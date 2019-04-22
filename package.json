@@ -1,0 +1,49 @@
+{
+    "name": "smithy-vscode",
+    "displayName": "Smithy",
+    "description": "Smithy IDL syntax highlighting",
+    "version": "0.1.0",
+    "publisher": "aws-smithy",
+    "engines": {
+        "vscode": "^1.32.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "preview": true,
+    "contributes": {
+        "languages": [
+            {
+                "id": "smithy",
+                "aliases": [
+                    "Smithy",
+                    "smithy"
+                ],
+                "extensions": [
+                    ".smithy"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "smithy",
+                "scopeName": "source.smithy",
+                "path": "./syntaxes/smithy.tmLanguage"
+            }
+        ]
+    },
+    "scripts": {
+        "install-plugin": "vsce package -o smithy-vscode-test.vsix && code --install-extension smithy-vscode-test.vsix"
+    },
+    "devDependencies": {
+        "@types/node": "^10.12.12",
+        "typescript": "^3.1.3",
+        "vsce": "^1.57.1",
+        "vscode": "^1.1.29",
+        "vscode-nls-dev": "^3.2.2"
+    },
+    "dependencies": {
+        "vscode-nls": "^3.2.4"
+    }
+}

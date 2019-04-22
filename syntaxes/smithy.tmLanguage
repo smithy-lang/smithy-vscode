@@ -1,0 +1,606 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Smithy</string>
+
+	<key>fileTypes</key>
+	<array>
+		<string>smithy</string>
+	</array>
+
+    <key>scopeName</key>
+	<string>source.smithy</string>
+
+    <key>uuid</key>
+	<string>9c3e617f-4d4a-4370-9194-2e82173c1610</string>
+
+    <key>foldingStartMarker</key>
+    <string>(\{|\[)\s*</string>
+
+    <key>foldingStopMarker</key>
+    <string>\s*(\}|\])</string>
+
+	<key>patterns</key>
+	<array>
+        <dict>
+			<key>include</key>
+			<string>#comment</string>
+		</dict>
+
+		<!-- Version statement: $version:1.0 -->
+        <dict>
+			<key>match</key>
+			<string>^(\$version:.+)</string>
+            <key>name</key>
+            <string>variable.language.smithy</string>
+		</dict>
+
+		<!-- Namespace definition: namespace identifier -->
+        <dict>
+			<key>match</key>
+			<string>^(namespace)\s+([A-Z-a-z0-9_\.#$-]+)</string>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.statement.smithy</string>
+				</dict>
+                <key>2</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.section.smithy</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- Metadata statement: metadata string|identifier = Node -->
+        <dict>
+			<key>match</key>
+			<string>^(metadata)(\s+.+)\s*(=)</string>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.statement.smithy</string>
+				</dict>
+                <key>2</key>
+				<dict>
+					<key>name</key>
+					<string>variable.other.smithy</string>
+				</dict>
+                <key>3</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.operator.smithy</string>
+				</dict>
+			</dict>
+		</dict>
+
+        <!-- Shape and name statements. -->
+		<dict>
+			<key>match</key>
+			<string>^(apply|byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|service|resource|trait|list|map|set|structure|union)\s+([A-Z-a-z0-9_\.#$-]+)\b</string>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.operator.smithy</string>
+				</dict>
+                <key>2</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.type.smithy</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- Operation shape definition -->
+		<dict>
+			<key>match</key>
+			<string>^(operation)\s+([A-Z-a-z0-9_\.#$-]+)\(.*\)(?:\s*(->)\s*[A-Z-a-z0-9_\.#$-]+)?(?:\s+(errors))?</string>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.operator.smithy</string>
+				</dict>
+                <key>2</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.type.smithy</string>
+				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
+					<string>support.function.smithy</string>
+				</dict>
+				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>support.function.smithy</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- Trait instance: @foo | @foo(baz: bar) | @foo(bar) -->
+        <dict>
+			<key>include</key>
+			<string>#trait</string>
+		</dict>
+
+		<!-- Highlights trait object key-value pairs: @foo(baz: bar) -->
+		<dict>
+			<key>match</key>
+			<string>([A-Z-a-z0-9_\.#$-]+)(:)</string>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>support.type.property-name.smithy</string>
+				</dict>
+                <key>2</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.separator.dictionary.pair.smithy</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- Highlights node values, wherever they are. -->
+		<dict>
+			<key>include</key>
+			<string>#value</string>
+		</dict>
+
+		<!-- Misc. operators -->
+		<dict>
+			<key>match</key>
+			<string>(\->)</string>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.other.smithy</string>
+				</dict>
+			</dict>
+		</dict>
+    </array>
+
+	<key>repository</key>
+	<dict>
+		<!-- Comments eat everything after "//" -->
+		<key>comment</key>
+		<dict>
+            <key>match</key>
+            <string>(//.*)</string>
+            <key>name</key>
+            <string>comment.line.double-slash.smithy</string>
+        </dict>
+
+		<!-- Traits can appear at the top level or within structures / unions -->
+		<key>trait</key>
+		<dict>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>match</key>
+					<string>@[0-9a-zA-Z\.#-]+</string>
+					<key>name</key>
+					<string>entity.name.tag.smithy</string>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>meta.structure.smithy</string>
+					<key>begin</key>
+					<string>(@[0-9a-zA-Z\.#-]+)(\()</string>
+					<key>beginCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>entity.name.tag.smithy</string>
+						</dict>
+						<key>2</key>
+						<dict>
+							<key>name</key>
+							<string>punctuation.definition.object.end.smithy</string>
+						</dict>
+					</dict>
+					<key>end</key>
+					<string>\)</string>
+					<key>endCaptures</key>
+					<dict>
+						<key>0</key>
+						<dict>
+							<key>name</key>
+							<string>punctuation.definition.object.end.smithy</string>
+						</dict>
+					</dict>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>include</key>
+							<string>#value</string>
+						</dict>
+						<dict>
+							<key>include</key>
+							<string>#object_inner</string>
+						</dict>
+					</array>
+				</dict>
+			</array>
+		</dict>
+
+		<!-- A JSON-like "Node" value -->
+		<key>value</key>
+		<dict>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#constant</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#number</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#string</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#array</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#object</string>
+				</dict>
+			</array>
+		</dict>
+
+		<!-- JSON-like array that can contain comments. -->
+		<key>array</key>
+		<dict>
+			<key>begin</key>
+			<string>\[</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.array.begin.smithy</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>\]</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.array.end.smithy</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>meta.structure.array.smithy</string>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#comment</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#value</string>
+				</dict>
+				<dict>
+					<key>match</key>
+					<string>,</string>
+					<key>name</key>
+					<string>punctuation.separator.array.smithy</string>
+				</dict>
+				<dict>
+					<key>match</key>
+					<string>[^\s\]]</string>
+					<key>name</key>
+					<string>invalid.illegal.expected-array-separator.smithy</string>
+				</dict>
+			</array>
+		</dict>
+
+		<!-- JSON-like contants -->
+		<key>constant</key>
+		<dict>
+			<key>match</key>
+			<string>\b(?:true|false|null)\b</string>
+			<key>name</key>
+			<string>constant.language.smithy</string>
+		</dict>
+
+		<!-- JSON-like numbers -->
+		<key>number</key>
+		<dict>
+			<key>match</key>
+			<string>(?x:            # turn on extended mode
+			             -?         # an optional minus
+			             (?:
+			               0        # a zero
+			               |        # ...or...
+			               [1-9]    # a 1-9 character
+			               \d*      # followed by zero or more digits
+			             )
+			             (?:
+			               (?:
+			                 \.     # a period
+			                 \d+    # followed by one or more digits
+			               )?
+			               (?:
+			                 [eE]   # an e character
+			                 [+-]?  # followed by an option +/-
+			                 \d+    # followed by one or more digits
+			               )?       # make exponent optional
+			             )?         # make decimal portion optional
+			           )</string>
+			<key>name</key>
+			<string>constant.numeric.smithy</string>
+		</dict>
+
+		<key>object</key>
+		<dict>
+			<key>begin</key>
+			<string>\{</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.dictionary.begin.smithy</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>\}</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.dictionary.end.smithy</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>meta.structure.dictionary.smithy</string>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#trait</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#object_inner</string>
+				</dict>
+			</array>
+		</dict>
+
+		<key>object_inner</key>
+		<dict>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#comment</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#string_key</string>
+				</dict>
+				<dict>
+					<key>begin</key>
+					<string>:</string>
+					<key>beginCaptures</key>
+					<dict>
+						<key>0</key>
+						<dict>
+							<key>name</key>
+							<string>punctuation.separator.dictionary.key-value.smithy</string>
+						</dict>
+					</dict>
+					<key>end</key>
+					<string>(,)|(?=\})</string>
+					<key>endCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>punctuation.separator.dictionary.pair.smithy</string>
+						</dict>
+					</dict>
+					<key>name</key>
+					<string>meta.structure.dictionary.value.smithy</string>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>include</key>
+							<string>#value</string>
+						</dict>
+						<dict>
+							<key>match</key>
+							<string>[^\s,]</string>
+							<key>name</key>
+							<string>invalid.illegal.expected-dictionary-separator.smithy</string>
+						</dict>
+					</array>
+				</dict>
+				<dict>
+					<key>match</key>
+					<string>[^\s\}]</string>
+					<key>name</key>
+					<string>invalid.illegal.expected-dictionary-separator.smithy</string>
+				</dict>
+			</array>
+		</dict>
+
+		<!-- A string or identifier used as an object key -->
+		<key>string_key</key>
+		<dict>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#identifier_key</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#dquote_key</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#squote_key</string>
+				</dict>
+			</array>
+		</dict>
+
+		<key>identifier_key</key>
+		<dict>
+			<key>name</key>
+			<string>support.type.property-name.smithy</string>
+			<key>match</key>
+			<string>[A-Z-a-z0-9_\.#$-]+</string>
+		</dict>
+
+		<key>dquote_key</key>
+		<dict>
+			<key>name</key>
+            <string>support.type.property-name.smithy</string>
+            <key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#dquote</string>
+				</dict>
+			</array>
+		</dict>
+
+		<key>squote_key</key>
+        <dict>
+            <key>name</key>
+            <string>support.type.property-name.smithy</string>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#squote</string>
+				</dict>
+			</array>
+		</dict>
+
+		<!-- A normal string value used in places like trait values,
+		    arrays, object values, etc. -->
+		<key>string</key>
+		<dict>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#dquote</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#squote</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#identifier</string>
+				</dict>
+			</array>
+		</dict>
+
+		<key>dquote</key>
+		<dict>
+			<key>name</key>
+			<string>string.quoted.double.smithy</string>
+			<key>begin</key>
+			<string>"</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.string.begin.smithy</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>"</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.string.end.smithy</string>
+				</dict>
+			</dict>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>match</key>
+					<string>\\.</string>
+					<key>name</key>
+					<string>constant.character.escape.smithy</string>
+				</dict>
+			</array>
+		</dict>
+
+		<key>squote</key>
+		<dict>
+			<key>name</key>
+			<string>string.quoted.single.smithy</string>
+			<key>begin</key>
+			<string>'</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.string.begin.smithy</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>'</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.string.end.smithy</string>
+				</dict>
+			</dict>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>match</key>
+					<string>\\.</string>
+					<key>name</key>
+					<string>constant.character.escape.smithy</string>
+				</dict>
+			</array>
+		</dict>
+
+		<key>identifier</key>
+		<dict>
+			<key>name</key>
+			<string>entity.name.section.smithy</string>
+			<key>match</key>
+			<string>[A-Z-a-z_][A-Z-a-z0-9_\.#$-]*</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
