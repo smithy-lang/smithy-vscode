@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>description</key>
+	<string>Smithy interface definition language</string>
+	<key>name</key>
+	<string>Smithy</string>
+	<key>uuid</key>
+	<string>9c3e617f-4d4a-4370-9194-2e82173c1610</string>
+</dict>
+</plist>
