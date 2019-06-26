@@ -26,6 +26,11 @@ for more details.
 
 ## Release Notes
 
+### 0.2.0 - 2019-06-26
+
+- Add support for use statements.
+- Add support for documentation comments.
+
 ### 0.1.0
 
 Initial release for Smithy IDL syntax highlighing.

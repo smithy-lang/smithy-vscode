@@ -67,7 +67,31 @@
                 <key>2</key>
                 <dict>
                     <key>name</key>
-                    <string>entity.name.section.smithy</string>
+                    <string>entity.name.type.namespace.smithy</string>
+                </dict>
+            </dict>
+        </dict>
+
+        <!-- Use statements. -->
+        <dict>
+            <key>match</key>
+            <string>^(use)\s+(shape|trait)\s+([A-Z-a-z0-9_\.#$-]+)\b</string>
+            <key>captures</key>
+            <dict>
+                <key>1</key>
+                <dict>
+                    <key>name</key>
+                    <string>keyword.statement.smithy</string>
+                </dict>
+                <key>2</key>
+                <dict>
+                    <key>name</key>
+                    <string>keyword.statement.smithy</string>
+                </dict>
+                <key>3</key>
+                <dict>
+                    <key>name</key>
+                    <string>entity.name.type.smithy</string>
                 </dict>
             </dict>
         </dict>
@@ -192,8 +216,33 @@
 
     <key>repository</key>
     <dict>
-        <!-- Comments eat everything after "//" -->
+        <!-- Comments are either "///" or "//" -->
         <key>comment</key>
+        <dict>
+            <key>patterns</key>
+            <array>
+                <dict>
+                    <key>include</key>
+                    <string>#doc_comment</string>
+                </dict>
+                <dict>
+                    <key>include</key>
+                    <string>#line_comment</string>
+                </dict>
+            </array>
+        </dict>
+
+        <!-- Doc comments eat everything after "//" -->
+        <key>doc_comment</key>
+        <dict>
+            <key>match</key>
+            <string>(///.*)</string>
+            <key>name</key>
+            <string>comment.block.documentation.smithy</string>
+        </dict>
+
+        <!-- Line comments eat everything after "//" -->
+        <key>line_comment</key>
         <dict>
             <key>match</key>
             <string>(//.*)</string>
@@ -208,21 +257,37 @@
             <array>
                 <dict>
                     <key>match</key>
-                    <string>@[0-9a-zA-Z\.#-]+</string>
-                    <key>name</key>
-                    <string>entity.name.tag.smithy</string>
+                    <string>(@)([0-9a-zA-Z\.#-]+)</string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>punctuation.definition.annotation.smithy</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.annotation.smithy</string>
+                        </dict>
+                    </dict>
                 </dict>
                 <dict>
                     <key>name</key>
                     <string>meta.structure.smithy</string>
                     <key>begin</key>
-                    <string>(@[0-9a-zA-Z\.#-]+)(\()</string>
+                    <string>(@)([0-9a-zA-Z\.#-]+)(\()</string>
                     <key>beginCaptures</key>
                     <dict>
                         <key>1</key>
                         <dict>
                             <key>name</key>
-                            <string>entity.name.tag.smithy</string>
+                            <string>punctuation.definition.annotation.smithy</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.annotation.smithy</string>
                         </dict>
                         <key>2</key>
                         <dict>
@@ -652,7 +717,7 @@
         <key>identifier</key>
         <dict>
             <key>name</key>
-            <string>entity.name.section.smithy</string>
+            <string>storage.type.smithy</string>
             <key>match</key>
             <string>[A-Z-a-z_][A-Z-a-z0-9_\.#$-]*</string>
         </dict>
