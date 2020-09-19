@@ -2,7 +2,7 @@
     "name": "smithy-vscode",
     "displayName": "Smithy",
     "description": "Smithy IDL syntax highlighting",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "publisher": "aws-smithy",
     "engines": {
         "vscode": "^1.32.0"
