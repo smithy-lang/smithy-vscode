@@ -26,6 +26,10 @@ for more details.
 
 ## Release Notes
 
+### 0.3.0 - 2020-09-19
+
+- Updated to work with Smithy 1.0 syntax.
+
 ### 0.2.0 - 2019-06-26
 
 - Add support for use statements.
@@ -33,4 +37,4 @@ for more details.
 
 ### 0.1.0
 
-Initial release for Smithy IDL syntax highlighing.
+Initial release for Smithy IDL syntax highlighting.
