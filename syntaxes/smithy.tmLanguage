@@ -29,7 +29,7 @@
             <string>#comment</string>
         </dict>
 
-        <!-- Control statements: $version: "0.1.0"\n -->
+        <!-- Control statements: $version: "2.0"\n -->
         <dict>
             <key>name</key>
             <string>meta.keyword.statement.control.smithy</string>
@@ -513,6 +513,7 @@
                     <key>include</key>
                     <string>#value</string>
                 </dict>
+                <!-- NOTE: these aren't necessary as of idl 2.0 -->
                 <dict>
                     <key>match</key>
                     <string>,</string>
@@ -598,8 +599,6 @@
             </array>
         </dict>
 
-        <!-- Note: This allows for invalid key-value pairs like:
-             { : foo, : foo }... Maybe that's fine for highlighting? -->
         <key>object_inner</key>
         <dict>
             <key>patterns</key>
@@ -613,47 +612,40 @@
                     <string>#string_key</string>
                 </dict>
                 <dict>
-                    <key>begin</key>
+                    <key>match</key>
+                    <string>:=</string>
+                    <key>name</key>
+                    <string>punctuation.separator.dictionary.inline-struct.smithy</string>
+                </dict>
+                <dict>
+                    <key>match</key>
                     <string>:</string>
-                    <key>beginCaptures</key>
-                    <dict>
-                        <key>0</key>
-                        <dict>
-                            <key>name</key>
-                            <string>punctuation.separator.dictionary.key-value.smithy</string>
-                        </dict>
-                    </dict>
-                    <!-- This allows object_inner to be shared across traits and node values -->
-                    <key>end</key>
-                    <string>(,)|(?=\})|(?=\))</string>
-                    <key>endCaptures</key>
-                    <dict>
-                        <key>1</key>
-                        <dict>
-                            <key>name</key>
-                            <string>punctuation.separator.dictionary.pair.smithy</string>
-                        </dict>
-                    </dict>
+                    <key>name</key>
+                    <string>punctuation.separator.dictionary.key-value.smithy</string>
+                </dict>
+                <dict>
                     <key>name</key>
                     <string>meta.structure.dictionary.value.smithy</string>
-                    <key>patterns</key>
-                    <array>
-                        <dict>
-                            <key>include</key>
-                            <string>#value</string>
-                        </dict>
-                        <dict>
-                            <key>match</key>
-                            <string>[^\s,]</string>
-                            <key>name</key>
-                            <string>invalid.illegal.expected-dictionary-separator.smithy</string>
-                        </dict>
-                    </array>
+                    <key>include</key>
+                    <string>#value</string>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>!</string>
+                    <key>name</key>
+                    <string>keyword.operator.smithy</string>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>,</string>
+                    <key>name</key>
+                    <string>punctuation.separator.dictionary.pair.smithy</string>
                 </dict>
             </array>
         </dict>
 
-        <!-- A string or identifier used as an object key -->
+        <!-- A string or identifier used as an object key. These will only get
+             recognized if the full key is on the same line as colon separator. -->
         <key>string_key</key>
         <dict>
             <key>patterns</key>
@@ -674,20 +666,15 @@
             <key>name</key>
             <string>support.type.property-name.smithy</string>
             <key>match</key>
-            <string>[A-Z-a-z0-9_\.#$]+</string>
+            <string>[A-Z-a-z0-9_\.#$]+(?=\s*:)</string>
         </dict>
 
         <key>dquote_key</key>
         <dict>
             <key>name</key>
             <string>support.type.property-name.smithy</string>
-            <key>patterns</key>
-            <array>
-                <dict>
-                    <key>include</key>
-                    <string>#dquote</string>
-                </dict>
-            </array>
+            <key>match</key>
+            <string>".*"(?=\s*:)</string>
         </dict>
 
         <!-- A normal string value used in places like trait values,
