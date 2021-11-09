@@ -257,7 +257,7 @@
                 </dict>
                 <dict>
                     <key>include</key>
-                    <string>#object_inner</string>
+                    <string>#shape_inner</string>
                 </dict>
             </array>
         </dict>
@@ -307,7 +307,7 @@
                 </dict>
                 <dict>
                     <key>include</key>
-                    <string>#object_inner</string>
+                    <string>#shape_inner</string>
                 </dict>
             </array>
         </dict>
@@ -350,7 +350,7 @@
             <array>
                 <dict>
                     <key>include</key>
-                    <string>#object_inner</string>
+                    <string>#shape_inner</string>
                 </dict>
             </array>
         </dict>
@@ -694,6 +694,35 @@
                 </dict>
                 <dict>
                     <key>match</key>
+                    <string>:</string>
+                    <key>name</key>
+                    <string>punctuation.separator.dictionary.key-value.smithy</string>
+                </dict>
+                <dict>
+                    <key>name</key>
+                    <string>meta.structure.dictionary.value.smithy</string>
+                    <key>include</key>
+                    <string>#value</string>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>,</string>
+                    <key>name</key>
+                    <string>punctuation.separator.dictionary.pair.smithy</string>
+                </dict>
+            </array>
+        </dict>
+
+        <key>shape_inner</key>
+        <dict>
+            <key>patterns</key>
+            <array>
+                <dict>
+                    <key>include</key>
+                    <string>#trait</string>
+                </dict>
+                <dict>
+                    <key>match</key>
                     <string>:=</string>
                     <key>name</key>
                     <string>punctuation.separator.dictionary.inline-struct.smithy</string>
@@ -701,16 +730,6 @@
                 <dict>
                     <key>include</key>
                     <string>#with_statement</string>
-                </dict>
-                <dict>
-                    <key>include</key>
-                    <string>#trait</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>:</string>
-                    <key>name</key>
-                    <string>punctuation.separator.dictionary.key-value.smithy</string>
                 </dict>
                 <dict>
                     <key>match</key>
@@ -730,22 +749,14 @@
                     </dict>
                 </dict>
                 <dict>
-                    <key>name</key>
-                    <string>meta.structure.dictionary.value.smithy</string>
                     <key>include</key>
-                    <string>#value</string>
+                    <string>#object_inner</string>
                 </dict>
                 <dict>
                     <key>match</key>
                     <string>!</string>
                     <key>name</key>
                     <string>keyword.operator.smithy</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>,</string>
-                    <key>name</key>
-                    <string>punctuation.separator.dictionary.pair.smithy</string>
                 </dict>
             </array>
         </dict>
