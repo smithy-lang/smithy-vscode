@@ -624,6 +624,23 @@
                     <string>punctuation.separator.dictionary.key-value.smithy</string>
                 </dict>
                 <dict>
+                    <key>match</key>
+                    <string>[^:](=)\s*(default)</string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>punctuation.separator.default.smithy</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.other.smithy</string>
+                        </dict>
+                    </dict>
+                </dict>
+                <dict>
                     <key>name</key>
                     <string>meta.structure.dictionary.value.smithy</string>
                     <key>include</key>
