@@ -225,7 +225,7 @@
             <string>\}</string>
             <key>endCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.object.end.smithy</string>
@@ -322,7 +322,7 @@
             <string>\}</string>
             <key>endCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.object.end.smithy</string>
@@ -407,7 +407,7 @@
                 </dict>
             </dict>
 
-            <key>end</string>
+            <key>end</key>
             <string>(?={)</string>
 
             <key>patterns</key>
@@ -491,7 +491,7 @@
                     <string>\)</string>
                     <key>endCaptures</key>
                     <dict>
-                        <key>1</key>
+                        <key>0</key>
                         <dict>
                             <key>name</key>
                             <string>punctuation.definition.object.end.smithy</string>
@@ -570,7 +570,7 @@
             <string>\[</string>
             <key>beginCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.array.begin.smithy</string>
@@ -580,7 +580,7 @@
             <string>\]</string>
             <key>endCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.array.end.smithy</string>
@@ -653,7 +653,7 @@
             <string>\{</string>
             <key>beginCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.dictionary.begin.smithy</string>
@@ -823,7 +823,7 @@
             <string>"""</string>
             <key>beginCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.string.begin.smithy</string>
@@ -833,7 +833,7 @@
             <string>"""</string>
             <key>endCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.string.end.smithy</string>
@@ -858,7 +858,7 @@
             <string>"</string>
             <key>beginCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.string.begin.smithy</string>
@@ -868,7 +868,7 @@
             <string>"</string>
             <key>endCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
                     <string>punctuation.definition.string.end.smithy</string>
