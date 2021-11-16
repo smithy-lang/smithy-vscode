@@ -656,17 +656,17 @@
                 <key>0</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.dictionary.begin.smithy</string>
+                    <string>punctuation.definition.object.begin.smithy</string>
                 </dict>
             </dict>
             <key>end</key>
             <string>\}</string>
             <key>endCaptures</key>
             <dict>
-                <key>1</key>
+                <key>0</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.dictionary.end.smithy</string>
+                    <string>punctuation.definition.object.end.smithy</string>
                 </dict>
             </dict>
             <key>name</key>
