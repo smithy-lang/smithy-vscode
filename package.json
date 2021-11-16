@@ -39,7 +39,8 @@
         ]
     },
     "scripts": {
-        "install-plugin": "vsce package -o smithy-vscode-test.vsix && code --install-extension smithy-vscode-test.vsix"
+        "install-plugin": "vsce package -o smithy-vscode-test.vsix && code --install-extension smithy-vscode-test.vsix",
+        "test": "npx vscode-tmgrammar-test -s 'source.smithy' -g syntaxes/smithy.tmLanguage -t 'tests/*'"
     },
     "devDependencies": {
         "@types/node": "^10.12.12",
@@ -50,6 +51,7 @@
         "vscode-test": "^1.4.0"
     },
     "dependencies": {
-        "vscode-nls": "^3.2.4"
+        "vscode-nls": "^3.2.4",
+        "vscode-tmgrammar-test": "^0.0.11"
     }
 }
