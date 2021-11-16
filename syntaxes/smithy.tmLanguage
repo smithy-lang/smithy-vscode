@@ -484,7 +484,7 @@
                         <key>3</key>
                         <dict>
                             <key>name</key>
-                            <string>punctuation.definition.dictionary.end.smithy</string>
+                            <string>punctuation.definition.dictionary.begin.smithy</string>
                         </dict>
                     </dict>
                     <key>end</key>
@@ -749,14 +749,14 @@
                     </dict>
                 </dict>
                 <dict>
-                    <key>include</key>
-                    <string>#object_inner</string>
-                </dict>
-                <dict>
                     <key>match</key>
                     <string>!</string>
                     <key>name</key>
                     <string>keyword.operator.smithy</string>
+                </dict>
+                <dict>
+                    <key>include</key>
+                    <string>#object_inner</string>
                 </dict>
             </array>
         </dict>
