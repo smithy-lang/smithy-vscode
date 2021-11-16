@@ -228,7 +228,7 @@
                 <key>0</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.object.end.smithy</string>
+                    <string>punctuation.definition.dictionary.end.smithy</string>
                 </dict>
             </dict>
             <key>beginCaptures</key>
@@ -246,7 +246,7 @@
                 <key>3</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.object.begin.smithy</string>
+                    <string>punctuation.definition.dictionary.begin.smithy</string>
                 </dict>
             </dict>
             <key>patterns</key>
@@ -274,7 +274,7 @@
                 <key>1</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.object.end.smithy</string>
+                    <string>punctuation.definition.dictionary.end.smithy</string>
                 </dict>
             </dict>
             <key>beginCaptures</key>
@@ -292,7 +292,7 @@
                 <key>3</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.object.begin.smithy</string>
+                    <string>punctuation.definition.dictionary.begin.smithy</string>
                 </dict>
             </dict>
             <key>patterns</key>
@@ -325,7 +325,7 @@
                 <key>0</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.object.end.smithy</string>
+                    <string>punctuation.definition.dictionary.end.smithy</string>
                 </dict>
             </dict>
             <key>beginCaptures</key>
@@ -343,7 +343,7 @@
                 <key>3</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.object.begin.smithy</string>
+                    <string>punctuation.definition.dictionary.begin.smithy</string>
                 </dict>
             </dict>
             <key>patterns</key>
@@ -484,7 +484,7 @@
                         <key>3</key>
                         <dict>
                             <key>name</key>
-                            <string>punctuation.definition.object.end.smithy</string>
+                            <string>punctuation.definition.dictionary.end.smithy</string>
                         </dict>
                     </dict>
                     <key>end</key>
@@ -494,7 +494,7 @@
                         <key>0</key>
                         <dict>
                             <key>name</key>
-                            <string>punctuation.definition.object.end.smithy</string>
+                            <string>punctuation.definition.dictionary.end.smithy</string>
                         </dict>
                     </dict>
                     <key>patterns</key>
@@ -656,7 +656,7 @@
                 <key>0</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.object.begin.smithy</string>
+                    <string>punctuation.definition.dictionary.begin.smithy</string>
                 </dict>
             </dict>
             <key>end</key>
@@ -666,7 +666,7 @@
                 <key>0</key>
                 <dict>
                     <key>name</key>
-                    <string>punctuation.definition.object.end.smithy</string>
+                    <string>punctuation.definition.dictionary.end.smithy</string>
                 </dict>
             </dict>
             <key>name</key>
