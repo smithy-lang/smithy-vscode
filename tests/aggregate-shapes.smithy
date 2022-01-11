@@ -57,19 +57,6 @@ structure Structure {
 //       ^        punctuation.separator.dictionary.key-value.smithy
 //         ^^^^^^ entity.name.type.smithy
 
-    required: String!
-//  ^^^^^^^^          support.type.property-name.smithy
-//          ^         punctuation.separator.dictionary.key-value.smithy
-//            ^^^^^^  entity.name.type.smithy
-//                  ^ keyword.operator.smithy
-
-    default: String = default
-//  ^^^^^^^                   support.type.property-name.smithy
-//         ^                  punctuation.separator.dictionary.key-value.smithy
-//           ^^^^^^           entity.name.type.smithy
-//                  ^         punctuation.separator.default.smithy
-//                    ^^^^^^^ keyword.other.smithy
-
 }
 // <- punctuation.definition.dictionary.end.smithy
 
