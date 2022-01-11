@@ -77,19 +77,6 @@ operation Operation {
 //         ^     punctuation.separator.dictionary.key-value.smithy
 //           ^^^ entity.name.type.smithy
 
-        bar: Bar!
-//      ^^^       support.type.property-name.smithy
-//         ^      punctuation.separator.dictionary.key-value.smithy
-//           ^^^  entity.name.type.smithy
-// TODO         ^ keyword.operator.smithy
-
-        baz: Bar = default
-//      ^^^                support.type.property-name.smithy
-//         ^               punctuation.separator.dictionary.key-value.smithy
-//           ^^^           entity.name.type.smithy
-// TODO          ^         punctuation.separator.default.smithy
-// TODO            ^^^^^^^ keyword.other.smithy
-
     }
 //  ^ punctuation.definition.dictionary.end.smithy
 
