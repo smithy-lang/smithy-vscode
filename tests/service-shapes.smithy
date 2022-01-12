@@ -104,13 +104,15 @@ operation OtherOperation {
 //        ^^^^^^^^^^^^^^   entity.name.type.smithy
 //                       ^ punctuation.definition.dictionary.begin.smithy
 
-    input := with Bar {}
-//  ^^^^^                support.type.property-name.smithy
-//        ^^             punctuation.separator.dictionary.inline-struct.smithy
-//           ^^^^        keyword.statement.with.smithy
-//                ^^^    entity.name.type.smithy
-//                    ^  punctuation.definition.dictionary.begin.smithy
-//                     ^ punctuation.definition.dictionary.end.smithy
+    input := with [Bar] {}
+//  ^^^^^                  support.type.property-name.smithy
+//        ^^               punctuation.separator.dictionary.inline-struct.smithy
+//           ^^^^          keyword.statement.with.smithy
+//                ^        punctuation.definition.array.begin.smithy
+//                 ^^^     entity.name.type.smithy
+//                    ^    punctuation.definition.array.end.smithy
+//                      ^  punctuation.definition.dictionary.begin.smithy
+//                       ^ punctuation.definition.dictionary.end.smithy
 
     output := @sensitive {}
 //  ^^^^^^                  support.type.property-name.smithy
