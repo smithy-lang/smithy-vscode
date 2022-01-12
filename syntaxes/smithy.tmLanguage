@@ -177,12 +177,12 @@
             <string>#trait</string>
         </dict>
 
-        <!-- simple shapes: string Foo\n -->
+        <!-- shape declarations with mixins: string Foo with [Bar] -->
         <dict>
             <key>name</key>
             <string>meta.keyword.statement.shape.smithy</string>
             <key>begin</key>
-            <string>^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document)\s+</string>
+            <string>^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|service|operation|resource)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)\s+(with)\s+(\[)</string>
             <key>beginCaptures</key>
             <dict>
                 <key>1</key>
@@ -190,9 +190,35 @@
                     <key>name</key>
                     <string>keyword.statement.smithy</string>
                 </dict>
+                <key>2</key>
+                <dict>
+                    <key>name</key>
+                    <string>entity.name.type.smithy</string>
+                </dict>
+                <key>3</key>
+                <dict>
+                    <key>name</key>
+                    <string>keyword.statement.with.smithy</string>
+                </dict>
+                <key>4</key>
+                <dict>
+                    <key>name</key>
+                    <string>punctuation.definition.array.begin.smithy</string>
+                </dict>
             </dict>
+
             <key>end</key>
-            <string>\n</string>
+            <string>\]</string>
+            <key>endCaptures</key>
+            <dict>
+                <key>0</key>
+                <dict>
+                    <key>name</key>
+                    <string>punctuation.definition.array.end.smithy</string>
+                </dict>
+            </dict>
+
+
             <key>patterns</key>
             <array>
                 <dict>
@@ -207,20 +233,47 @@
                 </dict>
                 <dict>
                     <key>match</key>
-                    <string>[^\n]</string>
+                    <string>,</string>
                     <key>name</key>
-                    <string>invalid.illegal.shape.smithy</string>
+                    <string>punctuation.separator.array.smithy</string>
                 </dict>
             </array>
         </dict>
 
-        <!-- Aggregate shapes (these have members with traits) -->
-        <!-- list Foo { member: Bar } -->
+        <!-- shape declarations without mixins: string Foo\n -->
         <dict>
             <key>name</key>
             <string>meta.keyword.statement.shape.smithy</string>
+            <key>match</key>
+            <string>^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|service|operation|resource)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)</string>
+            <key>captures</key>
+            <dict>
+                <key>1</key>
+                <dict>
+                    <key>name</key>
+                    <string>keyword.statement.smithy</string>
+                </dict>
+                <key>2</key>
+                <dict>
+                    <key>name</key>
+                    <string>entity.name.type.smithy</string>
+                </dict>
+            </dict>
+        </dict>
+
+        <!-- shape property bags -->
+        <dict>
             <key>begin</key>
-            <string>^(list|set|map|structure|union)\s+([A-Z-a-z0-9_\.#$-]+)\s*(\{)</string>
+            <string>\{</string>
+            <key>beginCaptures</key>
+            <dict>
+                <key>0</key>
+                <dict>
+                    <key>name</key>
+                    <string>punctuation.definition.dictionary.begin.smithy</string>
+                </dict>
+            </dict>
+
             <key>end</key>
             <string>\}</string>
             <key>endCaptures</key>
@@ -231,121 +284,7 @@
                     <string>punctuation.definition.dictionary.end.smithy</string>
                 </dict>
             </dict>
-            <key>beginCaptures</key>
-            <dict>
-                <key>1</key>
-                <dict>
-                    <key>name</key>
-                    <string>keyword.statement.smithy</string>
-                </dict>
-                <key>2</key>
-                <dict>
-                    <key>name</key>
-                    <string>entity.name.type.smithy</string>
-                </dict>
-                <key>3</key>
-                <dict>
-                    <key>name</key>
-                    <string>punctuation.definition.dictionary.begin.smithy</string>
-                </dict>
-            </dict>
-            <key>patterns</key>
-            <array>
-                <dict>
-                    <key>include</key>
-                    <string>#trait</string>
-                </dict>
-                <dict>
-                    <key>include</key>
-                    <string>#shape_inner</string>
-                </dict>
-            </array>
-        </dict>
 
-        <dict>
-            <key>name</key>
-            <string>meta.keyword.statement.shape.smithy</string>
-            <key>begin</key>
-            <string>^(structure)\s+([A-Z-a-z0-9_\.#$-]+)</string>
-            <key>end</key>
-            <string>\}</string>
-            <key>endCaptures</key>
-            <dict>
-                <key>1</key>
-                <dict>
-                    <key>name</key>
-                    <string>punctuation.definition.dictionary.end.smithy</string>
-                </dict>
-            </dict>
-            <key>beginCaptures</key>
-            <dict>
-                <key>1</key>
-                <dict>
-                    <key>name</key>
-                    <string>keyword.statement.smithy</string>
-                </dict>
-                <key>2</key>
-                <dict>
-                    <key>name</key>
-                    <string>entity.name.type.smithy</string>
-                </dict>
-                <key>3</key>
-                <dict>
-                    <key>name</key>
-                    <string>punctuation.definition.dictionary.begin.smithy</string>
-                </dict>
-            </dict>
-            <key>patterns</key>
-            <array>
-                <dict>
-                    <key>include</key>
-                    <string>#with_statement</string>
-                </dict>
-                <dict>
-                    <key>include</key>
-                    <string>#trait</string>
-                </dict>
-                <dict>
-                    <key>include</key>
-                    <string>#shape_inner</string>
-                </dict>
-            </array>
-        </dict>
-
-        <!-- Service shapes (they don't have members with traits) -->
-        <dict>
-            <key>name</key>
-            <string>meta.keyword.statement.shape.smithy</string>
-            <key>begin</key>
-            <string>^(apply|service|operation|resource)\s+([A-Z-a-z0-9_]+)\s*(\{)</string>
-            <key>end</key>
-            <string>\}</string>
-            <key>endCaptures</key>
-            <dict>
-                <key>0</key>
-                <dict>
-                    <key>name</key>
-                    <string>punctuation.definition.dictionary.end.smithy</string>
-                </dict>
-            </dict>
-            <key>beginCaptures</key>
-            <dict>
-                <key>1</key>
-                <dict>
-                    <key>name</key>
-                    <string>keyword.statement.smithy</string>
-                </dict>
-                <key>2</key>
-                <dict>
-                    <key>name</key>
-                    <string>entity.name.type.smithy</string>
-                </dict>
-                <key>3</key>
-                <dict>
-                    <key>name</key>
-                    <string>punctuation.definition.dictionary.begin.smithy</string>
-                </dict>
-            </dict>
             <key>patterns</key>
             <array>
                 <dict>
@@ -397,7 +336,7 @@
         <key>with_statement</key>
         <dict>
             <key>begin</key>
-            <string>(with)</string>
+            <string>(with)\s+(\[)</string>
             <key>beginCaptures</key>
             <dict>
                 <key>1</key>
@@ -405,22 +344,39 @@
                     <key>name</key>
                     <string>keyword.statement.with.smithy</string>
                 </dict>
+                <key>2</key>
+                <dict>
+                    <key>name</key>
+                    <string>punctuation.definition.array.begin.smithy</string>
+                </dict>
             </dict>
 
             <key>end</key>
-            <string>(?={)</string>
+            <string>\]</string>
+            <key>endCaptures</key>
+            <dict>
+                <key>0</key>
+                <dict>
+                    <key>name</key>
+                    <string>punctuation.definition.array.end.smithy</string>
+                </dict>
+            </dict>
 
             <key>patterns</key>
             <array>
-                <dict>
-                    <key>include</key>
-                    <string>#identifier</string>
-                </dict>
                 <dict>
                     <key>match</key>
                     <string>,</string>
                     <key>name</key>
                     <string>punctuation.separator.array.smithy</string>
+                </dict>
+                <dict>
+                    <key>include</key>
+                    <string>#identifier</string>
+                </dict>
+                <dict>
+                    <key>include</key>
+                    <string>#comment</string>
                 </dict>
             </array>
         </dict>
@@ -730,29 +686,6 @@
                 <dict>
                     <key>include</key>
                     <string>#with_statement</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>[^:](=)\s*(default)</string>
-                    <key>captures</key>
-                    <dict>
-                        <key>1</key>
-                        <dict>
-                            <key>name</key>
-                            <string>punctuation.separator.default.smithy</string>
-                        </dict>
-                        <key>2</key>
-                        <dict>
-                            <key>name</key>
-                            <string>keyword.other.smithy</string>
-                        </dict>
-                    </dict>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>!</string>
-                    <key>name</key>
-                    <string>keyword.operator.smithy</string>
                 </dict>
                 <dict>
                     <key>include</key>
