@@ -182,7 +182,7 @@
             <key>name</key>
             <string>meta.keyword.statement.shape.smithy</string>
             <key>begin</key>
-            <string>^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|service|operation|resource)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)\s+(with)\s+(\[)</string>
+            <string>^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|service|operation|resource|enum|intEnum)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)\s+(with)\s+(\[)</string>
             <key>beginCaptures</key>
             <dict>
                 <key>1</key>
@@ -245,7 +245,7 @@
             <key>name</key>
             <string>meta.keyword.statement.shape.smithy</string>
             <key>match</key>
-            <string>^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|service|operation|resource)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)</string>
+            <string>^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|service|operation|resource|enum|intEnum)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)</string>
             <key>captures</key>
             <dict>
                 <key>1</key>
