@@ -13,7 +13,7 @@
     },
     "license": "Apache-2.0",
     "categories": [
-        "Programming Languages"
+        "Programming Languages", "Snippets"
     ],
     "preview": true,
     "contributes": {
@@ -35,6 +35,12 @@
                 "language": "smithy",
                 "scopeName": "source.smithy",
                 "path": "./syntaxes/smithy.tmLanguage"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "smithy",
+                "path": "./snippets.json"
             }
         ]
     },
