@@ -3,6 +3,7 @@
     "displayName": "Smithy",
     "description": "Smithy IDL syntax highlighting",
     "version": "0.3.0",
+    "icon": "images/smithy.png",
     "publisher": "aws-smithy",
     "engines": {
         "vscode": "^1.65.0"
