@@ -26,7 +26,7 @@
   },
   "Add lifecycle Resource": {
     "prefix": "resource",
-    "body": "resource ${1:MyResource} {\n    identifiers: { ${2:myIdentifierKey1}: ${3:MyIdentifierString} }\n    create: ${4:MyCreateOperation}\n    put: ${5:MyPutOperation}\n    read: ${6:MyReadOperation}\n    update: ${7:MyUpdateOperation}\n    delete: ${8:MyDeleteOperation}\n    list: ${9:MyListOperation}\n    operations: [${10:MyOperation}]\n    collectionOperations: [${11:MyCollectionOperation}]\n    resources: [${0:MyResource}]\n}",
+    "body": "resource ${1:MyResource} {\n    identifiers: { ${2:myIdentifierKey1}: ${3:MyIdentifierString} }\n    create: ${4:MyCreateOperation}\n    put: ${5:MyPutOperation}\n    read: ${6:MyReadOperation}\n    update: ${7:MyUpdateOperation}\n    delete: ${8:MyDeleteOperation}\n    list: ${0:MyListOperation}\n}",
     "description": "Adds a resource with identifiers and lifecycle operations",
   },
   "Add identifier only Resource": {
