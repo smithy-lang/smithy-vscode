@@ -6,8 +6,9 @@ bundle in TextMate and [IntelliJ using a third-party plugin](https://www.jetbrai
 
 ## Features
 
-This extension currently provides basic syntax highlighting of ".smithy"
-files.
+This extension provides basic syntax highlighting of ".smithy" files.
+
+Additionally, it provides [Snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets).
 
 ## Installation
 
