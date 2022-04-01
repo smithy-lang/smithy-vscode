@@ -4,20 +4,15 @@
     "body": "service ${1:MyService} {\n    version: \"${2:MyVersion}\"\n    operations: [${3:MyOperation}]\n    resources: [${4:MyResource}]\n    errors: [${0:MyError}]\n}",
     "description": "Adds a service with version, operations, resources and errors properties",
   },
-  "Add Operation based Service": {
-    "prefix": "service",
-    "body": "service ${1:MyService} {\n    version: \"${2:MyVersion}\"\n    operations: [${3:MyOperation}]\n    errors: [${0:MyError}]\n}",
-    "description": "Adds a service with version, operations and errors properties",
-  },
   "Add Resource based Service": {
     "prefix": "service",
     "body": "service ${1:MyService} {\n    version: \"${2:version}\"\n    resources: [${3:MyResource}]\n    errors: [${0:MyError}]\n}",
     "description": "Adds a service with version, resources and errors properties",
   },
-  "Add inlined Operation": {
-    "prefix": "operation",
-    "body": "operation ${1:MyOperation} {\n    input := {}\n    output := {}\n    errors: [${0:MyError}]\n}",
-    "description": "Adds an operation with inlined input and output and errors properties",
+  "Add Operation based Service": {
+    "prefix": "service",
+    "body": "service ${1:MyService} {\n    version: \"${2:MyVersion}\"\n    operations: [${3:MyOperation}]\n    errors: [${0:MyError}]\n}",
+    "description": "Adds a service with version, operations and errors properties",
   },
   "Add Operation": {
     "prefix": "operation",
@@ -68,20 +63,5 @@
     "prefix": "union",
     "body": "union ${1:myUnion} {\n    ${2:myVariantA}: ${3:MyVariantTargetA}\n    ${4:myVariantB}: ${0:MyVariantTargetB}\n}",
     "description": "Adds a union shape",
-  },
-  "Add Enum shape": {
-    "prefix": "enum",
-    "body": "enum ${1:MyEnum} {\n    ${0:MY_ENUM_MEMBER}\n}",
-    "description": "Adds an enum shape",
-  },
-  "Add enumValue Enum shape": {
-    "prefix": "enum",
-    "body": "enum ${1:MyEnum} {\n    @enumValue(\"${2:myEnumValue}\")\n    ${0:MY_ENUM_MEMBER}\n}",
-    "description": "Adds an enum shape with an explicit enumValue trait",
-  },
-  "Add intEnum shape": {
-    "prefix": "intEnum",
-    "body": "intEnum ${1:MyIntEnum} {\n    @enumValue(${2:myEnumValue})\n    ${0:MY_ENUM_MEMBER}\n}",
-    "description": "Adds an intEnum shape",
   }
 }
