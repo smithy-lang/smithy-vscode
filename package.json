@@ -13,6 +13,9 @@
         "url": "git@github.com:awslabs/smithy-vscode.git"
     },
     "license": "Apache-2.0",
+    "prettier": {
+      "printWidth": 120
+    },
     "categories": [
         "Programming Languages",
         "Snippets"
@@ -49,9 +52,11 @@
     "scripts": {
         "install-plugin": "npm run package && code --install-extension smithy-vscode-test.vsix",
         "package": "vsce package -o smithy-vscode-test.vsix",
+        "format": "prettier --write '**/*.{ts,js,json,yml}'",
+        "format-check": "prettier --check '**/*.{ts,js,json,yml}'",
         "test-grammar": "npx vscode-tmgrammar-test -s 'source.smithy' -g syntaxes/smithy.tmLanguage -t 'tests/grammar/*'",
         "test-extension": "tsc -p ./ && node ./out/runTest.js",
-        "test": "npm run test-grammar && npm run test-extension"
+        "test": "npm run format-check && npm run test-grammar && npm run test-extension"
     },
     "devDependencies": {
         "@types/glob": "^7.2.0",
@@ -61,6 +66,7 @@
         "@vscode/test-electron": "^2.1.3",
         "glob": "^7.1.6",
         "mocha": "^9.2.2",
+        "prettier": "^2.6.2",
         "typescript": "^4.6.3",
         "vsce": "^2.7.0",
         "vscode-nls-dev": "^4.0.0"
