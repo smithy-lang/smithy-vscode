@@ -7,9 +7,9 @@ on:
     branches: [main]
 
 jobs:
-  test-textmate-language:
+  test-extension:
     runs-on: ubuntu-latest
-    name: Test Textmate syntax
+    name: Test Textmate syntax and extension
     steps:
       - uses: actions/checkout@v2
 
@@ -21,4 +21,4 @@ jobs:
         run: npm install
 
       - name: Run tests
-        run: npm test
+        run: xvfb-run -a npm test
