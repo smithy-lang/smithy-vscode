@@ -2,66 +2,66 @@
   "Add Service": {
     "prefix": "service",
     "body": "service ${1:MyService} {\n    version: \"${2:MyVersion}\"\n    operations: [${3:MyOperation}]\n    resources: [${4:MyResource}]\n    errors: [${0:MyError}]\n}",
-    "description": "Adds a service with version, operations, resources and errors properties",
+    "description": "Adds a service with version, operations, resources and errors properties"
   },
   "Add Resource based Service": {
     "prefix": "service",
     "body": "service ${1:MyService} {\n    version: \"${2:version}\"\n    resources: [${3:MyResource}]\n    errors: [${0:MyError}]\n}",
-    "description": "Adds a service with version, resources and errors properties",
+    "description": "Adds a service with version, resources and errors properties"
   },
   "Add Operation based Service": {
     "prefix": "service",
     "body": "service ${1:MyService} {\n    version: \"${2:MyVersion}\"\n    operations: [${3:MyOperation}]\n    errors: [${0:MyError}]\n}",
-    "description": "Adds a service with version, operations and errors properties",
+    "description": "Adds a service with version, operations and errors properties"
   },
   "Add Operation": {
     "prefix": "operation",
     "body": "operation ${1:MyOperation} {\n    input: ${2:MyInput}\n    output: ${3:MyOutput}\n    errors: [${0:MyError}]\n}",
-    "description": "Adds an operation with input, output and errors properties",
+    "description": "Adds an operation with input, output and errors properties"
   },
   "Add lifecycle Resource": {
     "prefix": "resource",
     "body": "resource ${1:MyResource} {\n    identifiers: { ${2:myIdentifierKey1}: ${3:MyIdentifierString} }\n    create: ${4:MyCreateOperation}\n    put: ${5:MyPutOperation}\n    read: ${6:MyReadOperation}\n    update: ${7:MyUpdateOperation}\n    delete: ${8:MyDeleteOperation}\n    list: ${0:MyListOperation}\n}",
-    "description": "Adds a resource with identifiers and lifecycle operations",
+    "description": "Adds a resource with identifiers and lifecycle operations"
   },
   "Add identifier only Resource": {
     "prefix": "resource",
     "body": "resource ${1:MyResource} {\n    identifiers: { ${2:myIdentifierKey1}: ${0:MyIdentifierString} }\n}",
-    "description": "Adds a resource with identifiers only",
+    "description": "Adds a resource with identifiers only"
   },
   "Add List shape": {
     "prefix": "list",
     "body": "list ${1:MyList} {\n    member: ${0:MyListMember}\n}",
-    "description": "Adds a list shape",
+    "description": "Adds a list shape"
   },
   "Add Set shape": {
     "prefix": "set",
     "body": "set ${1:MySet} {\n    member: ${0:MySetMember}\n}",
-    "description": "Adds a set shape",
+    "description": "Adds a set shape"
   },
   "Add Map shape": {
     "prefix": "map",
     "body": "map ${1:MyMap} {\n    key: ${2:MyStringKey}\n    value: ${0:MyValue}\n}",
-    "description": "Adds a map shape",
+    "description": "Adds a map shape"
   },
   "Add Structure shape": {
     "prefix": "structure",
     "body": "structure ${0:MyStructure} {\n}",
-    "description": "Adds a structure shape",
+    "description": "Adds a structure shape"
   },
   "Add @input Structure shape": {
     "prefix": "@input",
     "body": "@input\nstructure ${1:MyStructure} {$0}",
-    "description": "Adds a structure shape with the @input trait",
+    "description": "Adds a structure shape with the @input trait"
   },
   "Add @output Structure shape": {
     "prefix": "@output",
     "body": "@output\nstructure ${1:MyStructure} {$0}",
-    "description": "Adds a structure shape with the @output trait",
+    "description": "Adds a structure shape with the @output trait"
   },
   "Add Union shape": {
     "prefix": "union",
     "body": "union ${1:myUnion} {\n    ${2:myVariantA}: ${3:MyVariantTargetA}\n    ${4:myVariantB}: ${0:MyVariantTargetB}\n}",
-    "description": "Adds a union shape",
+    "description": "Adds a union shape"
   }
 }
