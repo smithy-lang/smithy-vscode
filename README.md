@@ -14,9 +14,10 @@ Additionally, it provides [Snippets](https://code.visualstudio.com/docs/editor/u
 
 ### VS Code
 
-This extension is not yet published, so you will need to install it manually
-by copying the contents of this repository into the `<user home>/.vscode/extensions`
-folder and restart Code.
+This extension is not yet published, so you will need to install it manually.
+First, clone and change into this repository: `git clone https://github.com/awslabs/smithy-vscode.git && cd smithy-vscode`
+Then, run npm commands to install:
+`npm install && npm run install-plugin`
 
 ### IntelliJ
 
