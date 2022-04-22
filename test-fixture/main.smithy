@@ -1,3 +1,5 @@
+$version: "1.0"
+
 namespace example.weather
 
 /// Provides weather forecasts.
@@ -13,6 +15,7 @@ resource City {
     identifiers: { cityId: CityId },
     read: GetCity,
     list: ListCities,
+    delete: DeleteCity,
     resources: [Forecast],
 }
 

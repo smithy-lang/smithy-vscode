@@ -4,9 +4,9 @@ import { runTests } from "@vscode/test-electron";
 
 async function go() {
   try {
-    const extensionDevelopmentPath = path.resolve(__dirname, "../");
+    const extensionDevelopmentPath = path.resolve(__dirname, "../../");
     const extensionTestsPath = path.resolve(__dirname, "./suite");
-    const testWorkspace = path.resolve(__dirname, "../test-fixture");
+    const testWorkspace = path.resolve(__dirname, "../../test-fixture");
 
     await runTests({
       extensionDevelopmentPath,
@@ -15,6 +15,7 @@ async function go() {
     });
   } catch (err) {
     console.error("Failed to run tests");
+    console.log(err);
     process.exit(1);
   }
 }

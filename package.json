@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:awslabs/smithy-vscode.git"
+    "url": "https://github.com/awslabs/smithy-vscode.git"
   },
   "license": "Apache-2.0",
   "prettier": {
@@ -20,6 +20,10 @@
     "Programming Languages",
     "Snippets"
   ],
+  "activationEvents": [
+    "onLanguage:smithy"
+  ],
+  "main": "./out/src/extension",
   "preview": true,
   "contributes": {
     "languages": [
@@ -47,9 +51,39 @@
         "language": "smithy",
         "path": "./snippets.json"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "vscode-smithy configuration",
+      "properties": {
+        "smithyLsp.maxNumberOfProblems": {
+          "scope": "resource",
+          "type": "number",
+          "default": 100,
+          "description": "Controls the maximum number of problems produced by the server."
+        },
+        "smithyLsp.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "verbose",
+          "description": "Traces the communication between VS Code and the language server."
+        },
+        "smithyLsp.version": {
+          "scope": "window",
+          "type": "string",
+          "default": "0.0.0-snapshot",
+          "description": "Version of the Smithy LSP (see https://github.com/smithy/smithy-language-server)"
+        }
+      }
+    }
   },
   "scripts": {
+    "compile": "tsc -p ./",
     "install-plugin": "npm run package && code --install-extension smithy-vscode-test.vsix",
     "package": "vsce package -o smithy-vscode-test.vsix",
     "format": "prettier --write '**/*.{ts,js,json,yml}'",
@@ -59,6 +93,7 @@
     "test": "npm run format-check && npm run test-grammar && npm run test-extension"
   },
   "devDependencies": {
+    "@types/follow-redirects": "^1.14.1",
     "@types/glob": "^7.2.0",
     "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.23",
@@ -72,6 +107,9 @@
     "vscode-nls-dev": "^4.0.0"
   },
   "dependencies": {
+    "follow-redirects": "^1.14.9",
+    "test-extension": "^0.0.1",
+    "vscode-languageclient": "^7.0.0",
     "vscode-nls": "^5.0.0",
     "vscode-tmgrammar-test": "^0.0.11"
   }
