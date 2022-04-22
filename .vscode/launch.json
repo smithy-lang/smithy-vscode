@@ -9,13 +9,15 @@
             "name": "Extension",
             "type": "extensionHost",
             "request": "launch",
+            "preLaunchTask": "compile",
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--disable-extensions",
-                "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/suite"
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/tests/suite",
+                "${workspaceRoot}/test-fixture",
             ],
-            "outFiles": ["${workspaceFolder}/out/suite/*.js"]
+            "outFiles": ["${workspaceRoot}/out/tests/suite/*.js"]
         }
     ]
 }
