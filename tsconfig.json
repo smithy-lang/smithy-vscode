@@ -7,6 +7,6 @@
     "sourceMap": true,
     "skipLibCheck": true
   },
-  "include": ["tests"],
+  "include": ["src", "tests"],
   "exclude": ["node_modules", ".vscode-test"]
 }
