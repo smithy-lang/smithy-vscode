@@ -85,7 +85,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "install-plugin": "npm run package && code --install-extension smithy-vscode-test.vsix",
-    "package": "vsce package -o smithy-vscode-test.vsix",
+    "package": "npm run compile && vsce package -o smithy-vscode-test.vsix",
     "format": "prettier --write '**/*.{ts,js,json,yml}'",
     "format-check": "prettier --check '**/*.{ts,js,json,yml}'",
     "test-grammar": "npx vscode-tmgrammar-test -s 'source.smithy' -g syntaxes/smithy.tmLanguage.json -t 'tests/grammar/*'",
