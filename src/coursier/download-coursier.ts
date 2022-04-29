@@ -4,19 +4,14 @@ import { IncomingMessage } from "http";
 import * as fs from "fs";
 import { access, mkdir } from "fs/promises";
 
-export function downloadCoursierIfRequired(
-  extensionPath: string,
-  versionPath: string
-): Promise<string> {
+export function downloadCoursierIfRequired(extensionPath: string, versionPath: string): Promise<string> {
   function binPath(filename: string) {
     return path.join(extensionPath, filename);
   }
 
   function createDir() {
     return mkdir(extensionPath).catch((err: { code?: string }) => {
-      return err && err.code === "EEXIST"
-        ? Promise.resolve()
-        : Promise.reject(err);
+      return err && err.code === "EEXIST" ? Promise.resolve() : Promise.reject(err);
     });
   }
 
@@ -33,11 +28,7 @@ export function downloadCoursierIfRequired(
 
   const targetFile = targets[process.platform];
   return validBinFileExists(targetFile).then((valid) => {
-    return valid
-      ? targetFile
-      : createDir().then(() =>
-          downloadFile(urls[process.platform], targetFile)
-        );
+    return valid ? targetFile : createDir().then(() => downloadFile(urls[process.platform], targetFile));
   });
 }
 
@@ -54,11 +45,7 @@ function downloadFile(url: string, targetFile: string): Promise<string> {
         if (response.statusCode === 200) {
           resolve(response);
         } else {
-          reject(
-            new Error(
-              `Server responded with ${response.statusCode}: ${response.statusMessage}`
-            )
-          );
+          reject(new Error(`Server responded with ${response.statusCode}: ${response.statusMessage}`));
         }
       });
     });
