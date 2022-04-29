@@ -22,10 +22,7 @@ const defaultImpl: ExecForCode = {
   },
 };
 
-export function findCoursierOnPath(
-  cwd: string,
-  execForCode: ExecForCode = defaultImpl
-): Promise<Array<string>> {
+export function findCoursierOnPath(cwd: string, execForCode: ExecForCode = defaultImpl): Promise<Array<string>> {
   function availableOnPath(execName: string): Promise<boolean> {
     return execForCode
       .run(execName, ["--help"], cwd)
