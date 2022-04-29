@@ -44,6 +44,6 @@ suite("Extension tests", () => {
 
   async function waitForServerStartup() {
     // Wait for Smithy Language Server to start
-    await new Promise(resolve => setTimeout(resolve, 6000));
+    await new Promise((resolve) => setTimeout(resolve, 6000));
   }
 });
