@@ -44,9 +44,7 @@ export function activate(context: ExtensionContext) {
 
           let port = (server.address() as net.AddressInfo).port;
 
-          let version = vscode.workspace
-            .getConfiguration("smithyLsp")
-            .get("version", "`");
+          let version = vscode.workspace.getConfiguration("smithyLsp").get("version", "`");
 
           // Downloading latest poms
           let resolveArgs = [
@@ -57,18 +55,12 @@ export function activate(context: ExtensionContext) {
             "-r",
             "m2local",
           ];
-          let resolveProcess = child_process.spawn(
-            executable,
-            resolveArgs,
-            options
-          );
+          let resolveProcess = child_process.spawn(executable, resolveArgs, options);
           console.log(resolveArgs);
           resolveProcess.on("exit", (exitCode) => {
             console.log("Exit code : " + exitCode);
             if (exitCode == 0) {
-              console.log(
-                "Launching smithy-language-server version:" + version
-              );
+              console.log("Launching smithy-language-server version:" + version);
 
               let launchargs = [
                 "launch",
@@ -81,11 +73,7 @@ export function activate(context: ExtensionContext) {
 
               console.log(launchargs);
 
-              let childProcess = child_process.spawn(
-                executable,
-                launchargs,
-                options
-              );
+              let childProcess = child_process.spawn(executable, launchargs, options);
 
               childProcess.stdout.on("data", (data) => {
                 console.log(`stdout: ${data}`);
@@ -99,9 +87,7 @@ export function activate(context: ExtensionContext) {
                 console.log(`LSP exited with code ${code}`);
               });
             } else {
-              console.log(
-                `Could not resolve smithy-language-server implementation`
-              );
+              console.log(`Could not resolve smithy-language-server implementation`);
             }
           });
 
@@ -135,19 +121,9 @@ export function activate(context: ExtensionContext) {
 
   // Create the language client and start the client.
 
-  client = new LanguageClient(
-    "smithyLsp",
-    "Smithy LSP",
-    createServer,
-    clientOptions
-  );
+  client = new LanguageClient("smithyLsp", "Smithy LSP", createServer, clientOptions);
   const smithyContentProvider = createSmithyContentProvider(client);
-  context.subscriptions.push(
-    workspace.registerTextDocumentContentProvider(
-      "smithyjar",
-      smithyContentProvider
-    )
-  );
+  context.subscriptions.push(workspace.registerTextDocumentContentProvider("smithyjar", smithyContentProvider));
 
   // Start the client. This will also launch the server
   client.start();
@@ -160,20 +136,11 @@ export function deactivate(): Thenable<void> | undefined {
   return client.stop();
 }
 
-function createSmithyContentProvider(
-  languageClient: LanguageClient
-): vscode.TextDocumentContentProvider {
+function createSmithyContentProvider(languageClient: LanguageClient): vscode.TextDocumentContentProvider {
   return <vscode.TextDocumentContentProvider>{
-    provideTextDocumentContent: async (
-      uri: vscode.Uri,
-      token: CancellationToken
-    ): Promise<string> => {
+    provideTextDocumentContent: async (uri: vscode.Uri, token: CancellationToken): Promise<string> => {
       return languageClient
-        .sendRequest(
-          ClassFileContentsRequest.type,
-          { uri: uri.toString() },
-          token
-        )
+        .sendRequest(ClassFileContentsRequest.type, { uri: uri.toString() }, token)
         .then((v: string): string => {
           return v || "";
         });
@@ -182,9 +149,5 @@ function createSmithyContentProvider(
 }
 
 export namespace ClassFileContentsRequest {
-  export const type = new RequestType<
-    TextDocumentIdentifier,
-    string,
-    void
-  >("smithy/jarFileContents");
+  export const type = new RequestType<TextDocumentIdentifier, string, void>("smithy/jarFileContents");
 }
