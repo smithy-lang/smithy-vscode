@@ -89,7 +89,7 @@
     "format": "prettier --write '**/*.{ts,js,json,yml}'",
     "format-check": "prettier --check '**/*.{ts,js,json,yml}'",
     "test-grammar": "npx vscode-tmgrammar-test -s 'source.smithy' -g syntaxes/smithy.tmLanguage -t 'tests/grammar/*'",
-    "test-extension": "tsc -p ./ && node ./out/tests/runTest.js",
+    "test-extension": "npm run compile && node ./out/tests/runTest.js",
     "test": "npm run format-check && npm run test-grammar"
   },
   "devDependencies": {
