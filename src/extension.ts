@@ -3,6 +3,8 @@ import * as fs from "fs";
 import * as child_process from "child_process";
 import { workspace, ExtensionContext } from "vscode";
 import * as vscode from "vscode";
+import { SelectorDecorator } from "./selector/selector-decorator";
+import { selectorRunCommandHandler, selectorClearCommandHandler } from "./selector/selector-command-handlers";
 
 import {
   CancellationToken,
@@ -122,8 +124,22 @@ export function activate(context: ExtensionContext) {
   // Create the language client and start the client.
 
   client = new LanguageClient("smithyLsp", "Smithy LSP", createServer, clientOptions);
+
+  // Set client on `this` context to use with command handlers.
+  this.client = client;
+
   const smithyContentProvider = createSmithyContentProvider(client);
   context.subscriptions.push(workspace.registerTextDocumentContentProvider("smithyjar", smithyContentProvider));
+
+  // Set default expression input, and use context to hold state between command invocations.
+  this.expression = "Enter Selector Expression";
+  this.selectorDecorator = new SelectorDecorator();
+
+  // Register selector commands.
+  context.subscriptions.push(vscode.commands.registerCommand("smithy.runSelector", selectorRunCommandHandler, this));
+  context.subscriptions.push(
+    vscode.commands.registerCommand("smithy.clearSelector", selectorClearCommandHandler, this)
+  );
 
   // Start the client. This will also launch the server
   client.start();

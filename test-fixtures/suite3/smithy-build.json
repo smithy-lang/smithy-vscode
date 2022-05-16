@@ -1,0 +1,6 @@
+{
+  "maven": {
+    "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.19.0"],
+    "repositories": [{ "url": "" }]
+  }
+}
