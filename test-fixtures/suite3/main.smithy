@@ -15,7 +15,6 @@ resource City {
     identifiers: { cityId: CityId },
     read: GetCity,
     list: ListCities,
-    delete: DeleteCity,
     resources: [Forecast],
 }
 
