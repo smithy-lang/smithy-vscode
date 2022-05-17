@@ -6,7 +6,7 @@
 	"version": "0.2.0",
     "configurations": [
         {
-            "name": "Extension",
+            "name": "Extension - Test Suite 1 - Language Registration",
             "type": "extensionHost",
             "request": "launch",
             "preLaunchTask": "compile",
@@ -14,10 +14,38 @@
             "args": [
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/tests/suite",
-                "${workspaceRoot}/test-fixture",
+                "--extensionTestsPath=${workspaceRoot}/out/tests/suite1",
+                "${workspaceRoot}/test-fixtures/suite1",
             ],
-            "outFiles": ["${workspaceRoot}/out/tests/suite/*.js"]
+            "outFiles": ["${workspaceRoot}/out/tests/suite1/*.js"]
+        },
+        {
+            "name": "Extension - Test Suite 2 - Diagnostics",
+            "type": "extensionHost",
+            "request": "launch",
+            "preLaunchTask": "compile",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--disable-extensions",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/tests/suite2",
+                "${workspaceRoot}/test-fixtures/suite2",
+            ],
+            "outFiles": ["${workspaceRoot}/out/tests/suite2/*.js"]
+        },
+        {
+            "name": "Extension - Test Suite 3 - Selectors",
+            "type": "extensionHost",
+            "request": "launch",
+            "preLaunchTask": "compile",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--disable-extensions",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/tests/suite3",
+                "${workspaceRoot}/test-fixtures/suite3",
+            ],
+            "outFiles": ["${workspaceRoot}/out/tests/suite3/*.js"]
         }
     ]
 }
