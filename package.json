@@ -99,7 +99,7 @@
         "smithyLsp.version": {
           "scope": "window",
           "type": "string",
-          "default": "0.0.0-snapshot",
+          "default": "0.0.0-SNAPSHOT",
           "description": "Version of the Smithy LSP (see https://github.com/smithy/smithy-language-server)"
         }
       }
