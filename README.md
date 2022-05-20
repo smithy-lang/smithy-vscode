@@ -14,12 +14,30 @@ Additionally, it provides [Snippets](https://code.visualstudio.com/docs/editor/u
 
 ### VS Code
 
-This extension and the Smithy Language Server are not yet published. To use this extension, publish the Language Server locally before manually installing the Extension with the following steps:
-* Clone the Language Server locally: `git clone https://github.com/awslabs/smithy-language-server.git && cd smithy-language-server`
+This extension and the Smithy Language Server are not yet published. To use
+this extension, publish the Language Server locally before manually installing
+the Extension with the following steps:
+* Clone the Language Server locally:
+`git clone https://github.com/awslabs/smithy-language-server.git && cd smithy-language-server`
 * Build and publish it locally: `./gradlew build publishToMavenLocal`
 * Clone the Extension: `git clone https://github.com/awslabs/smithy-vscode.git && cd smithy-vscode`
 * Run npm commands to install:
 `npm install && npm run install-plugin`
+* Open VS Code and add a `smithy-build.json` file to the root of your project,
+specifying any Maven dependencies used by your model, along with the
+repositories where they can be located.
+```
+{
+    {
+    "maven": {
+      "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.19.0"],
+      "repositories": [{ "url": "https://repo1.maven.org/maven2/" }]
+    }
+  }
+}
+```
+* Start authoring your Smithy model. Opening a `*.smithy` file will activate
+the extension.
 
 ### IntelliJ
 
