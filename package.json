@@ -106,9 +106,11 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run webpack-package",
+    "webpack-package": "webpack --mode production --devtool hidden-source-map",
     "compile": "tsc -p ./",
-    "install-plugin": "npm run package && code --install-extension smithy-vscode-test.vsix",
-    "package": "npm run compile && vsce package -o smithy-vscode-test.vsix",
+    "install-plugin": "npm run package && code --install-extension smithy-vscode.vsix",
+    "package": "vsce package -o smithy-vscode.vsix",
     "format": "prettier --write '**/*.{ts,js,json,yml}'",
     "format-check": "prettier --check '**/*.{ts,js,json,yml}'",
     "test-grammar": "npx vscode-tmgrammar-test -s 'source.smithy' -g syntaxes/smithy.tmLanguage -t 'tests/grammar/*'",
@@ -127,13 +129,15 @@
     "mocha": "^9.2.2",
     "prettier": "^2.6.2",
     "sinon": "^13.0.2",
+    "ts-loader": "^9.3.0",
     "typescript": "^4.6.3",
-    "vsce": "^2.7.0",
-    "vscode-nls-dev": "^4.0.0"
+    "vsce": "^2.8.0",
+    "vscode-nls-dev": "^4.0.0",
+    "webpack": "^5.72.1",
+    "webpack-cli": "^4.9.2"
   },
   "dependencies": {
     "follow-redirects": "^1.14.9",
-    "test-extension": "^0.0.1",
     "vscode-languageclient": "^7.0.0",
     "vscode-nls": "^5.0.0",
     "vscode-tmgrammar-test": "^0.0.11"
