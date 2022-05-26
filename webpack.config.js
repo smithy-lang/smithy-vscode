@@ -1,26 +1,26 @@
 //@ts-check
 
-'use strict';
+"use strict";
 
-const path = require('path');
+const path = require("path");
 
 /**@type {import('webpack').Configuration}*/
 const config = {
-  target: 'node',
-	mode: 'none', // Set to 'production' when packaging
+  target: "node",
+  mode: "none", // Set to 'production' when packaging
 
-  entry: './src/extension.ts',
+  entry: "./src/extension.ts",
   output: {
-    path: path.resolve(__dirname, 'out', 'src'),
-    filename: 'extension.js',
-    libraryTarget: 'commonjs2'
+    path: path.resolve(__dirname, "out", "src"),
+    filename: "extension.js",
+    libraryTarget: "commonjs2",
   },
-  devtool: 'nosources-source-map',
+  devtool: "nosources-source-map",
   externals: {
-    vscode: 'commonjs vscode' // vscode module provided by VS Code itself.
+    vscode: "commonjs vscode", // vscode module provided by VS Code itself.
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: [".ts", ".js"],
   },
   module: {
     rules: [
@@ -29,11 +29,11 @@ const config = {
         exclude: /node_modules/,
         use: [
           {
-            loader: 'ts-loader'
-          }
-        ]
-      }
-    ]
-  }
+            loader: "ts-loader",
+          },
+        ],
+      },
+    ],
+  },
 };
 module.exports = config;
