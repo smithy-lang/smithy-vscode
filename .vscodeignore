@@ -1,4 +1,14 @@
 .vscode/**
 .vscode-test/**
+.github
 .gitignore
+.prettierignore
+.idea
 vsc-extension-quickstart.md
+node_modules
+out/
+!out/src/extension.*
+src
+test-fixtures
+tests
+tsconfig.json
