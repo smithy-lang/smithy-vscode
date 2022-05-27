@@ -1,6 +1,13 @@
+import { spawnSync } from "child_process";
 import { resolve } from "path";
 
-import { runTests } from "@vscode/test-electron";
+import {
+  runTests,
+  downloadAndUnzipVSCode,
+  resolveCliPathFromVSCodeExecutablePath,
+  resolveCliArgsFromVSCodeExecutablePath,
+} from "@vscode/test-electron";
+import * as assert from "assert";
 
 async function go() {
   try {
@@ -20,13 +27,24 @@ async function go() {
       launchArgs: [resolve(__dirname, "../../test-fixtures/suite2")],
     });
 
+    // Suite 3 - Selector commands
     await runTests({
       extensionDevelopmentPath,
       extensionTestsPath: resolve(__dirname, "./suite3"),
       launchArgs: [resolve(__dirname, "../../test-fixtures/suite3")],
     });
+
+    // Confirm that webpacked and vsce packaged extension can be installed.
+    const vscodeExecutablePath = await downloadAndUnzipVSCode();
+    const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
+
+    const result = spawnSync(cli, [...args, "--install-extension", "smithy-vscode.vsix"], {
+      encoding: "utf-8",
+    });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /Extension 'smithy-vscode.vsix' was successfully installed./);
   } catch (err) {
-    console.error("Failed to run tests");
+    console.error("Test Failure");
     console.log(err);
     process.exit(1);
   }
