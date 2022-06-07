@@ -100,7 +100,7 @@
     },
     {
       "name": "meta.keyword.statement.shape.smithy",
-      "begin": "^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|service|operation|resource|enum|intEnum)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)\\s+(with)\\s+(\\[)",
+      "begin": "^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|union|service|operation|resource|enum|intEnum)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)\\s+(with)\\s+(\\[)",
       "beginCaptures": {
         "1": {
           "name": "keyword.statement.smithy"
@@ -137,12 +137,73 @@
     },
     {
       "name": "meta.keyword.statement.shape.smithy",
-      "match": "^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|service|operation|resource|enum|intEnum)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)",
+      "match": "^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|union|service|operation|resource|enum|intEnum)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)",
       "captures": {
         "1": {
           "name": "keyword.statement.smithy"
         },
         "2": {
+          "name": "entity.name.type.smithy"
+        }
+      }
+    },
+    {
+      "name": "meta.keyword.statement.shape.smithy",
+      "begin": "^(structure)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)(?:\\s+(for)\\s+([0-9a-zA-Z\\.#-]+))?\\s+(with)\\s+(\\[)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        },
+        "2": {
+          "name": "entity.name.type.smithy"
+        },
+        "3": {
+          "name": "keyword.statement.for-resource.smithy"
+        },
+        "4": {
+          "name": "entity.name.type.smithy"
+        },
+        "5": {
+          "name": "keyword.statement.with.smithy"
+        },
+        "6": {
+          "name": "punctuation.definition.array.begin.smithy"
+        }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.array.end.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#identifier",
+          "name": "entity.name.type.smithy"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.array.smithy"
+        }
+      ]
+    },
+    {
+      "name": "meta.keyword.statement.shape.smithy",
+      "match": "^(structure)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)(?:\\s+(for)\\s+([0-9a-zA-Z\\.#-]+))?",
+      "captures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        },
+        "2": {
+          "name": "entity.name.type.smithy"
+        },
+        "3": {
+          "name": "keyword.statement.for-resource.smithy"
+        },
+        "4": {
           "name": "entity.name.type.smithy"
         }
       }
@@ -395,6 +456,9 @@
           "include": "#with_statement"
         },
         {
+          "include": "#elided_target"
+        },
+        {
           "include": "#object_inner"
         }
       ]
@@ -479,6 +543,17 @@
     "shapeid": {
       "name": "entity.name.type.smithy",
       "match": "[A-Z-a-z_][A-Z-a-z0-9_\\.#$]*"
+    },
+    "elided_target": {
+      "match": "(\\$)([A-Z-a-z0-9_\\.#$]+)",
+      "captures": {
+        "1": {
+          "name": "keyword.statement.elision.smithy"
+        },
+        "2": {
+          "name": "support.type.property-name.smithy"
+        }
+      }
     }
   }
 }
