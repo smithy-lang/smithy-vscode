@@ -39,7 +39,7 @@
       {
         "language": "smithy",
         "scopeName": "source.smithy",
-        "path": "./syntaxes/smithy.tmLanguage"
+        "path": "./syntaxes/smithy.tmLanguage.json"
       }
     ],
     "snippets": [
@@ -54,7 +54,7 @@
     "package": "vsce package -o smithy-vscode-test.vsix",
     "format": "prettier --write '**/*.{ts,js,json,yml}'",
     "format-check": "prettier --check '**/*.{ts,js,json,yml}'",
-    "test-grammar": "npx vscode-tmgrammar-test -s 'source.smithy' -g syntaxes/smithy.tmLanguage -t 'tests/grammar/*'",
+    "test-grammar": "npx vscode-tmgrammar-test -s 'source.smithy' -g syntaxes/smithy.tmLanguage.json -t 'tests/grammar/*'",
     "test-extension": "tsc -p ./ && node ./out/runTest.js",
     "test": "npm run format-check && npm run test-grammar && npm run test-extension"
   },
