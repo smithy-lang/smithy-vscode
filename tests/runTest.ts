@@ -38,7 +38,7 @@ async function go() {
     const vscodeExecutablePath = await downloadAndUnzipVSCode();
     const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
 
-    const result = spawnSync(cli, [...args, "--install-extension", "smithy-vscode.vsix"], {
+    const result = spawnSync(cli, [...args, "--install-extension", "smithy-vscode.vsix", "--force"], {
       encoding: "utf-8",
     });
     assert.equal(result.status, 0);
