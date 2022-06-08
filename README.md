@@ -14,12 +14,8 @@ Additionally, it provides [Snippets](https://code.visualstudio.com/docs/editor/u
 
 ### VS Code
 
-This extension and the Smithy Language Server are not yet published. To use
-this extension, publish the Language Server locally before manually installing
+This extension is not yet published. To use this extension, manually installing
 the Extension with the following steps:
-* Clone the Language Server locally:
-`git clone https://github.com/awslabs/smithy-language-server.git && cd smithy-language-server`
-* Build and publish it locally: `./gradlew build publishToMavenLocal`
 * Clone the Extension: `git clone https://github.com/awslabs/smithy-vscode.git && cd smithy-vscode`
 * Run npm commands to install:
 `npm install && npm run install-plugin`
