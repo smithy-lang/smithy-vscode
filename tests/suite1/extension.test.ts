@@ -18,7 +18,7 @@ suite("Extension tests", () => {
     assert.equal(ext.isActive, true);
     assert.match(logText, /Downloaded external jars.*smithy-aws-traits-1\.19\.0\.jar/);
     assert.match(logText, /Discovered smithy files.*\/main.smithy]/);
-  }).timeout(7000);
+  }).timeout(10000);
 
   test("Should register language", async () => {
     const languages = await vscode.languages.getLanguages();
