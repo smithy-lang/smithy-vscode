@@ -10,6 +10,12 @@ suite("Extension tests", () => {
     const ext = vscode.extensions.getExtension("aws-smithy.smithy-vscode");
     await waitForServerStartup();
 
+    // Grab model file directly
+    const modelFile = await vscode.workspace.openTextDocument(getDocUri("suite1/main.smithy"));
+    const modelFileText = modelFile.getText();
+
+    assert.match(modelFileText, /namespace example.weather/);
+
     // Grab Language Server logs
     const logText = await getLangServerLogs("suite1");
 
