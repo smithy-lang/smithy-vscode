@@ -44,6 +44,14 @@ for more details.
 
 ## Release Notes
 
+### 0.4.0 - 2022-06-13
+
+- Updated to work with Smithy 2.0 syntax.
+- Use [Smithy Language Server](https://github.com/awslabs/smithy-language-server/) for language features including:
+auto-completion, jump to definition, model validations as diagnostics. [#32](https://github.com/awslabs/smithy-vscode/pull/32)
+- Added `Smithy:Selector:Run` and `Smithy:Selector:Clear` commands for highlighting the results of running an
+expression on the model in a workspace. [#33](https://github.com/awslabs/smithy-vscode/pull/33)
+
 ### 0.3.0 - 2020-09-19
 
 - Updated to work with Smithy 1.0 syntax.
