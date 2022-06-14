@@ -12,15 +12,16 @@ Additionally, it provides [Snippets](https://code.visualstudio.com/docs/editor/u
 
 ## Installation
 
-### VS Code
+This extension can be installed from the
+[VS Code Extension Marketplace](https://marketplace.visualstudio.com/items?itemName=smithy.smithy-vscode-extension).
 
-This extension is not yet published. To use this extension, manually installing
-the Extension with the following steps:
-* Clone the Extension: `git clone https://github.com/awslabs/smithy-vscode.git && cd smithy-vscode`
+To install from source, follow these steps:
+* Clone the repository: `git clone https://github.com/awslabs/smithy-vscode.git && cd smithy-vscode`
 * Run npm commands to install:
 `npm install && npm run install-plugin`
-* Open VS Code and add a `smithy-build.json` file to the root of your project,
-specifying any Maven dependencies used by your model, along with the
+
+## Authoring a model
+If your model requires dependencies, add a `smithy-build.json` file to the root of your project, specifying Maven dependencies, along with the
 repositories where they can be located.
 ```
 {
@@ -32,12 +33,12 @@ repositories where they can be located.
   }
 }
 ```
-* Start authoring your Smithy model. Opening a `*.smithy` file will activate
+Start authoring your Smithy model. Opening a `*.smithy` file will activate
 the extension.
 
-### IntelliJ
+## Use with IntelliJ
 
-You can use this extension in IntelliJ by installing the
+You can use this extension for syntax highlighting in IntelliJ by installing the
 "TextMate bundle support" plugin and registering this repository as a bundle.
 See the [IntelliJ documentation](https://www.jetbrains.com/help/idea/textmate.html)
 for more details.
