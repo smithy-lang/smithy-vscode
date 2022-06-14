@@ -1,5 +1,5 @@
 {
-  "name": "smithy-vscode",
+  "name": "smithy-vscode-extension",
   "displayName": "Smithy",
   "description": "Smithy IDL Language Extension",
   "version": "0.4.0",
