@@ -115,7 +115,7 @@
     "format-check": "prettier --check '**/*.{ts,js,json,yml}'",
     "test-grammar": "npx vscode-tmgrammar-test -s 'source.smithy' -g syntaxes/smithy.tmLanguage.json -t 'tests/grammar/*'",
     "test-extension": "npm run compile && npm run package && node ./out/tests/runTest.js",
-    "test": "npm run format-check && npm run test-grammar"
+    "test": "npm run format-check && npm run test-grammar && npm run test-extension"
   },
   "devDependencies": {
     "@types/follow-redirects": "^1.14.1",
