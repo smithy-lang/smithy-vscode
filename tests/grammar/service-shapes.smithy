@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests resource shapes"
+// SYNTAX TEST "source.smithy" "This tests service shapes"
 $version: "2.0"
 
 namespace com.example

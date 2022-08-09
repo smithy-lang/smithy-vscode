@@ -60,6 +60,21 @@ structure Structure {
 }
 // <- punctuation.definition.dictionary.end.smithy
 
+structure StructureWithDefaultTraitSugar {
+// <---------                              keyword.statement.smithy
+//        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   entity.name.type.smithy
+//                                       ^ punctuation.definition.dictionary.begin.smithy
+
+    normative: Boolean = true
+//  ^^^^^^^^^                 support.type.property-name.smithy
+//           ^                punctuation.separator.dictionary.key-value.smithy
+//             ^^^^^^^        entity.name.type.smithy
+//                     ^      keyword.operator.smithy
+//                       ^^^^ constant.language.smithy
+
+}
+// <- punctuation.definition.dictionary.end.smithy
+
 union Union {
 // <-----     keyword.statement.smithy
 //    ^^^^^   entity.name.type.smithy

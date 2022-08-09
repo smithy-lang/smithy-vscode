@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests aggregate shapes"
+// SYNTAX TEST "source.smithy" "This tests enum and intEnum shapes"
 $version: "2.0"
 
 namespace com.example
@@ -21,6 +21,19 @@ enum Enum {
 }
 // <- punctuation.definition.dictionary.end.smithy
 
+enum EnumWithEnumValueTraitSugar {
+// <----                           keyword.statement.smithy
+//   ^^^^^^^^^^^^^^^^^^^^^^^^^^^   entity.name.type.smithy
+//                               ^ punctuation.definition.dictionary.begin.smithy
+
+    MEMBER = "member"
+//  ^^^^^^ entity.name.type.smithy
+//         ^ keyword.operator.smithy
+//           ^^^^^^^^ string.quoted.double.smithy
+
+}
+// <- punctuation.definition.dictionary.end.smithy
+
 intEnum IntEnum {
 // <-------       keyword.statement.smithy
 //      ^^^^^^^   entity.name.type.smithy
@@ -35,6 +48,19 @@ intEnum IntEnum {
 
     MEMBER
 //  ^^^^^^ entity.name.type.smithy
+
+}
+// <- punctuation.definition.dictionary.end.smithy
+
+intEnum IntEnumWithEnumValueTraitSugar {
+// <-------                              keyword.statement.smithy
+//      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   entity.name.type.smithy
+//                                     ^ punctuation.definition.dictionary.begin.smithy
+
+    MEMBER = 1
+//  ^^^^^^     entity.name.type.smithy
+//         ^   keyword.operator.smithy
+//           ^ constant.numeric.smithy
 
 }
 // <- punctuation.definition.dictionary.end.smithy
