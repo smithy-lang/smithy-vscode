@@ -434,6 +434,10 @@
           "name": "punctuation.separator.dictionary.key-value.smithy"
         },
         {
+          "match": "=",
+          "name": "keyword.operator.smithy"
+        },
+        {
           "name": "meta.structure.dictionary.value.smithy",
           "include": "#value"
         },
