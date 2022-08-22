@@ -130,6 +130,18 @@ resource Resource {
 //       ^^^^^^^^   entity.name.type.smithy
 //                ^ punctuation.definition.dictionary.begin.smithy
 
+    properties: {
+//  ^^^^^^^^^^    support.type.property-name.smithy
+//            ^   punctuation.separator.dictionary.key-value.smithy
+//              ^ punctuation.definition.dictionary.begin.smithy
+
+        myProp: Float
+//      ^^^^^^        support.type.property-name.smithy
+//            ^       punctuation.separator.dictionary.key-value.smithy
+//              ^^^^^ entity.name.type.smithy
+    }
+//  ^ punctuation.definition.dictionary.end.smithy
+
     identifiers: {
 //  ^^^^^^^^^^^    support.type.property-name.smithy
 //             ^   punctuation.separator.dictionary.key-value.smithy
@@ -206,5 +218,27 @@ resource Resource {
     ]
 //  ^ punctuation.definition.array.end.smithy
 
+}
+// <- punctuation.definition.dictionary.end.smithy
+
+// The `for` syntax here determines which resource should be checked.
+structure ResourceDetails for Resource {
+// <---------                            keyword.statement.smithy
+//        ^^^^^^^^^^^^^^^                entity.name.type.smithy
+//                        ^^^            keyword.statement.for-resource.smithy
+//                            ^^^^^^^^   entity.name.type.smithy
+//                                     ^ punctuation.definition.dictionary.begin.smithy
+    $id
+//  ^   keyword.statement.elision.smithy
+//   ^^ support.type.property-name.smithy
+
+    $myProp
+//  ^       keyword.statement.elision.smithy
+//   ^^^^^^ support.type.property-name.smithy
+
+    address: String
+//  ^^^^^^^         support.type.property-name.smithy
+//         ^        punctuation.separator.dictionary.key-value.smithy
+//           ^^^^^^ entity.name.type.smithy
 }
 // <- punctuation.definition.dictionary.end.smithy
