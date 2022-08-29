@@ -37,6 +37,10 @@
         "extensions": [
           ".smithy"
         ],
+        "icon": {
+          "dark": "./images/smithy-file-icon.png",
+          "light": "./images/smithy-file-icon.png"
+        },
         "configuration": "./language-configuration.json"
       }
     ],
