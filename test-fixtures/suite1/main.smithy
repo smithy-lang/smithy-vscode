@@ -4,13 +4,13 @@ namespace example.weather
 
 /// Provides weather forecasts.
 service Weather {
-    version: "2006-03-01",
+    version: "2006-03-01"
     operations: [GetCurrentTime]
 }
 
 @readonly
 operation GetCurrentTime {
-    input := {},
+    input := {}
     output := {
         @required
         time: Timestamp
