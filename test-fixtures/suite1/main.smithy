@@ -1,4 +1,4 @@
-$version: "1.0"
+$version: "2.0"
 
 namespace example.weather
 
@@ -10,15 +10,9 @@ service Weather {
 
 @readonly
 operation GetCurrentTime {
-    input: GetCurrentTimeInput,
-    output: GetCurrentTimeOutput
-}
-
-@input
-structure GetCurrentTimeInput {}
-
-@output
-structure GetCurrentTimeOutput {
-    @required
-    time: Timestamp
+    input := {},
+    output := {
+        @required
+        time: Timestamp
+    }
 }

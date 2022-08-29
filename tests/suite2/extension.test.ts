@@ -6,7 +6,7 @@ suite("broken model tests", () => {
   test("Should provide diagnostics", async () => {
     const smithyMainUri = getDocUri("suite2/main.smithy");
     const doc = await vscode.workspace.openTextDocument(smithyMainUri);
-    const editor = await vscode.window.showTextDocument(doc);
+    await vscode.window.showTextDocument(doc);
     await waitForServerStartup();
     const diagnostics = vscode.languages.getDiagnostics(smithyMainUri);
 
