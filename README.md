@@ -27,7 +27,7 @@ repositories where they can be located.
 {
     {
     "maven": {
-      "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.19.0"],
+      "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.23.1"],
       "repositories": [{ "url": "https://repo1.maven.org/maven2/" }]
     }
   }
@@ -44,6 +44,12 @@ See the [IntelliJ documentation](https://www.jetbrains.com/help/idea/textmate.ht
 for more details.
 
 ## Release Notes
+
+### 0.5.0 - 2022-08-29
+
+- Updated to use [Smithy Language Server 0.2.0](https://github.com/awslabs/smithy-language-server/) which adds support for
+hover action and Smithy IDL 2 syntax. [#52](https://github.com/awslabs/smithy-vscode/pull/52)
+- Added a new file icon for `*.smithy` files. [#51](https://github.com/awslabs/smithy-vscode/pull/51)
 
 ### 0.4.0 - 2022-06-13
 
