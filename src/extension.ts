@@ -1,7 +1,6 @@
 import * as net from "net";
 import * as fs from "fs";
 import * as child_process from "child_process";
-import { workspace, ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import { SelectorDecorator } from "./selector/selector-decorator";
 import { selectorRunCommandHandler, selectorClearCommandHandler } from "./selector/selector-command-handlers";
@@ -19,7 +18,7 @@ import { getCoursierExecutable } from "./coursier/coursier";
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
   async function createServer(): Promise<StreamInfo> {
     function startServer(executable: string): Promise<StreamInfo> {
       console.log(`Executable located at ${executable}.`);
@@ -108,32 +107,14 @@ export function activate(context: ExtensionContext) {
     return await startServer(binaryPath);
   }
 
-  // Options to control the language client
-  let clientOptions: LanguageClientOptions = {
-    // Register the server for plain text documents
-    documentSelector: [
-      { scheme: "file", language: "smithy" },
-      { scheme: "smithyjar", language: "smithy" },
-    ],
-    synchronize: {
-      // Notify the server about file changes to 'smithy-build.json' files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher("**/{smithy-build}.json"),
-    },
-    outputChannelName: "Smithy Language Server",
-
-    // Don't switch to output window when the server returns output.
-    revealOutputChannelOn: RevealOutputChannelOn.Never,
-  };
-
   // Create the language client and start the client.
-
-  client = new LanguageClient("smithyLsp", "Smithy LSP", createServer, clientOptions);
+  client = new LanguageClient("smithyLsp", "Smithy LSP", createServer, getClientOptions());
 
   // Set client on `this` context to use with command handlers.
   this.client = client;
 
   const smithyContentProvider = createSmithyContentProvider(client);
-  context.subscriptions.push(workspace.registerTextDocumentContentProvider("smithyjar", smithyContentProvider));
+  context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("smithyjar", smithyContentProvider));
 
   // Set default expression input, and use context to hold state between command invocations.
   this.expression = "Enter Selector Expression";
@@ -149,11 +130,68 @@ export function activate(context: ExtensionContext) {
   client.start();
 }
 
+function getClientOptions(): LanguageClientOptions {
+  let workspaceFolder: vscode.WorkspaceFolder;
+
+  let rootPath: string = vscode.workspace.getConfiguration("smithyLsp").get("rootPath");
+
+  if (rootPath) {
+    const workspaceRoot = getWorkspaceRoot();
+    if (rootPath.startsWith("${workspaceRoot}") && workspaceRoot === "") {
+      console.warn(`Unable to retrieve the workspace root.`);
+    }
+    workspaceFolder = {
+      uri: vscode.Uri.file(rootPath.replace("${workspaceRoot}", workspaceRoot)),
+      name: "smithy-lsp-root-path",
+      index: 1,
+    };
+  }
+
+  // Configure file patterns relative to the workspace folder.
+  let filePattern: vscode.GlobPattern = "**/{smithy-build}.json";
+  let selectorPattern: string = null;
+  if (workspaceFolder) {
+    filePattern = new vscode.RelativePattern(workspaceFolder, filePattern);
+    selectorPattern = `${workspaceFolder.uri.fsPath}/**/*`;
+  }
+
+  // Options to control the language client
+  return {
+    // Register the server for plain text documents
+    documentSelector: [
+      { scheme: "file", language: "smithy", pattern: selectorPattern },
+      { scheme: "smithyjar", language: "smithy", pattern: selectorPattern },
+    ],
+    synchronize: {
+      // Notify the server about file changes to 'smithy-build.json' files contained in the workspace
+      fileEvents: vscode.workspace.createFileSystemWatcher(filePattern),
+    },
+    outputChannelName: "Smithy Language Server",
+
+    workspaceFolder,
+
+    // Don't switch to output window when the server returns output.
+    revealOutputChannelOn: RevealOutputChannelOn.Never,
+  };
+}
+
 export function deactivate(): Thenable<void> | undefined {
   if (!client) {
     return undefined;
   }
   return client.stop();
+}
+
+function getWorkspaceRoot(): string | undefined {
+  let folders = vscode.workspace.workspaceFolders;
+  if (!folders || folders.length === 0) {
+    return "";
+  }
+  let folder = folders[0];
+  if (folder.uri.scheme === "file") {
+    return folder.uri.fsPath;
+  }
+  return "";
 }
 
 function createSmithyContentProvider(languageClient: LanguageClient): vscode.TextDocumentContentProvider {

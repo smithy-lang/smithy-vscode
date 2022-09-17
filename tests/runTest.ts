@@ -34,6 +34,13 @@ async function go() {
       launchArgs: [resolve(__dirname, "../../test-fixtures/suite3")],
     });
 
+    // Suite 4 - User-specific root
+    await runTests({
+      extensionDevelopmentPath,
+      extensionTestsPath: resolve(__dirname, "./suite4"),
+      launchArgs: [resolve(__dirname, "../../test-fixtures/suite4")],
+    });
+
     // Confirm that webpacked and vsce packaged extension can be installed.
     const vscodeExecutablePath = await downloadAndUnzipVSCode();
     const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);

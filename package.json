@@ -105,6 +105,10 @@
           "type": "string",
           "default": "0.2.0",
           "description": "Version of the Smithy LSP (see https://github.com/smithy/smithy-language-server)"
+        },
+        "smithyLsp.rootPath": {
+          "scope": "resource",
+          "type": "string"
         }
       }
     }
@@ -142,7 +146,7 @@
   },
   "dependencies": {
     "follow-redirects": "^1.14.9",
-    "vscode-languageclient": "^7.0.0",
+    "vscode-languageclient": "^8.0.2",
     "vscode-nls": "^5.2.0",
     "vscode-tmgrammar-test": "^0.1.1"
   }
