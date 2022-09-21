@@ -11,6 +11,7 @@ import {
   LanguageClient,
   LanguageClientOptions,
   RequestType,
+  RevealOutputChannelOn,
   StreamInfo,
   TextDocumentIdentifier,
 } from "vscode-languageclient/node";
@@ -119,6 +120,9 @@ export function activate(context: ExtensionContext) {
       fileEvents: workspace.createFileSystemWatcher("**/{smithy-build}.json"),
     },
     outputChannelName: "Smithy Language Server",
+
+    // Don't switch to output window when the server returns output.
+    revealOutputChannelOn: RevealOutputChannelOn.Never,
   };
 
   // Create the language client and start the client.
