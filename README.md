@@ -27,7 +27,7 @@ repositories where they can be located.
 {
     {
     "maven": {
-      "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.23.1"],
+      "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.25.0"],
       "repositories": [{ "url": "https://repo1.maven.org/maven2/" }]
     }
   }
