@@ -45,6 +45,13 @@ for more details.
 
 ## Release Notes
 
+### 0.5.1 - 2022-09-29
+
+- Updated to use [Smithy Language Server 0.2.1](https://github.com/awslabs/smithy-language-server/)
+- Stop switching focus to VSCode's output window when the extension receives a message [#55](https://github.com/awslabs/smithy-vscode/pull/55)
+- Allow setting the root path to be used by the extension [#54](https://github.com/awslabs/smithy-vscode/pull/54)
+- Update tests to use version 1.25.0 for Smithy packages [#56](https://github.com/awslabs/smithy-vscode/pull/56)
+
 ### 0.5.0 - 2022-08-29
 
 - Updated to use [Smithy Language Server 0.2.0](https://github.com/awslabs/smithy-language-server/) which adds support for
