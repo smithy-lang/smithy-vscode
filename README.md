@@ -36,6 +36,15 @@ repositories where they can be located.
 Start authoring your Smithy model. Opening a `*.smithy` file will activate
 the extension.
 
+## Use with any Maven private registry
+
+Follow [this instructions](https://get-coursier.io/docs/other-credentials#property-file) to set the credentials file for your Maven private registry. Here is an example for a Maven registry provided by GitHub:
+```
+github.username=<ANY_USERNAME>
+github.password=<YOUR_GITHUB_TOKEN>
+github.host=maven.pkg.github.com
+```
+
 ## Use with IntelliJ
 
 You can use this extension for syntax highlighting in IntelliJ by installing the
