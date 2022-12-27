@@ -27,7 +27,7 @@ repositories where they can be located.
 {
     {
     "maven": {
-      "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.25.0"],
+      "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.27.0"],
       "repositories": [{ "url": "https://repo1.maven.org/maven2/" }]
     }
   }
@@ -53,6 +53,10 @@ See the [IntelliJ documentation](https://www.jetbrains.com/help/idea/textmate.ht
 for more details.
 
 ## Release Notes
+
+### 0.5.2 - 2022-12-27
+
+- Updated to use [Smithy Language Server 0.2.2](https://github.com/awslabs/smithy-language-server/)
 
 ### 0.5.1 - 2022-09-29
 
