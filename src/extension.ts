@@ -7,6 +7,7 @@ import { selectorRunCommandHandler, selectorClearCommandHandler } from "./select
 
 import {
   CancellationToken,
+  DocumentFormattingRequest,
   LanguageClient,
   LanguageClientOptions,
   RequestType,
@@ -116,6 +117,9 @@ export function activate(context: vscode.ExtensionContext) {
   const smithyContentProvider = createSmithyContentProvider(client);
   context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("smithyjar", smithyContentProvider));
 
+  const smithyFormattingEditProvider = createSmithyFormattingEditProvider(client);
+  context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider("smithy", smithyFormattingEditProvider));
+
   // Set default expression input, and use context to hold state between command invocations.
   this.expression = "Enter Selector Expression";
   this.selectorDecorator = new SelectorDecorator();
@@ -203,6 +207,19 @@ function createSmithyContentProvider(languageClient: LanguageClient): vscode.Tex
           return v || "";
         });
     },
+  };
+}
+
+function createSmithyFormattingEditProvider(languageClient: LanguageClient): vscode.DocumentFormattingEditProvider {
+  return <vscode.DocumentFormattingEditProvider>{
+    provideDocumentFormattingEdits: async (document: vscode.TextDocument, options: vscode.FormattingOptions, token: CancellationToken): Promise<vscode.TextEdit[]> => {
+      document.uri
+      return languageClient
+        .sendRequest(DocumentFormattingRequest.type, { textDocument: { uri: document.uri.toString() }, options: options }, token)
+        .then((v: vscode.TextEdit[]): vscode.TextEdit[] => {
+          return v;
+        });
+    }
   };
 }
 

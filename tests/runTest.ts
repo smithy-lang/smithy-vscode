@@ -41,6 +41,13 @@ async function go() {
       launchArgs: [resolve(__dirname, "../../test-fixtures/suite4")],
     });
 
+    // Suite 5 - Formatter
+    await runTests({
+      extensionDevelopmentPath,
+      extensionTestsPath: resolve(__dirname, "./suite5"),
+      launchArgs: [resolve(__dirname, "../../test-fixtures/suite5")],
+    });
+
     // Confirm that webpacked and vsce packaged extension can be installed.
     const vscodeExecutablePath = await downloadAndUnzipVSCode();
     const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
