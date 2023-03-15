@@ -5,6 +5,8 @@ import { getDocUri, waitForServerStartup } from "../helper";
 suite("formatting tests", () => {
   test("Should register Smithy formatter", async () => {
     const smithyMainUri = getDocUri("suite5/smithy/main.smithy");
+    const doc = await vscode.workspace.openTextDocument(smithyMainUri);
+    await vscode.window.showTextDocument(doc);
     await waitForServerStartup();
     const edits: vscode.TextEdit[] = await vscode.commands.executeCommand(
       "vscode.executeFormatDocumentProvider",
