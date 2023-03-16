@@ -103,7 +103,7 @@
         "smithyLsp.version": {
           "scope": "window",
           "type": "string",
-          "default": "0.2.2",
+          "default": "0.2.3",
           "description": "Version of the Smithy LSP (see https://github.com/smithy/smithy-language-server)"
         },
         "smithyLsp.rootPath": {
