@@ -2,7 +2,7 @@
   "name": "smithy-vscode-extension",
   "displayName": "Smithy",
   "description": "Smithy IDL Language Extension",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "icon": "images/smithy.png",
   "publisher": "smithy",
   "engines": {
