@@ -30,20 +30,20 @@ export function runTests(testsRoot: string, cb: (error: any, failures?: number) 
     ui: "tdd",
   });
 
-  glob("**/**.test.js", { cwd: testsRoot }, (err, files) => {
-    if (err) {
+  glob("**/**.test.js", { cwd: testsRoot })
+    .then((files) => {
+      files.forEach((f) => mocha.addFile(resolve(testsRoot, f)));
+
+      try {
+        mocha.run((failures) => {
+          cb(null, failures);
+        });
+      } catch (err) {
+        console.error(err);
+        cb(err);
+      }
+    })
+    .catch((err) => {
       return cb(err);
-    }
-
-    files.forEach((f) => mocha.addFile(resolve(testsRoot, f)));
-
-    try {
-      mocha.run((failures) => {
-        cb(null, failures);
-      });
-    } catch (err) {
-      console.error(err);
-      cb(err);
-    }
-  });
+    });
 }
