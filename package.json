@@ -126,7 +126,7 @@
     "test": "npm run format-check && npm run test-grammar && npm run test-extension"
   },
   "devDependencies": {
-    "@vscode/vsce": "^2.18.0",
+    "@vscode/vsce": "^2.19.0",
     "@types/follow-redirects": "^1.14.1",
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
@@ -140,7 +140,7 @@
     "sinon": "^15.0.2",
     "ts-loader": "^9.3.0",
     "typescript": "^5.0.2",
-    "vscode-nls-dev": "^4.0.1",
+    "vscode-nls-dev": "^4.0.4",
     "vscode-tmgrammar-test": "^0.1.1",
     "webpack": "^5.76.0",
     "webpack-cli": "^5.0.1"
