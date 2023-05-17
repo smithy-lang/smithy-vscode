@@ -229,19 +229,19 @@
     },
     {
       "name": "meta.keyword.statement.apply.smithy",
-      "begin": "^(apply)\\s+([A-Z-a-z0-9_]+)\\s+",
+      "begin": "^(apply)\\s+",
       "end": "\\n",
       "beginCaptures": {
         "1": {
           "name": "keyword.statement.smithy"
-        },
-        "2": {
-          "name": "entity.name.type.smithy"
         }
       },
       "patterns": [
         {
           "include": "#trait"
+        },
+        {
+          "include": "#shapeid"
         },
         {
           "match": "[^\\n]",
