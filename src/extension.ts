@@ -70,6 +70,8 @@ export function activate(context: vscode.ExtensionContext) {
                 "software.amazon.smithy:smithy-language-server:" + version,
                 "-r",
                 "m2local",
+                "-M",
+                "software.amazon.smithy.lsp.Main",
                 "--",
                 port.toString(),
               ];
