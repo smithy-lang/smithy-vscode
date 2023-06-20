@@ -27,6 +27,12 @@
   "main": "./out/src/extension",
   "preview": true,
   "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": "smithy-build.json",
+        "url": "./smithy-build-schema.json"
+      }
+    ],
     "languages": [
       {
         "id": "smithy",
