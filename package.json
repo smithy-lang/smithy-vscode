@@ -106,6 +106,16 @@
           "default": "verbose",
           "description": "Traces the communication between VS Code and the language server."
         },
+        "smithyLsp.logToFile": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "enabled",
+            "disabled"
+          ],
+          "default": "disabled",
+          "description": "Writes additional logging to .smithy.lsp.log file in workspace."
+        },
         "smithyLsp.version": {
           "scope": "window",
           "type": "string",

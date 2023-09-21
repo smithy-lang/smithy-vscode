@@ -178,6 +178,10 @@ function getClientOptions(): LanguageClientOptions {
 
     workspaceFolder,
 
+    initializationOptions: {
+      logToFile: vscode.workspace.getConfiguration("smithyLsp").get("logToFile", "disabled"),
+    },
+
     // Don't switch to output window when the server returns output.
     revealOutputChannelOn: RevealOutputChannelOn.Never,
   };
