@@ -23,7 +23,7 @@ suite("Extension tests", () => {
     assert.notEqual(doc, undefined);
     assert.notEqual(editor, undefined);
     assert.equal(ext.isActive, true);
-    assert.match(logText, /Downloaded external jars.*smithy-aws-traits-1\.25\.0\.jar/);
+    assert.match(logText, /Downloaded external jars.*smithy-aws-traits-1\.40\.0\.jar/);
     assert.match(logText, /Discovered smithy files.*\/main.smithy]/);
     assert.equal(diagnostics.length, 0);
   }).timeout(10000);

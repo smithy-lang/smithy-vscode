@@ -1,4 +1,6 @@
 out/
 node_modules/
+build/
 .vscode/
 .vscode-test/
+test-fixtures/**/build

@@ -10,8 +10,8 @@ suite("broken model tests", () => {
     await waitForServerStartup();
     const diagnostics = vscode.languages.getDiagnostics(smithyMainUri);
 
-    assert.match(diagnostics[0].message, /relationship to an unresolved shape `example.weather#GetCurrentTime`/);
-    assert.equal(diagnostics[0].range.start.line, 5);
+    assert.match(diagnostics[0].message, /Cannot apply `smithy.api#deprecated` to an immutable prelude shape/);
+    assert.equal(diagnostics[0].range.start.line, 4);
     assert.equal(diagnostics[0].range.start.character, 0);
   }).timeout(10000);
 });
