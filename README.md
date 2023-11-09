@@ -25,12 +25,11 @@ If your model requires dependencies, add a `smithy-build.json` file to the root 
 repositories where they can be located.
 ```
 {
-    {
+    "version": "1.0",
     "maven": {
-      "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.28.1"],
-      "repositories": [{ "url": "https://repo1.maven.org/maven2/" }]
+        "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.40.0"],
+        "repositories": [{ "url": "https://repo1.maven.org/maven2/" }]
     }
-  }
 }
 ```
 Start authoring your Smithy model. Opening a `*.smithy` file will activate
@@ -53,6 +52,12 @@ See the [IntelliJ documentation](https://www.jetbrains.com/help/idea/textmate.ht
 for more details.
 
 ## Release Notes
+
+### 0.5.4 - 2023-11-09
+
+- Added configuration for LspLog file. [#82](https://github.com/smithy-lang/smithy-vscode/pull/82)
+- Added `smithy-build.json` JSON Schema. [#76](https://github.com/smithy-lang/smithy-vscode/pull/76)
+- Fixed grammar for `apply` statement. [#76](https://github.com/smithy-lang/smithy-vscode/pull/75)
 
 ### 0.5.3 - 2023-03-17
 
