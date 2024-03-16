@@ -162,7 +162,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "follow-redirects": "^1.15.3",
+    "follow-redirects": "^1.15.6",
     "vscode-languageclient": "^8.1.0",
     "vscode-nls": "^5.2.0"
   }
