@@ -1,3 +1,4 @@
 {
-    "smithyLsp.rootPath": "${workspaceRoot}/smithy"
+    "smithyLsp.rootPath": "${workspaceRoot}/smithy",
+    "smithyLsp.logToFile": "enabled"
 }
