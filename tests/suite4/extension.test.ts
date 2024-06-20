@@ -11,8 +11,8 @@ suite("User-specific root", () => {
     const diagnostics = vscode.languages.getDiagnostics(smithyMainUri);
     const logText = await getLangServerLogs("suite4/smithy");
 
-    assert.match(logText, /Downloaded external jars.*smithy-aws-traits-1\.25\.0\.jar/);
-    assert.match(logText, /Downloaded external jars.*smithy-waiters-1\.25\.0\.jar/);
+    assert.match(logText, /Downloaded external jars.*smithy-aws-traits-1\.40\.0\.jar/);
+    assert.match(logText, /Downloaded external jars.*smithy-waiters-1\.40\.0\.jar/);
     assert.doesNotMatch(logText, /Unable to resolve trait/);
     assert.equal(diagnostics.length, 0);
   }).timeout(10000);

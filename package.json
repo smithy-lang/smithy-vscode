@@ -148,7 +148,7 @@
     "@types/node": "^18.18.9",
     "@types/sinon": "^10.0.20",
     "@types/vscode": "^1.84.1",
-    "@vscode/test-electron": "^2.3.6",
+    "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^2.22.0",
     "glob": "^9.3.5",
     "mocha": "^10.2.0",
