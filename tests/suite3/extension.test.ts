@@ -2,7 +2,9 @@ import * as vscode from "vscode";
 import { getDocUri, waitForServerStartup } from "./../helper";
 import * as sinon from "sinon";
 
-suite("Selector tests", () => {
+suite("Selector tests", function () {
+  this.timeout(0);
+
   test("Can run selectors", async () => {
     const smithyMainUri = getDocUri("suite3/main.smithy");
     const doc = await vscode.workspace.openTextDocument(smithyMainUri);
@@ -15,5 +17,6 @@ suite("Selector tests", () => {
     // we don't have a way to check the output. as long as this command
     // can run it should be fine - more robust tests are done on the server
     // side.
-  }).timeout(10000);
+    return Promise.resolve();
+  });
 });

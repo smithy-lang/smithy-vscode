@@ -17,6 +17,14 @@ import {
 } from "vscode-languageclient/node";
 import { getCoursierExecutable } from "./coursier/coursier";
 
+// Couriser uses an index to determine where to download jvms from: https://get-coursier.io/docs/2.0.6/cli-java#jvm-index
+// Newer versions of coursier use this index, which is more up to date than the one
+// used by the coursier version used by the extension.
+// This is a temporary solution to avoid adding logic that determines the version of
+// coursier on the local machine. In the near future, we will vend the language server
+// as a standalone executable, and will no longer need couriser to manage the jvm version.
+const COURSIER_JVM_INDEX = "https://raw.githubusercontent.com/coursier/jvm-index/master/index.json";
+
 let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
@@ -68,8 +76,15 @@ export function activate(context: vscode.ExtensionContext) {
               let launchargs = [
                 "launch",
                 "software.amazon.smithy:smithy-language-server:" + version,
+                // Configure couriser to use java 21
                 "--jvm",
-                "21",
+                // By default, coursier uses AdoptOpenJDK: https://get-coursier.io/docs/2.0.6/cli-java
+                // We could just say '21' here, and let coursier default to adopt jdk
+                // 21, but later versions of the jdk are released under the name adoptium.
+                "corretto:21",
+                // The location to download the jvm from is provided by the jvm index.
+                "--jvm-index",
+                COURSIER_JVM_INDEX,
                 "-r",
                 "m2local",
                 "-M",

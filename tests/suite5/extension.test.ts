@@ -2,7 +2,9 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import { getDocUri, waitForServerStartup } from "../helper";
 
-suite("formatting tests", () => {
+suite("formatting tests", function () {
+  this.timeout(0);
+
   test("Should register Smithy formatter", async () => {
     const smithyMainUri = getDocUri("suite5/smithy/main.smithy");
     const doc = await vscode.workspace.openTextDocument(smithyMainUri);
@@ -13,5 +15,6 @@ suite("formatting tests", () => {
       smithyMainUri
     );
     assert.strictEqual(edits.length > 0, true, "expected edits from formatter, but got none");
-  }).timeout(10000);
+    return Promise.resolve();
+  });
 });

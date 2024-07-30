@@ -2,7 +2,9 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import { getDocUri, waitForServerStartup } from "./../helper";
 
-suite("broken model tests", () => {
+suite("broken model tests", function () {
+  this.timeout(0);
+
   test("Should provide diagnostics", async () => {
     const smithyMainUri = getDocUri("suite2/main.smithy");
     const doc = await vscode.workspace.openTextDocument(smithyMainUri);
@@ -13,5 +15,6 @@ suite("broken model tests", () => {
     assert.match(diagnostics[0].message, /Cannot apply `smithy.api#deprecated` to an immutable prelude shape/);
     assert.equal(diagnostics[0].range.start.line, 4);
     assert.equal(diagnostics[0].range.start.character, 24);
-  }).timeout(10000);
+    return Promise.resolve();
+  });
 });
