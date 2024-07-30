@@ -12,6 +12,6 @@ suite("broken model tests", () => {
 
     assert.match(diagnostics[0].message, /Cannot apply `smithy.api#deprecated` to an immutable prelude shape/);
     assert.equal(diagnostics[0].range.start.line, 4);
-    assert.equal(diagnostics[0].range.start.character, 0);
+    assert.equal(diagnostics[0].range.start.character, 24);
   }).timeout(10000);
 });

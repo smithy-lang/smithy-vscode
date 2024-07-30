@@ -1,5 +1,6 @@
 {
   "version": "1.0",
+  "sources": ["./main.smithy"],
   "maven": {
     "dependencies": ["software.amazon.smithy:smithy-aws-traits:1.40.0", "software.amazon.smithy:smithy-waiters:1.40.0"],
     "repositories": [{ "url": "https://repo1.maven.org/maven2/" }]

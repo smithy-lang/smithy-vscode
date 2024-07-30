@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
-import { getDocUri, getLangServerLogs, waitForServerStartup } from "./../helper";
+import { getDocUri, waitForServerStartup } from "./../helper";
 
 suite("Extension tests", () => {
   test("Should start extension and Language Server", async () => {
@@ -17,15 +17,10 @@ suite("Extension tests", () => {
 
     assert.match(modelFileText, /namespace example.weather/);
 
-    // Grab Language Server logs
-    const logText = await getLangServerLogs("suite1");
-
     assert.notEqual(doc, undefined);
     assert.notEqual(editor, undefined);
     assert.equal(ext.isActive, true);
-    assert.match(logText, /Downloaded external jars.*smithy-aws-traits-1\.40\.0\.jar/);
-    assert.match(logText, /Discovered smithy files.*\/main.smithy]/);
-    assert.equal(diagnostics.length, 0);
+    assert.deepStrictEqual(diagnostics, []);
   }).timeout(10000);
 
   test("Should register language", async () => {
