@@ -20,10 +20,6 @@
     "Programming Languages",
     "Snippets"
   ],
-  "activationEvents": [
-    "onLanguage:smithy",
-    "onCommand:smithy.runSelector"
-  ],
   "main": "./out/src/extension",
   "preview": true,
   "contributes": {
@@ -106,25 +102,33 @@
           "default": "verbose",
           "description": "Traces the communication between VS Code and the language server."
         },
-        "smithyLsp.logToFile": {
-          "scope": "window",
-          "type": "string",
-          "enum": [
-            "enabled",
-            "disabled"
-          ],
-          "default": "disabled",
-          "description": "Writes additional logging to .smithy.lsp.log file in workspace."
-        },
         "smithyLsp.version": {
           "scope": "window",
           "type": "string",
-          "default": "0.2.4",
-          "description": "Version of the Smithy LSP (see https://github.com/smithy-lang/smithy-language-server)"
+          "default": "0.4.0",
+          "description": "Version of the Smithy Language Server (see https://github.com/smithy-lang/smithy-language-server)."
         },
         "smithyLsp.rootPath": {
           "scope": "resource",
           "type": "string"
+        },
+        "smithyLsp.diagnostics.minimumSeverity": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "NOTE",
+            "WARNING",
+            "DANGER",
+            "ERROR"
+          ],
+          "default": "WARNING",
+          "description": "Minimum severity of Smithy validation events to display in the editor."
+        },
+        "smithyLsp.onlyReloadOnSave": {
+          "scope": "window",
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to only re-load the Smithy model on save. Use this if the server feels slow as you type."
         }
       }
     }

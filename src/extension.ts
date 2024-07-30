@@ -68,6 +68,8 @@ export function activate(context: vscode.ExtensionContext) {
               let launchargs = [
                 "launch",
                 "software.amazon.smithy:smithy-language-server:" + version,
+                "--jvm",
+                "21",
                 "-r",
                 "m2local",
                 "-M",
@@ -179,11 +181,13 @@ function getClientOptions(): LanguageClientOptions {
     workspaceFolder,
 
     initializationOptions: {
-      logToFile: vscode.workspace.getConfiguration("smithyLsp").get("logToFile", "disabled"),
+      "diagnostics.minimumSeverity": vscode.workspace.getConfiguration("smithyLsp").get("diagnostics.minimumSeverity"),
+      onlyReloadOnSave: vscode.workspace.getConfiguration("smithyLsp").get("onlyReloadOnSave"),
     },
 
     // Don't switch to output window when the server returns output.
     revealOutputChannelOn: RevealOutputChannelOn.Never,
+    progressOnInitialization: true,
   };
 }
 
