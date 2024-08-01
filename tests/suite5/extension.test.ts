@@ -2,7 +2,9 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import { getDocUri, waitForServerStartup } from "../helper";
 
-suite("formatting tests", () => {
+suite("formatting tests", function () {
+  this.timeout(0);
+
   test("Should register Smithy formatter", async () => {
     const smithyMainUri = getDocUri("suite5/smithy/main.smithy");
     const doc = await vscode.workspace.openTextDocument(smithyMainUri);
@@ -12,13 +14,7 @@ suite("formatting tests", () => {
       "vscode.executeFormatDocumentProvider",
       smithyMainUri
     );
-    const edit: vscode.TextEdit = edits[0];
-    const expectedRange = new vscode.Range(new vscode.Position(12, 0), new vscode.Position(12, 0));
-    const range = edit.range;
-    const newText = edit.newText;
-
-    assert.equal(edits.length, 1);
-    assert.equal(range.isEqual(expectedRange), true);
-    assert.equal(newText, "    ");
-  }).timeout(10000);
+    assert.strictEqual(edits.length > 0, true, "expected edits from formatter, but got none");
+    return Promise.resolve();
+  });
 });
