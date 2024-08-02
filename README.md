@@ -53,6 +53,13 @@ for more details.
 
 ## Release Notes
 
+### 0.6.0 - 2024-08-02
+
+- Updated smithy-language-server version to 0.4.0 [#89](https://github.com/smithy-lang/smithy-vscode/pull/89)
+- Removed configuration for .smithy.lsp.log file [#89](https://github.com/smithy-lang/smithy-vscode/pull/89)
+- Added configuration option for model validation minimum severity [#89](https://github.com/smithy-lang/smithy-vscode/pull/89)
+- Added configuration option for only reloading the model on save [#89](https://github.com/smithy-lang/smithy-vscode/pull/89)
+
 ### 0.5.4 - 2023-11-09
 
 - Added configuration for LspLog file. [#82](https://github.com/smithy-lang/smithy-vscode/pull/82)
