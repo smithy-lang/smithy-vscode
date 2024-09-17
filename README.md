@@ -53,6 +53,10 @@ for more details.
 
 ## Release Notes
 
+### 0.6.1 - 2024-09-09
+
+- Updated smithy-language-server version to 0.4.1 [#94](https://github.com/smithy-lang/smithy-vscode/pull/94)
+
 ### 0.6.0 - 2024-08-02
 
 - Updated smithy-language-server version to 0.4.0 [#89](https://github.com/smithy-lang/smithy-vscode/pull/89)

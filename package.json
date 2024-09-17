@@ -2,7 +2,7 @@
   "name": "smithy-vscode-extension",
   "displayName": "Smithy",
   "description": "Smithy IDL Language Extension",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "icon": "images/smithy.png",
   "publisher": "smithy",
   "engines": {
@@ -105,7 +105,7 @@
         "smithyLsp.version": {
           "scope": "window",
           "type": "string",
-          "default": "0.4.0",
+          "default": "0.4.1",
           "description": "Version of the Smithy Language Server (see https://github.com/smithy-lang/smithy-language-server)."
         },
         "smithyLsp.rootPath": {
