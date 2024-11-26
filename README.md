@@ -53,6 +53,11 @@ for more details.
 
 ## Release Notes
 
+### 0.7.0 - 2024-11-26
+
+- Updated smithy-language-server version to 0.5.0 [#97](https://github.com/smithy-lang/smithy-vscode/pull/97)
+- Extension now starts when any Smithy files are found in the workspace [#96](https://github.com/smithy-lang/smithy-vscode/pull/96)
+
 ### 0.6.1 - 2024-09-09
 
 - Updated smithy-language-server version to 0.4.1 [#94](https://github.com/smithy-lang/smithy-vscode/pull/94)
