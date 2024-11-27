@@ -3,7 +3,7 @@
   "displayName": "Smithy",
   "description": "Smithy IDL Language Extension",
   "version": "0.7.0",
-  "icon": "images/smithy.png",
+  "icon": "images/smithy_anvil_red.png",
   "publisher": "smithy",
   "engines": {
     "vscode": "^1.84.1"
@@ -45,8 +45,8 @@
           ".smithy"
         ],
         "icon": {
-          "dark": "./images/smithy-file-icon.png",
-          "light": "./images/smithy-file-icon.png"
+          "dark": "./images/smithy_anvil_red_file_icon.png",
+          "light": "./images/smithy_anvil_red_file_icon.png"
         },
         "configuration": "./language-configuration.json"
       }
