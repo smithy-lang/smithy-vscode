@@ -6,9 +6,8 @@ bundle in TextMate and [IntelliJ using a third-party plugin](https://www.jetbrai
 
 ## Features
 
-This extension provides basic syntax highlighting of ".smithy" files.
-
-Additionally, it provides [Snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets).
+This extension provides basic syntax highlighting of ".smithy" files, [Snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets),
+and [Formatting](https://code.visualstudio.com/docs/editor/codebasics#_formatting).
 
 ## Installation
 
@@ -42,6 +41,19 @@ Follow [these instructions](https://get-coursier.io/docs/other-credentials#prope
 github.username=<ANY_USERNAME>
 github.password=<YOUR_GITHUB_TOKEN>
 github.host=maven.pkg.github.com
+```
+
+## Formatting
+
+Set this extension as the default formatter for the Smithy language and format 
+from the command palette or on save.
+
+```json
+{
+  "[smithy]": {
+    "editor.defaultFormatter": "smithy.smithy-vscode-extension"
+  }
+}
 ```
 
 ## Use with IntelliJ
