@@ -161,7 +161,7 @@
     "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^2.22.0",
     "glob": "^9.3.5",
-    "mocha": "^10.2.0",
+    "mocha": "^10.8.2",
     "prettier": "^2.8.8",
     "sinon": "^15.2.0",
     "ts-loader": "^9.5.0",
