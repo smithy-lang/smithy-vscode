@@ -186,6 +186,7 @@ function getClientOptions(): LanguageClientOptions {
     documentSelector: [
       { scheme: "file", language: "smithy", pattern: selectorPattern },
       { scheme: "smithyjar", language: "smithy", pattern: selectorPattern },
+      { scheme: "file", language: "json", pattern: "**/{smithy-build,.smithy-project}.json" },
     ],
     synchronize: {
       // Notify the server about file changes to 'smithy-build.json' files contained in the workspace

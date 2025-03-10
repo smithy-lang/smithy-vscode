@@ -28,12 +28,6 @@
     "workspaceContains:**/.smithy-project.json"
   ],
   "contributes": {
-    "jsonValidation": [
-      {
-        "fileMatch": "smithy-build.json",
-        "url": "./smithy-build-schema.json"
-      }
-    ],
     "languages": [
       {
         "id": "smithy",
