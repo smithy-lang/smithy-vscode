@@ -2,19 +2,10 @@ import * as net from 'net';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';
+import * as lsp from 'vscode-languageclient/node';
 import { SelectorDecorator } from './selector/selector-decorator';
 import { selectorRunCommandHandler, selectorClearCommandHandler } from './selector/selector-command-handlers';
 
-import {
-    CancellationToken,
-    DocumentFormattingRequest,
-    LanguageClient,
-    LanguageClientOptions,
-    RequestType,
-    RevealOutputChannelOn,
-    StreamInfo,
-    TextDocumentIdentifier,
-} from 'vscode-languageclient/node';
 import { getCoursierExecutable } from './coursier/coursier';
 
 // Couriser uses an index to determine where to download jvms from: https://get-coursier.io/docs/2.0.6/cli-java#jvm-index
@@ -25,110 +16,136 @@ import { getCoursierExecutable } from './coursier/coursier';
 // as a standalone executable, and will no longer need couriser to manage the jvm version.
 const COURSIER_JVM_INDEX = 'https://raw.githubusercontent.com/coursier/jvm-index/master/index.json';
 
-let client: LanguageClient;
+let client: lsp.LanguageClient;
 
-export function activate(context: vscode.ExtensionContext) {
-    async function createServer(): Promise<StreamInfo> {
-        function startServer(executable: string): Promise<StreamInfo> {
-            console.log(`Executable located at ${executable}.`);
-            return new Promise((resolve, reject) => {
-                const server = net
-                    .createServer((socket) => {
-                        console.log('Creating server');
+type RunCmd = {
+    command: string;
+    args: string[];
+};
 
-                        resolve({
-                            reader: socket,
-                            writer: socket,
+function runWithCmd(context: vscode.ExtensionContext, cmd: RunCmd): lsp.StreamInfo {
+    const options = { cwd: context.extensionPath };
+    const cp = child_process.spawn(cmd.command, cmd.args, options);
+
+    return {
+        writer: cp.stdin,
+        reader: cp.stdout,
+    };
+}
+
+async function runWithCoursier(context: vscode.ExtensionContext): Promise<lsp.StreamInfo> {
+    function startServer(executable: string): Promise<lsp.StreamInfo> {
+        console.log(`Executable located at ${executable}.`);
+        return new Promise((resolve, reject) => {
+            const server = net
+                .createServer((socket) => {
+                    console.log('Creating server');
+
+                    resolve({
+                        reader: socket,
+                        writer: socket,
+                    });
+
+                    socket.on('end', () => console.log('Disconnected'));
+                })
+                .on('error', (err) => {
+                    // handle errors here
+                    reject(err);
+                });
+
+            // grab a random port.
+            server.listen(() => {
+                // Start the child java process
+                let options = { cwd: context.extensionPath };
+
+                let port = (server.address() as net.AddressInfo).port;
+
+                let version = vscode.workspace.getConfiguration('smithyLsp').get('version', '`');
+
+                // Downloading latest poms
+                let resolveArgs = [
+                    'resolve',
+                    '--mode',
+                    'force',
+                    'software.amazon.smithy:smithy-language-server:' + version,
+                    '-r',
+                    'm2local',
+                ];
+                let resolveProcess = child_process.spawn(executable, resolveArgs, options);
+                console.log(resolveArgs);
+                resolveProcess.on('exit', (exitCode) => {
+                    console.log('Exit code : ' + exitCode);
+                    if (exitCode == 0) {
+                        console.log('Launching smithy-language-server version:' + version);
+
+                        let launchargs = [
+                            'launch',
+                            'software.amazon.smithy:smithy-language-server:' + version,
+                            // Configure couriser to use java 21
+                            '--jvm',
+                            // By default, coursier uses AdoptOpenJDK: https://get-coursier.io/docs/2.0.6/cli-java
+                            // We could just say '21' here, and let coursier default to adopt jdk
+                            // 21, but later versions of the jdk are released under the name adoptium.
+                            'corretto:21',
+                            // The location to download the jvm from is provided by the jvm index.
+                            '--jvm-index',
+                            COURSIER_JVM_INDEX,
+                            '-r',
+                            'm2local',
+                            '-M',
+                            'software.amazon.smithy.lsp.Main',
+                            '--',
+                            port.toString(),
+                        ];
+
+                        console.log(launchargs);
+
+                        let childProcess = child_process.spawn(executable, launchargs, options);
+
+                        childProcess.stdout.on('data', (data) => {
+                            console.log(`stdout: ${data}`);
                         });
 
-                        socket.on('end', () => console.log('Disconnected'));
-                    })
-                    .on('error', (err) => {
-                        // handle errors here
-                        reject(err);
-                    });
+                        childProcess.stderr.on('data', (data) => {
+                            console.error(`stderr: ${data}`);
+                        });
 
-                // grab a random port.
-                server.listen(() => {
-                    // Start the child java process
-                    let options = { cwd: context.extensionPath };
-
-                    let port = (server.address() as net.AddressInfo).port;
-
-                    let version = vscode.workspace.getConfiguration('smithyLsp').get('version', '`');
-
-                    // Downloading latest poms
-                    let resolveArgs = [
-                        'resolve',
-                        '--mode',
-                        'force',
-                        'software.amazon.smithy:smithy-language-server:' + version,
-                        '-r',
-                        'm2local',
-                    ];
-                    let resolveProcess = child_process.spawn(executable, resolveArgs, options);
-                    console.log(resolveArgs);
-                    resolveProcess.on('exit', (exitCode) => {
-                        console.log('Exit code : ' + exitCode);
-                        if (exitCode == 0) {
-                            console.log('Launching smithy-language-server version:' + version);
-
-                            let launchargs = [
-                                'launch',
-                                'software.amazon.smithy:smithy-language-server:' + version,
-                                // Configure couriser to use java 21
-                                '--jvm',
-                                // By default, coursier uses AdoptOpenJDK: https://get-coursier.io/docs/2.0.6/cli-java
-                                // We could just say '21' here, and let coursier default to adopt jdk
-                                // 21, but later versions of the jdk are released under the name adoptium.
-                                'corretto:21',
-                                // The location to download the jvm from is provided by the jvm index.
-                                '--jvm-index',
-                                COURSIER_JVM_INDEX,
-                                '-r',
-                                'm2local',
-                                '-M',
-                                'software.amazon.smithy.lsp.Main',
-                                '--',
-                                port.toString(),
-                            ];
-
-                            console.log(launchargs);
-
-                            let childProcess = child_process.spawn(executable, launchargs, options);
-
-                            childProcess.stdout.on('data', (data) => {
-                                console.log(`stdout: ${data}`);
-                            });
-
-                            childProcess.stderr.on('data', (data) => {
-                                console.error(`stderr: ${data}`);
-                            });
-
-                            childProcess.on('close', (code) => {
-                                console.log(`LSP exited with code ${code}`);
-                            });
-                        } else {
-                            console.log(`Could not resolve smithy-language-server implementation`);
-                        }
-                    });
-
-                    // Send raw output to a file
-                    if (context.storageUri) {
-                        if (!fs.existsSync(context.storageUri.fsPath)) {
-                            fs.mkdirSync(context.storageUri.fsPath);
-                        }
+                        childProcess.on('close', (code) => {
+                            console.log(`LSP exited with code ${code}`);
+                        });
+                    } else {
+                        console.log(`Could not resolve smithy-language-server implementation`);
                     }
                 });
-            });
-        }
 
-        const binaryPath = await getCoursierExecutable(context.globalStoragePath);
-        return await startServer(binaryPath);
+                // Send raw output to a file
+                if (context.storageUri) {
+                    if (!fs.existsSync(context.storageUri.fsPath)) {
+                        fs.mkdirSync(context.storageUri.fsPath);
+                    }
+                }
+            });
+        });
+    }
+
+    const binaryPath = await getCoursierExecutable(context.globalStoragePath);
+    return await startServer(binaryPath);
+}
+
+export function activate(context: vscode.ExtensionContext) {
+    async function createServer(): Promise<lsp.StreamInfo> {
+        const cmd: RunCmd | undefined = vscode.workspace.getConfiguration('smithyLsp').get('runCmd');
+        if (cmd) {
+            console.log('Running with command: ', JSON.stringify(cmd, null, 4));
+            return runWithCmd(context, cmd);
+        } else {
+            console.log('Running with coursier');
+            return await runWithCoursier(context);
+        }
     }
 
     // Create the language client and start the client.
-    client = new LanguageClient('smithyLsp', 'Smithy LSP', createServer, getClientOptions());
+    client = new lsp.LanguageClient('smithyLsp', 'Smithy LSP', createServer, getClientOptions());
 
     // Set client on `this` context to use with command handlers.
     this.client = client;
@@ -157,10 +174,10 @@ export function activate(context: vscode.ExtensionContext) {
     client.start();
 }
 
-function getClientOptions(): LanguageClientOptions {
-    let workspaceFolder: vscode.WorkspaceFolder;
+function getClientOptions(): lsp.LanguageClientOptions {
+    let workspaceFolder: vscode.WorkspaceFolder | undefined;
 
-    let rootPath: string = vscode.workspace.getConfiguration('smithyLsp').get('rootPath');
+    let rootPath: string | undefined = vscode.workspace.getConfiguration('smithyLsp').get('rootPath');
 
     if (rootPath) {
         const workspaceRoot = getWorkspaceRoot();
@@ -176,12 +193,13 @@ function getClientOptions(): LanguageClientOptions {
 
     // Configure file patterns relative to the workspace folder.
     let filePattern: vscode.GlobPattern = '**/{smithy-build}.json';
-    let selectorPattern: string = null;
+    let selectorPattern: string | undefined;
     if (workspaceFolder) {
         filePattern = new vscode.RelativePattern(workspaceFolder, filePattern);
         selectorPattern = `${workspaceFolder.uri.fsPath}/**/*`;
     }
 
+    lsp.DocumentSelector;
     // Options to control the language client
     return {
         // Register the server for plain text documents
@@ -206,7 +224,7 @@ function getClientOptions(): LanguageClientOptions {
         },
 
         // Don't switch to output window when the server returns output.
-        revealOutputChannelOn: RevealOutputChannelOn.Never,
+        revealOutputChannelOn: lsp.RevealOutputChannelOn.Never,
         progressOnInitialization: true,
     };
 }
@@ -218,7 +236,7 @@ export function deactivate(): Thenable<void> | undefined {
     return client.stop();
 }
 
-function getWorkspaceRoot(): string | undefined {
+function getWorkspaceRoot(): string {
     let folders = vscode.workspace.workspaceFolders;
     if (!folders || folders.length === 0) {
         return '';
@@ -230,32 +248,30 @@ function getWorkspaceRoot(): string | undefined {
     return '';
 }
 
-function createSmithyContentProvider(languageClient: LanguageClient): vscode.TextDocumentContentProvider {
-    return <vscode.TextDocumentContentProvider>{
-        provideTextDocumentContent: async (uri: vscode.Uri, token: CancellationToken): Promise<string> => {
-            return languageClient
-                .sendRequest(ClassFileContentsRequest.type, { uri: uri.toString() }, token)
-                .then((v: string): string => {
-                    return v || '';
-                });
+function createSmithyContentProvider(languageClient: lsp.LanguageClient): vscode.TextDocumentContentProvider {
+    return {
+        provideTextDocumentContent: async (uri: vscode.Uri, token: lsp.CancellationToken): Promise<string> => {
+            return languageClient.sendRequest(ClassFileContentsRequest.type, { uri: uri.toString() }, token);
         },
     };
 }
 
-function createSmithyFormattingEditProvider(languageClient: LanguageClient): vscode.DocumentFormattingEditProvider {
+function createSmithyFormattingEditProvider(languageClient: lsp.LanguageClient): vscode.DocumentFormattingEditProvider {
     return <vscode.DocumentFormattingEditProvider>{
         provideDocumentFormattingEdits: async (
             document: vscode.TextDocument,
             options: vscode.FormattingOptions,
-            token: CancellationToken
+            token: lsp.CancellationToken
         ): Promise<vscode.TextEdit[]> => {
-            document.uri;
+            const params = {
+                textDocument: {
+                    uri: document.uri.toString(),
+                },
+                options: options,
+            };
+
             return languageClient
-                .sendRequest(
-                    DocumentFormattingRequest.type,
-                    { textDocument: { uri: document.uri.toString() }, options: options },
-                    token
-                )
+                .sendRequest(lsp.DocumentFormattingRequest.type, params, token)
                 .then((v: vscode.TextEdit[]): vscode.TextEdit[] => {
                     return v;
                 });
@@ -264,5 +280,5 @@ function createSmithyFormattingEditProvider(languageClient: LanguageClient): vsc
 }
 
 export namespace ClassFileContentsRequest {
-    export const type = new RequestType<TextDocumentIdentifier, string, void>('smithy/jarFileContents');
+    export const type = new lsp.RequestType<lsp.TextDocumentIdentifier, string, void>('smithy/jarFileContents');
 }

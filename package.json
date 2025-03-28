@@ -130,6 +130,27 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Whether to only re-load the Smithy model on save. Use this if the server feels slow as you type."
+                },
+                "smithyLsp.runCmd": {
+                    "type": "object",
+                    "default": null,
+                    "required": [
+                        "command",
+                        "args"
+                    ],
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "The command to run the language server"
+                        },
+                        "args": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "The arguments to pass to the language server"
+                        }
+                    }
                 }
             }
         }
