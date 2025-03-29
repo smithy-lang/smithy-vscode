@@ -4,7 +4,7 @@ import { IncomingMessage } from 'http';
 import * as fs from 'fs';
 import { access, mkdir } from 'fs/promises';
 
-export function downloadCoursierIfRequired(extensionPath: string, versionPath: string): Promise<string> {
+export default function downloadCoursierIfRequired(extensionPath: string, versionPath: string): Promise<string> {
     function binPath(filename: string) {
         return path.join(extensionPath, filename);
     }
