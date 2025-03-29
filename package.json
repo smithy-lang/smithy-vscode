@@ -109,10 +109,6 @@
                     "default": "0.6.0",
                     "description": "Version of the Smithy Language Server (see https://github.com/smithy-lang/smithy-language-server)."
                 },
-                "smithyLsp.rootPath": {
-                    "scope": "resource",
-                    "type": "string"
-                },
                 "smithyLsp.diagnostics.minimumSeverity": {
                     "scope": "window",
                     "type": "string",

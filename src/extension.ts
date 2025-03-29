@@ -144,8 +144,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    const clientOptions = getClientOptions();
+
     // Create the language client and start the client.
-    client = new lsp.LanguageClient('smithyLsp', 'Smithy LSP', createServer, getClientOptions());
+    client = new lsp.LanguageClient('smithyLsp', 'Smithy LSP', createServer, clientOptions);
 
     const jarFileContentsProvider = new JarFileContentsProvider(client);
     const selectorHandler = new SelectorHandler(client);
@@ -160,61 +162,6 @@ export function activate(context: vscode.ExtensionContext) {
     client.start();
 }
 
-function getClientOptions(): lsp.LanguageClientOptions {
-    let workspaceFolder: vscode.WorkspaceFolder | undefined;
-
-    let rootPath: string | undefined = vscode.workspace.getConfiguration('smithyLsp').get('rootPath');
-
-    if (rootPath) {
-        const workspaceRoot = getWorkspaceRoot();
-        if (rootPath.startsWith('${workspaceRoot}') && workspaceRoot === '') {
-            console.warn(`Unable to retrieve the workspace root.`);
-        }
-        workspaceFolder = {
-            uri: vscode.Uri.file(rootPath.replace('${workspaceRoot}', workspaceRoot)),
-            name: 'smithy-lsp-root-path',
-            index: 1,
-        };
-    }
-
-    // Configure file patterns relative to the workspace folder.
-    let filePattern: vscode.GlobPattern = '**/{smithy-build}.json';
-    let selectorPattern: string | undefined;
-    if (workspaceFolder) {
-        filePattern = new vscode.RelativePattern(workspaceFolder, filePattern);
-        selectorPattern = `${workspaceFolder.uri.fsPath}/**/*`;
-    }
-
-    lsp.DocumentSelector;
-    // Options to control the language client
-    return {
-        // Register the server for plain text documents
-        documentSelector: [
-            { scheme: 'file', language: 'smithy', pattern: selectorPattern },
-            { scheme: 'smithyjar', language: 'smithy', pattern: selectorPattern },
-            { scheme: 'file', language: 'json', pattern: '**/{smithy-build,.smithy-project}.json' },
-        ],
-        synchronize: {
-            // Notify the server about file changes to 'smithy-build.json' files contained in the workspace
-            fileEvents: vscode.workspace.createFileSystemWatcher(filePattern),
-        },
-        outputChannelName: 'Smithy Language Server',
-
-        workspaceFolder,
-
-        initializationOptions: {
-            'diagnostics.minimumSeverity': vscode.workspace
-                .getConfiguration('smithyLsp')
-                .get('diagnostics.minimumSeverity'),
-            onlyReloadOnSave: vscode.workspace.getConfiguration('smithyLsp').get('onlyReloadOnSave'),
-        },
-
-        // Don't switch to output window when the server returns output.
-        revealOutputChannelOn: lsp.RevealOutputChannelOn.Never,
-        progressOnInitialization: true,
-    };
-}
-
 export function deactivate(): Thenable<void> | undefined {
     if (!client) {
         return undefined;
@@ -222,14 +169,35 @@ export function deactivate(): Thenable<void> | undefined {
     return client.stop();
 }
 
-function getWorkspaceRoot(): string {
-    let folders = vscode.workspace.workspaceFolders;
-    if (!folders || folders.length === 0) {
-        return '';
-    }
-    let folder = folders[0];
-    if (folder.uri.scheme === 'file') {
-        return folder.uri.fsPath;
-    }
-    return '';
+type ServerOptions = {
+    diagnostics?: {
+        minimumSeverity?: string;
+    };
+    onlyReloadOnSave?: boolean;
+};
+
+function getClientOptions(): lsp.LanguageClientOptions {
+    const smithyConfig = vscode.workspace.getConfiguration('smithyLsp');
+
+    const serverOptions: ServerOptions = {
+        diagnostics: {
+            minimumSeverity: smithyConfig.get('diagnostics.minimumSeverity'),
+        },
+        onlyReloadOnSave: smithyConfig.get('onlyReloadOnSave'),
+    };
+
+    return {
+        outputChannelName: 'Smithy Language Server',
+        // Don't switch to output window when the server returns output.
+        revealOutputChannelOn: lsp.RevealOutputChannelOn.Never,
+        progressOnInitialization: true,
+
+        documentSelector: [
+            { language: 'smithy' },
+            { scheme: 'smithyjar' },
+            { pattern: '**/{smithy-build,.smithy-project}.json' },
+        ],
+
+        initializationOptions: serverOptions,
+    };
 }
