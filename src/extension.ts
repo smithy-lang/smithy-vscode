@@ -155,11 +155,6 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.workspace.registerTextDocumentContentProvider('smithyjar', smithyContentProvider)
     );
 
-    const smithyFormattingEditProvider = createSmithyFormattingEditProvider(client);
-    context.subscriptions.push(
-        vscode.languages.registerDocumentFormattingEditProvider('smithy', smithyFormattingEditProvider)
-    );
-
     // Set default expression input, and use context to hold state between command invocations.
     this.expression = 'Enter Selector Expression';
     this.selectorDecorator = new SelectorDecorator();
@@ -252,29 +247,6 @@ function createSmithyContentProvider(languageClient: lsp.LanguageClient): vscode
     return {
         provideTextDocumentContent: async (uri: vscode.Uri, token: lsp.CancellationToken): Promise<string> => {
             return languageClient.sendRequest(ClassFileContentsRequest.type, { uri: uri.toString() }, token);
-        },
-    };
-}
-
-function createSmithyFormattingEditProvider(languageClient: lsp.LanguageClient): vscode.DocumentFormattingEditProvider {
-    return <vscode.DocumentFormattingEditProvider>{
-        provideDocumentFormattingEdits: async (
-            document: vscode.TextDocument,
-            options: vscode.FormattingOptions,
-            token: lsp.CancellationToken
-        ): Promise<vscode.TextEdit[]> => {
-            const params = {
-                textDocument: {
-                    uri: document.uri.toString(),
-                },
-                options: options,
-            };
-
-            return languageClient
-                .sendRequest(lsp.DocumentFormattingRequest.type, params, token)
-                .then((v: vscode.TextEdit[]): vscode.TextEdit[] => {
-                    return v;
-                });
         },
     };
 }
