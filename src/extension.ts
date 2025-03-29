@@ -3,10 +3,10 @@ import * as fs from 'fs';
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
-import { SelectorDecorator } from './selector/selector-decorator';
-import { selectorRunCommandHandler, selectorClearCommandHandler } from './selector/selector-command-handlers';
 
 import { getCoursierExecutable } from './coursier/coursier';
+import JarFileContentsProvider from './jar-file-contents';
+import SelectorHandler from './selector';
 
 // Couriser uses an index to determine where to download jvms from: https://get-coursier.io/docs/2.0.6/cli-java#jvm-index
 // Newer versions of coursier use this index, which is more up to date than the one
@@ -147,22 +147,13 @@ export function activate(context: vscode.ExtensionContext) {
     // Create the language client and start the client.
     client = new lsp.LanguageClient('smithyLsp', 'Smithy LSP', createServer, getClientOptions());
 
-    // Set client on `this` context to use with command handlers.
-    this.client = client;
+    const jarFileContentsProvider = new JarFileContentsProvider(client);
+    const selectorHandler = new SelectorHandler(client);
 
-    const smithyContentProvider = createSmithyContentProvider(client);
     context.subscriptions.push(
-        vscode.workspace.registerTextDocumentContentProvider('smithyjar', smithyContentProvider)
-    );
-
-    // Set default expression input, and use context to hold state between command invocations.
-    this.expression = 'Enter Selector Expression';
-    this.selectorDecorator = new SelectorDecorator();
-
-    // Register selector commands.
-    context.subscriptions.push(vscode.commands.registerCommand('smithy.runSelector', selectorRunCommandHandler, this));
-    context.subscriptions.push(
-        vscode.commands.registerCommand('smithy.clearSelector', selectorClearCommandHandler, this)
+        vscode.workspace.registerTextDocumentContentProvider('smithyjar', jarFileContentsProvider),
+        vscode.commands.registerCommand('smithy.runSelector', selectorHandler.run, selectorHandler),
+        vscode.commands.registerCommand('smithy.clearSelector', selectorHandler.clear, selectorHandler)
     );
 
     // Start the client. This will also launch the server
@@ -241,16 +232,4 @@ function getWorkspaceRoot(): string {
         return folder.uri.fsPath;
     }
     return '';
-}
-
-function createSmithyContentProvider(languageClient: lsp.LanguageClient): vscode.TextDocumentContentProvider {
-    return {
-        provideTextDocumentContent: async (uri: vscode.Uri, token: lsp.CancellationToken): Promise<string> => {
-            return languageClient.sendRequest(ClassFileContentsRequest.type, { uri: uri.toString() }, token);
-        },
-    };
-}
-
-export namespace ClassFileContentsRequest {
-    export const type = new lsp.RequestType<lsp.TextDocumentIdentifier, string, void>('smithy/jarFileContents');
 }
