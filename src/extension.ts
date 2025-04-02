@@ -37,9 +37,7 @@ export function deactivate(): Thenable<void> | undefined {
 
 function getClientOptions(): lsp.LanguageClientOptions {
     const initializationOptions = {
-        diagnostics: {
-            minimumSeverity: config.getServerDiagnosticsMinimumSeverity(),
-        },
+        'diagnostics.minimumSeverity': config.getServerDiagnosticsMinimumSeverity(),
         onlyReloadOnSave: config.getServerOnlyReloadOnSave(),
     };
 
