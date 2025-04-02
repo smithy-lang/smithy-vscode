@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
+import * as config from './config';
 import JarFileContentsProvider from './jar-file-contents';
 import SelectorHandler from './selector';
 import getCoursierExecutable from './coursier/coursier';
@@ -12,7 +13,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const clientOptions = getClientOptions();
 
     // Create the language client and start the client.
-    client = new lsp.LanguageClient('smithyLsp', 'Smithy LSP', server, clientOptions);
+    client = new lsp.LanguageClient('smithy', 'Smithy', server, clientOptions);
 
     const jarFileContentsProvider = new JarFileContentsProvider(client);
     const selectorHandler = new SelectorHandler(client);
@@ -34,23 +35,12 @@ export function deactivate(): Thenable<void> | undefined {
     return client.stop();
 }
 
-function getConfig<T>(config: string, defaultValue?: T): T | undefined {
-    return vscode.workspace.getConfiguration('smithyLsp').get(config, defaultValue);
-}
-
-type InitializationOptions = {
-    diagnostics?: {
-        minimumSeverity?: string;
-    };
-    onlyReloadOnSave?: boolean;
-};
-
 function getClientOptions(): lsp.LanguageClientOptions {
-    const initializationOptions: InitializationOptions = {
+    const initializationOptions = {
         diagnostics: {
-            minimumSeverity: getConfig<string>('minimumSeverity'),
+            minimumSeverity: config.getServerDiagnosticsMinimumSeverity(),
         },
-        onlyReloadOnSave: getConfig<boolean>('onlyReloadOnSave'),
+        onlyReloadOnSave: config.getServerOnlyReloadOnSave(),
     };
 
     return {
@@ -65,14 +55,9 @@ function getClientOptions(): lsp.LanguageClientOptions {
             { pattern: '**/{smithy-build,.smithy-project}.json' },
         ],
 
-        initializationOptions: initializationOptions,
+        initializationOptions,
     };
 }
-
-type RunCmd = {
-    command: string;
-    args: string[];
-};
 
 // Couriser uses an index to determine where to download jvms from: https://get-coursier.io/docs/2.0.6/cli-java#jvm-index
 // Newer versions of coursier use this index, which is more up to date than the one
@@ -83,15 +68,15 @@ type RunCmd = {
 const COURSIER_JVM_INDEX = 'https://raw.githubusercontent.com/coursier/jvm-index/master/index.json';
 
 async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executable> {
-    const cmd = getConfig<RunCmd>('runCmd');
-    if (cmd) {
+    const serverExecutable = config.getServerExecutable();
+    if (serverExecutable) {
         return {
-            command: cmd.command,
+            command: serverExecutable,
             args: ['0'],
         };
     } else {
         const coursierExecutable = await getCoursierExecutable(context);
-        const languageServerVersion = getConfig<string>('version', '');
+        const languageServerVersion = config.getServerVersion();
         return {
             command: coursierExecutable,
             args: [
