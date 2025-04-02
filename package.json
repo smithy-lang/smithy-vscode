@@ -84,7 +84,7 @@
         },
         "configuration": {
             "type": "object",
-            "title": "vscode-smithy configuration",
+            "title": "Smithy",
             "properties": {
                 "smithyLsp.maxNumberOfProblems": {
                     "scope": "resource",
@@ -119,13 +119,59 @@
                         "ERROR"
                     ],
                     "default": "WARNING",
-                    "description": "Minimum severity of Smithy validation events to display in the editor."
+                    "description": "Minimum severity of Smithy validation events to display in the editor.",
+                    "deprecationMessage": "Use smithy.server.initializationOptions.diagnostics.minimumSeverity instead."
                 },
                 "smithyLsp.onlyReloadOnSave": {
                     "scope": "window",
                     "type": "boolean",
                     "default": false,
-                    "description": "Whether to only re-load the Smithy model on save. Use this if the server feels slow as you type."
+                    "description": "Whether to only re-load the Smithy model on save. Use this if the server feels slow as you type.",
+                    "deprecationMessage": "May cause features like definition, hover, and completions to behave incorrectly when you have unsaved changes."
+                },
+                "smithy-language-server": {
+                    "description": "Settings for how the extension should setup and use the Smithy Language Server.",
+                    "type": "object",
+                    "properties": {
+                        "run": {
+                            "description": "Settings for how the extension should run the Smithy Language Server.",
+                            "type": "object",
+                            "properties": {
+                                "executable": {
+                                    "description": "Executable to run the language server. Can be the executable name if it is on your PATH, or an absolute path to the executable.",
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "version": {
+                            "description": "Version of the Smithy Language Server to use. Ignored if `server.run.executable` is provided.",
+                            "type": "string",
+                            "default": "0.6.0"
+                        },
+                        "initializationOptions": {
+                            "type": "object",
+                            "description": "Options sent to the server in the [Initialize Request](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialize)",
+                            "properties": {
+                                "diagnostics": {
+                                    "description": "Settings for diagnostics produced by the server.",
+                                    "type": "object",
+                                    "properties": {
+                                        "minimumSeverity": {
+                                            "description": "Minimum severity of Smithy validation events to display in the editor.",
+                                            "type": "string",
+                                            "enum": [
+                                                "NOTE",
+                                                "WARNING",
+                                                "DANGER",
+                                                "ERROR"
+                                            ],
+                                            "default": "WARNING"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 },
                 "smithyLsp.runCmd": {
                     "type": "object",
