@@ -10,11 +10,10 @@ suite('formatting tests', function () {
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
         await vscode.window.showTextDocument(doc);
         await waitForServerStartup();
-        const edits: vscode.TextEdit[] = await vscode.commands.executeCommand(
-            'vscode.executeFormatDocumentProvider',
-            smithyMainUri
-        );
-        assert.strictEqual(edits.length > 0, true, 'expected edits from formatter, but got none');
-        return Promise.resolve();
+
+        const beforeEditText = doc.getText();
+        await vscode.commands.executeCommand('editor.action.formatDocument', smithyMainUri);
+        const afterEditText = doc.getText();
+        assert.notStrictEqual(afterEditText, beforeEditText);
     });
 });
