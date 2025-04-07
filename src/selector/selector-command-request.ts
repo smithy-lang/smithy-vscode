@@ -1,9 +1,9 @@
-import { RequestType } from "vscode-languageclient";
+import { RequestType } from 'vscode-languageclient';
 
 interface SelectorParams {
-  expression: String;
+    expression: String;
 }
 
 export namespace SelectorCommandRequest {
-  export const type = new RequestType<SelectorParams, [], void>("smithy/selectorCommand");
+    export const type = new RequestType<SelectorParams, [], void>('smithy/selectorCommand');
 }

@@ -4,3 +4,4 @@ build/
 .vscode/
 .vscode-test/
 test-fixtures/**/build
+package-lock.json

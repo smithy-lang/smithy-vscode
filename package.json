@@ -1,173 +1,175 @@
 {
-  "name": "smithy-vscode-extension",
-  "displayName": "Smithy",
-  "description": "Smithy IDL Language Extension",
-  "version": "0.8.0",
-  "icon": "images/smithy_anvil_red.png",
-  "publisher": "smithy",
-  "engines": {
-    "vscode": "^1.84.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/smithy-lang/smithy-vscode.git"
-  },
-  "license": "Apache-2.0",
-  "prettier": {
-    "printWidth": 120
-  },
-  "categories": [
-    "Programming Languages",
-    "Snippets"
-  ],
-  "main": "./out/src/extension",
-  "preview": true,
-  "activationEvents": [
-    "workspaceContains:**/smithy-build.json",
-    "workspaceContains:**/*.smithy",
-    "workspaceContains:**/.smithy-project.json"
-  ],
-  "contributes": {
-    "languages": [
-      {
-        "id": "smithy",
-        "aliases": [
-          "Smithy",
-          "smithy"
-        ],
-        "extensions": [
-          ".smithy"
-        ],
-        "icon": {
-          "dark": "./images/smithy_anvil_red_file_icon.png",
-          "light": "./images/smithy_anvil_red_file_icon.png"
-        },
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "smithy",
-        "scopeName": "source.smithy",
-        "path": "./syntaxes/smithy.tmLanguage.json"
-      }
-    ],
-    "snippets": [
-      {
-        "language": "smithy",
-        "path": "./snippets.json"
-      }
-    ],
-    "commands": [
-      {
-        "command": "smithy.runSelector",
-        "title": "Smithy:Selector:Run"
-      },
-      {
-        "command": "smithy.clearSelector",
-        "title": "Smithy:Selector:Clear"
-      }
-    ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "smithy.runSelector",
-          "when": "editorLangId == smithy"
-        },
-        {
-          "command": "smithy.clearSelector",
-          "when": "editorLangId == smithy"
-        }
-      ]
+    "name": "smithy-vscode-extension",
+    "displayName": "Smithy",
+    "description": "Smithy IDL Language Extension",
+    "version": "0.8.0",
+    "icon": "images/smithy_anvil_red.png",
+    "publisher": "smithy",
+    "engines": {
+        "vscode": "^1.84.1"
     },
-    "configuration": {
-      "type": "object",
-      "title": "vscode-smithy configuration",
-      "properties": {
-        "smithyLsp.maxNumberOfProblems": {
-          "scope": "resource",
-          "type": "number",
-          "default": 100,
-          "description": "Controls the maximum number of problems produced by the server."
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/smithy-lang/smithy-vscode.git"
+    },
+    "license": "Apache-2.0",
+    "prettier": {
+        "tabWidth": 4,
+        "singleQuote": true,
+        "printWidth": 120
+    },
+    "categories": [
+        "Programming Languages",
+        "Snippets"
+    ],
+    "main": "./out/src/extension",
+    "preview": true,
+    "activationEvents": [
+        "workspaceContains:**/smithy-build.json",
+        "workspaceContains:**/*.smithy",
+        "workspaceContains:**/.smithy-project.json"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "smithy",
+                "aliases": [
+                    "Smithy",
+                    "smithy"
+                ],
+                "extensions": [
+                    ".smithy"
+                ],
+                "icon": {
+                    "dark": "./images/smithy_anvil_red_file_icon.png",
+                    "light": "./images/smithy_anvil_red_file_icon.png"
+                },
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "smithy",
+                "scopeName": "source.smithy",
+                "path": "./syntaxes/smithy.tmLanguage.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "smithy",
+                "path": "./snippets.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "smithy.runSelector",
+                "title": "Smithy:Selector:Run"
+            },
+            {
+                "command": "smithy.clearSelector",
+                "title": "Smithy:Selector:Clear"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "smithy.runSelector",
+                    "when": "editorLangId == smithy"
+                },
+                {
+                    "command": "smithy.clearSelector",
+                    "when": "editorLangId == smithy"
+                }
+            ]
         },
-        "smithyLsp.trace.server": {
-          "scope": "window",
-          "type": "string",
-          "enum": [
-            "off",
-            "messages",
-            "verbose"
-          ],
-          "default": "verbose",
-          "description": "Traces the communication between VS Code and the language server."
-        },
-        "smithyLsp.version": {
-          "scope": "window",
-          "type": "string",
-          "default": "0.6.0",
-          "description": "Version of the Smithy Language Server (see https://github.com/smithy-lang/smithy-language-server)."
-        },
-        "smithyLsp.rootPath": {
-          "scope": "resource",
-          "type": "string"
-        },
-        "smithyLsp.diagnostics.minimumSeverity": {
-          "scope": "window",
-          "type": "string",
-          "enum": [
-            "NOTE",
-            "WARNING",
-            "DANGER",
-            "ERROR"
-          ],
-          "default": "WARNING",
-          "description": "Minimum severity of Smithy validation events to display in the editor."
-        },
-        "smithyLsp.onlyReloadOnSave": {
-          "scope": "window",
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to only re-load the Smithy model on save. Use this if the server feels slow as you type."
+        "configuration": {
+            "type": "object",
+            "title": "vscode-smithy configuration",
+            "properties": {
+                "smithyLsp.maxNumberOfProblems": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                },
+                "smithyLsp.trace.server": {
+                    "scope": "window",
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "verbose",
+                    "description": "Traces the communication between VS Code and the language server."
+                },
+                "smithyLsp.version": {
+                    "scope": "window",
+                    "type": "string",
+                    "default": "0.6.0",
+                    "description": "Version of the Smithy Language Server (see https://github.com/smithy-lang/smithy-language-server)."
+                },
+                "smithyLsp.rootPath": {
+                    "scope": "resource",
+                    "type": "string"
+                },
+                "smithyLsp.diagnostics.minimumSeverity": {
+                    "scope": "window",
+                    "type": "string",
+                    "enum": [
+                        "NOTE",
+                        "WARNING",
+                        "DANGER",
+                        "ERROR"
+                    ],
+                    "default": "WARNING",
+                    "description": "Minimum severity of Smithy validation events to display in the editor."
+                },
+                "smithyLsp.onlyReloadOnSave": {
+                    "scope": "window",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to only re-load the Smithy model on save. Use this if the server feels slow as you type."
+                }
+            }
         }
-      }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run webpack-package",
+        "webpack-package": "webpack --mode production --devtool hidden-source-map",
+        "compile": "tsc -p ./",
+        "install-plugin": "npm run package && code --install-extension smithy-vscode.vsix",
+        "uninstall-plugin": "code --uninstall-extension smithy.smithy-vscode-extension",
+        "package": "vsce package -o smithy-vscode.vsix",
+        "format": "prettier --write '**/*.{ts,js,json}'",
+        "format-check": "prettier --check '**/*.{ts,js,json}'",
+        "test-grammar": "npx vscode-tmgrammar-test -g syntaxes/smithy.tmLanguage.json 'tests/grammar/*'",
+        "test-extension": "npm run compile && npm run package && node ./out/tests/runTest.js",
+        "test": "npm run format-check && npm run test-grammar && npm run test-extension"
+    },
+    "devDependencies": {
+        "@types/follow-redirects": "^1.14.4",
+        "@types/glob": "^8.1.0",
+        "@types/mocha": "^10.0.4",
+        "@types/node": "^18.18.9",
+        "@types/sinon": "^10.0.20",
+        "@types/vscode": "^1.84.1",
+        "@vscode/test-electron": "^2.4.0",
+        "@vscode/vsce": "^2.22.0",
+        "glob": "^9.3.5",
+        "mocha": "^10.8.2",
+        "prettier": "^2.8.8",
+        "sinon": "^15.2.0",
+        "ts-loader": "^9.5.0",
+        "typescript": "^5.2.2",
+        "vscode-nls-dev": "^4.0.4",
+        "vscode-tmgrammar-test": "^0.1.2",
+        "webpack": "^5.94.0",
+        "webpack-cli": "^5.1.4"
+    },
+    "dependencies": {
+        "follow-redirects": "^1.15.6",
+        "vscode-languageclient": "^8.1.0",
+        "vscode-nls": "^5.2.0"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run webpack-package",
-    "webpack-package": "webpack --mode production --devtool hidden-source-map",
-    "compile": "tsc -p ./",
-    "install-plugin": "npm run package && code --install-extension smithy-vscode.vsix",
-    "uninstall-plugin": "code --uninstall-extension smithy.smithy-vscode-extension",
-    "package": "vsce package -o smithy-vscode.vsix",
-    "format": "prettier --write '**/*.{ts,js,json,yml}'",
-    "format-check": "prettier --check '**/*.{ts,js,json,yml}'",
-    "test-grammar": "npx vscode-tmgrammar-test -g syntaxes/smithy.tmLanguage.json 'tests/grammar/*'",
-    "test-extension": "npm run compile && npm run package && node ./out/tests/runTest.js",
-    "test": "npm run format-check && npm run test-grammar && npm run test-extension"
-  },
-  "devDependencies": {
-    "@types/follow-redirects": "^1.14.4",
-    "@types/glob": "^8.1.0",
-    "@types/mocha": "^10.0.4",
-    "@types/node": "^18.18.9",
-    "@types/sinon": "^10.0.20",
-    "@types/vscode": "^1.84.1",
-    "@vscode/test-electron": "^2.4.0",
-    "@vscode/vsce": "^2.22.0",
-    "glob": "^9.3.5",
-    "mocha": "^10.8.2",
-    "prettier": "^2.8.8",
-    "sinon": "^15.2.0",
-    "ts-loader": "^9.5.0",
-    "typescript": "^5.2.2",
-    "vscode-nls-dev": "^4.0.4",
-    "vscode-tmgrammar-test": "^0.1.2",
-    "webpack": "^5.94.0",
-    "webpack-cli": "^5.1.4"
-  },
-  "dependencies": {
-    "follow-redirects": "^1.15.6",
-    "vscode-languageclient": "^8.1.0",
-    "vscode-nls": "^5.2.0"
-  }
 }
