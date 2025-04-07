@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 export function getServerDiagnosticsMinimumSeverity(): string | undefined {
-    return getConfig('server.diagnostics.minimumSeverity') ?? getOldConfig('diagnostics.minimumSeverity');
+    return getOldOrNewConfig('diagnostics.minimumSeverity', 'server.diagnostics.minimumSeverity');
 }
 
 export function getServerOnlyReloadOnSave(): boolean | undefined {
@@ -13,7 +13,11 @@ export function getServerExecutable(): string | undefined {
 }
 
 export function getServerVersion(): string {
-    return getConfig('server.version') ?? getOldConfig('version');
+    return getOldOrNewConfig('version', 'server.version');
+}
+
+function getOldOrNewConfig<T>(oldKey: string, newKey: string): T | undefined {
+    return getOldConfig(oldKey) || getConfig(newKey);
 }
 
 function getConfig<T>(key: string): T | undefined {
