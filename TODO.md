@@ -1,2 +1,0 @@
--   Configuration:
-    -   Should I reorder smithy.trace.server?

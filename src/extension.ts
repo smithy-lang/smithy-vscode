@@ -89,6 +89,8 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
                 // The location to download the jvm from is provided by the jvm index.
                 '--jvm-index',
                 COURSIER_JVM_INDEX,
+                '-r',
+                'm2local',
                 '-M',
                 'software.amazon.smithy.lsp.Main',
                 '--',
