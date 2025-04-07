@@ -248,6 +248,24 @@
                     "name": "invalid.illegal.apply.smithy"
                 }
             ]
+        },
+        {
+            "name": "meta.keyword.statement.member.smithy",
+            "begin": "^([A-Z-a-z_][A-Z-a-z0-9_]*)(:)\\s*",
+            "end": "\\n",
+            "beginCaptures": {
+                "1": {
+                    "name": "support.type.property-name.smithy"
+                },
+                "2": {
+                    "name": "punctuation.separator.dictionary.pair.smithy"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#shapeid"
+                }
+            ]
         }
     ],
     "repository": {
