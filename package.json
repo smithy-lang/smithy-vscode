@@ -84,13 +84,14 @@
         },
         "configuration": {
             "type": "object",
-            "title": "vscode-smithy configuration",
+            "title": "Smithy",
             "properties": {
                 "smithyLsp.maxNumberOfProblems": {
                     "scope": "resource",
                     "type": "number",
                     "default": 100,
-                    "description": "Controls the maximum number of problems produced by the server."
+                    "description": "Controls the maximum number of problems produced by the server.",
+                    "deprecationMessage": "Use smithy.maxNumberOfProblems instead."
                 },
                 "smithyLsp.trace.server": {
                     "scope": "window",
@@ -101,17 +102,15 @@
                         "verbose"
                     ],
                     "default": "verbose",
-                    "description": "Traces the communication between VS Code and the language server."
+                    "description": "Traces the communication between VS Code and the language server.",
+                    "deprecationMessage": "Use smithy.trace.server instead."
                 },
                 "smithyLsp.version": {
                     "scope": "window",
                     "type": "string",
-                    "default": "0.6.0",
-                    "description": "Version of the Smithy Language Server (see https://github.com/smithy-lang/smithy-language-server)."
-                },
-                "smithyLsp.rootPath": {
-                    "scope": "resource",
-                    "type": "string"
+                    "default": null,
+                    "description": "Version of the Smithy Language Server (see https://github.com/smithy-lang/smithy-language-server).",
+                    "deprecationMessage": "Use smithy.server.version instead."
                 },
                 "smithyLsp.diagnostics.minimumSeverity": {
                     "scope": "window",
@@ -122,14 +121,53 @@
                         "DANGER",
                         "ERROR"
                     ],
-                    "default": "WARNING",
-                    "description": "Minimum severity of Smithy validation events to display in the editor."
+                    "default": null,
+                    "description": "Minimum severity of Smithy validation events to display in the editor.",
+                    "deprecationMessage": "Use smithy.server.diagnostics.minimumSeverity instead."
                 },
                 "smithyLsp.onlyReloadOnSave": {
                     "scope": "window",
                     "type": "boolean",
                     "default": false,
-                    "description": "Whether to only re-load the Smithy model on save. Use this if the server feels slow as you type."
+                    "description": "Whether to only re-load the Smithy model on save. Use this if the server feels slow as you type.",
+                    "deprecationMessage": "May cause features like definition, hover, and completions to behave incorrectly when you have unsaved changes."
+                },
+                "smithy.maxNumberOfProblems": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                },
+                "smithy.trace.server": {
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "verbose",
+                    "description": "Traces the communication between VS Code and the language server."
+                },
+                "smithy.server.executable": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Executable to run the Smithy Language Server. Can be the executable name if it is on your PATH, or an absolute path to the executable."
+                },
+                "smithy.server.version": {
+                    "type": "string",
+                    "default": "0.6.0",
+                    "description": "Version of the Smithy Language Server to use. Ignored if smithy.server.executable is provided."
+                },
+                "smithy.server.diagnostics.minimumSeverity": {
+                    "type": "string",
+                    "enum": [
+                        "NOTE",
+                        "WARNING",
+                        "DANGER",
+                        "ERROR"
+                    ],
+                    "default": "WARNING",
+                    "description": "Minimum severity of Smithy validation events to display in the editor."
                 }
             }
         }
