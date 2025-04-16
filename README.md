@@ -53,6 +53,13 @@ for more details.
 
 ## Release Notes
 
+### 0.9.0 - 2025-04-16
+
+- Added setting to run the smithy-language-server using a specific executable [#106](https://github.com/smithy-lang/smithy-vscode/pull/106)
+- Changed name of settings to `smithy.*` and deprecated old settings [#106](https://github.com/smithy-lang/smithy-vscode/pull/106)
+- Added syntax highlighting for hovering on members [#107](https://github.com/smithy-lang/smithy-vscode/pull/107)
+- Updated smithy-language-server version to 0.7.0 [#108](https://github.com/smithy-lang/smithy-vscode/pull/108)
+
 ### 0.8.0 - 2025-03-10
 
 - Updated smithy-language-server version to 0.6.0 [#103](https://github.com/smithy-lang/smithy-vscode/pull/103)
