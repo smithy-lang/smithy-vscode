@@ -146,17 +146,17 @@
                         "verbose"
                     ],
                     "default": "verbose",
-                    "description": "Traces the communication between VS Code and the language server."
+                    "description": "Traces the communication between VS Code and smithy-language-server."
                 },
                 "smithy.server.executable": {
                     "type": "string",
                     "default": null,
-                    "description": "Executable to run the Smithy Language Server. Can be the executable name if it is on your PATH, or an absolute path to the executable."
+                    "description": "Executable to run smithy-language-server, instead of the one managed by the extension. Can be the executable name if it is on your PATH, or an absolute path to the executable. If `null`, the extension will download it.`"
                 },
                 "smithy.server.version": {
                     "type": "string",
                     "default": "0.7.0",
-                    "description": "Version of the Smithy Language Server to use. Ignored if smithy.server.executable is provided."
+                    "description": "Version of smithy-language-server to use. Ignored if smithy.server.executable is provided."
                 },
                 "smithy.server.diagnostics.minimumSeverity": {
                     "type": "string",
