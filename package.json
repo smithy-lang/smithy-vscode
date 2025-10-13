@@ -2,7 +2,7 @@
     "name": "smithy-vscode-extension",
     "displayName": "Smithy",
     "description": "Smithy IDL Language Extension",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "icon": "images/smithy_anvil_red.png",
     "publisher": "smithy",
     "engines": {
@@ -155,7 +155,7 @@
                 },
                 "smithy.server.version": {
                     "type": "string",
-                    "default": "0.7.0",
+                    "default": "0.8.0",
                     "description": "Version of smithy-language-server to use. Ignored if smithy.server.executable is provided."
                 },
                 "smithy.server.diagnostics.minimumSeverity": {

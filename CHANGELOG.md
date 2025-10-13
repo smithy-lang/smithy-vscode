@@ -1,5 +1,9 @@
 # Smithy VSCode Extension Changelog
 
+## 0.9.1 (2025-10-13)
+
+- Fixed bug where language server could not load [#115](https://github.com/smithy-lang/smithy-vscode/pull/114)
+
 ## 0.9.0 (2025-04-16)
 
 - Added setting to run the smithy-language-server using a specific executable [#106](https://github.com/smithy-lang/smithy-vscode/pull/106)
