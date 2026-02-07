@@ -202,7 +202,7 @@
         "typescript": "^5.2.2",
         "vscode-nls-dev": "^4.0.4",
         "vscode-tmgrammar-test": "^0.1.2",
-        "webpack": "^5.94.0",
+        "webpack": "^5.105.0",
         "webpack-cli": "^5.1.4"
     },
     "dependencies": {
