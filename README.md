@@ -47,6 +47,12 @@ Install the extension:
 npm run install-plugin
 ```
 
+Or, for [Kiro IDE][kiro]:
+
+```shell
+npm run install-plugin-kiro
+```
+
 This will overwrite any existing installation of the extension with the locally
 built one.
 
@@ -58,4 +64,5 @@ This project is licensed under the Apache-2.0 License.
 [snippets]: https://code.visualstudio.com/docs/editor/userdefinedsnippets
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=smithy.smithy-vscode-extension
 [smithy-language-server]: https://github.com/smithy-lang/smithy-language-server.git
+[kiro]: https://kiro.dev
 [vscode-settings]: https://code.visualstudio.com/docs/configure/settings
