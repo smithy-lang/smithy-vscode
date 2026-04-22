@@ -2,6 +2,8 @@
 
 Provides support for the [Smithy interface definition language][smithy].
 
+[![Open VSX](https://img.shields.io/open-vsx/v/smithy/smithy-vscode-extension)](https://open-vsx.org/extension/smithy/smithy-vscode-extension)
+
 ## Features
 
 - Syntax highlighting of `.smithy` files
