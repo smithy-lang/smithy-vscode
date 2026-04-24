@@ -155,7 +155,7 @@
                 },
                 "smithy.server.version": {
                     "type": "string",
-                    "default": "0.8.0",
+                    "default": "latest.release",
                     "description": "Version of smithy-language-server to use. Ignored if smithy.server.executable is provided."
                 },
                 "smithy.server.diagnostics.minimumSeverity": {
