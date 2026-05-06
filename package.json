@@ -68,6 +68,10 @@
             {
                 "command": "smithy.clearSelector",
                 "title": "Smithy:Selector:Clear"
+            },
+            {
+                "command": "smithy.toggleVersionPolicy",
+                "title": "Smithy: Change Language Server Version"
             }
         ],
         "menus": {
