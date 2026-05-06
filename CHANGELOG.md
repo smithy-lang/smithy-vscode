@@ -1,5 +1,10 @@
 # Smithy VSCode Extension Changelog
 
+## 0.9.2 (2026-06-08)
+
+- Added a prompt to change the language server version when a project-specific version is detected [#129](https://github.com/smithy-lang/smithy-vscode/pull/129)
+- Changed the default smithy-language-server version to resolve to the latest released version [#127](https://github.com/smithy-lang/smithy-vscode/pull/127)
+
 ## 0.9.1 (2025-10-13)
 
 - Fixed bug where language server could not load [#115](https://github.com/smithy-lang/smithy-vscode/pull/114)
