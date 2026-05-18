@@ -7,8 +7,15 @@ import SelectorHandler from './selector';
 import getCoursierExecutable from './coursier/coursier';
 
 let client: lsp.LanguageClient;
+let versionStatusBarItem: vscode.StatusBarItem;
+
+const VERSION_POLICY_PROMPTED_KEY = 'smithy.versionPolicyPrompted';
+const LATEST_RELEASE = 'latest.release';
 
 export async function activate(context: vscode.ExtensionContext) {
+    promptVersionPolicy(context);
+    createVersionStatusBarItem(context);
+
     const server = await getServer(context);
     const clientOptions = getClientOptions();
 
@@ -21,7 +28,8 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.workspace.registerTextDocumentContentProvider('smithyjar', jarFileContentsProvider),
         vscode.commands.registerCommand('smithy.runSelector', selectorHandler.run, selectorHandler),
-        vscode.commands.registerCommand('smithy.clearSelector', selectorHandler.clear, selectorHandler)
+        vscode.commands.registerCommand('smithy.clearSelector', selectorHandler.clear, selectorHandler),
+        vscode.commands.registerCommand('smithy.toggleVersionPolicy', () => toggleVersionPolicy(context))
     );
 
     // Start the client. This will also launch the server
@@ -33,6 +41,117 @@ export function deactivate(): Thenable<void> | undefined {
         return undefined;
     }
     return client.stop();
+}
+
+async function promptVersionPolicy(context: vscode.ExtensionContext): Promise<void> {
+    if (context.globalState.get<boolean>(VERSION_POLICY_PROMPTED_KEY)) {
+        return;
+    }
+
+    const useLatest = 'Use latest';
+    const pinVersion = 'Pin a version';
+    const choice = await vscode.window.showInformationMessage(
+        'The Smithy extension can automatically use the latest Smithy Language Server, or you can pin a specific version.',
+        useLatest,
+        pinVersion
+    );
+
+    await context.globalState.update(VERSION_POLICY_PROMPTED_KEY, true);
+
+    if (choice === pinVersion) {
+        await pickAndPinVersion();
+    }
+}
+
+function createVersionStatusBarItem(context: vscode.ExtensionContext): void {
+    versionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    versionStatusBarItem.command = 'smithy.toggleVersionPolicy';
+    updateVersionStatusBarItem();
+    versionStatusBarItem.show();
+    context.subscriptions.push(versionStatusBarItem);
+
+    // Update status bar when configuration changes
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration((e) => {
+            if (e.affectsConfiguration('smithy.server.version')) {
+                updateVersionStatusBarItem();
+            }
+        })
+    );
+}
+
+function updateVersionStatusBarItem(): void {
+    const version = config.getServerVersion();
+    if (version === LATEST_RELEASE) {
+        versionStatusBarItem.text = '$(check) Smithy LS (latest)';
+        versionStatusBarItem.tooltip =
+            'Smithy Language Server: using latest from Maven Central. Click to pin a version.';
+    } else {
+        versionStatusBarItem.text = '$(pin) Smithy LS v' + version;
+        versionStatusBarItem.tooltip = 'Smithy Language Server: pinned to v' + version + '. Click to switch to latest.';
+    }
+}
+
+async function fetchAvailableVersions(): Promise<string[]> {
+    const metadataUrl =
+        'https://repo1.maven.org/maven2/software/amazon/smithy/smithy-language-server/maven-metadata.xml';
+    try {
+        const response = await fetch(metadataUrl);
+        const text = await response.text();
+        const versions = [...text.matchAll(/<version>([^<]+)<\/version>/g)].map((m) => m[1]).reverse();
+        return versions;
+    } catch {
+        return [];
+    }
+}
+
+async function pickAndPinVersion(): Promise<void> {
+    const versions = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: 'Fetching available versions...' },
+        () => fetchAvailableVersions()
+    );
+
+    if (versions.length === 0) {
+        vscode.window.showErrorMessage('Could not fetch Smithy Language Server versions from Maven Central.');
+        return;
+    }
+
+    const picked = await vscode.window.showQuickPick(versions, {
+        placeHolder: 'Select a Smithy Language Server version to pin',
+    });
+
+    if (picked) {
+        await vscode.workspace
+            .getConfiguration('smithy')
+            .update('server.version', picked, vscode.ConfigurationTarget.Global);
+        const reload = await vscode.window.showInformationMessage(
+            'Smithy Language Server pinned to v' + picked + '. Reload window to apply.',
+            'Reload'
+        );
+        if (reload === 'Reload') {
+            vscode.commands.executeCommand('workbench.action.reloadWindow');
+        }
+    }
+}
+
+async function toggleVersionPolicy(context: vscode.ExtensionContext): Promise<void> {
+    const currentVersion = config.getServerVersion();
+    const isLatest = currentVersion === LATEST_RELEASE;
+
+    if (isLatest) {
+        await pickAndPinVersion();
+    } else {
+        await vscode.workspace
+            .getConfiguration('smithy')
+            .update('server.version', undefined, vscode.ConfigurationTarget.Global);
+        const reload = await vscode.window.showInformationMessage(
+            'Smithy Language Server set to use latest version. Reload window to apply.',
+            'Reload'
+        );
+        if (reload === 'Reload') {
+            vscode.commands.executeCommand('workbench.action.reloadWindow');
+        }
+    }
 }
 
 function getClientOptions(): lsp.LanguageClientOptions {
