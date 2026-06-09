@@ -3,6 +3,8 @@
 Provides support for the [Smithy interface definition language][smithy].
 
 [![Open VSX](https://img.shields.io/open-vsx/v/smithy/smithy-vscode-extension)](https://open-vsx.org/extension/smithy/smithy-vscode-extension)
+[![Install on VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=smithy.smithy-vscode-extension)
+[![Install in Kiro](https://img.shields.io/badge/Install-Kiro-9046FF?style=flat-square&logo=kiro&logoColor=white)](https://open-vsx.org/extension/smithy/smithy-vscode-extension)
 
 ## Features
 
