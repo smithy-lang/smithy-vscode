@@ -16,9 +16,16 @@ export default function downloadCoursierIfRequired(extensionPath: string, versio
     }
 
     const urls = {
-        darwin: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-apple-darwin`,
-        linux: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-pc-linux`,
-        win32: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-pc-win32.exe`,
+        darwin: {
+            default: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-apple-darwin`,
+        },
+        linux: {
+            arm64: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-aarch64-pc-linux`,
+            default: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-pc-linux`,
+        },
+        win32: {
+            default: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-pc-win32.exe`,
+        },
     };
     const targets = {
         darwin: binPath('coursier'),
@@ -27,8 +34,9 @@ export default function downloadCoursierIfRequired(extensionPath: string, versio
     };
 
     const targetFile = targets[process.platform];
+    const downloadUrl = urls[process.platform]?.[process.arch] ?? urls[process.platform].default;
     return validBinFileExists(targetFile).then((valid) => {
-        return valid ? targetFile : createDir().then(() => downloadFile(urls[process.platform], targetFile));
+        return valid ? targetFile : createDir().then(() => downloadFile(downloadUrl, targetFile));
     });
 }
 
