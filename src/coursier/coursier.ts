@@ -10,7 +10,7 @@ export default async function getCoursierExecutable(context: vscode.ExtensionCon
     }
 
     console.log('Coursier not found on path, downloading it instead.');
-    return await downloadCoursierIfRequired(context.globalStoragePath, 'v2.0.6');
+    return await downloadCoursierIfRequired(context.globalStoragePath, 'v2.0.10');
 }
 
 function availableOnPath(command: string, args: string[]): Promise<boolean> {
