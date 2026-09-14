@@ -8,6 +8,8 @@ string Foo
 apply Foo @mixin
 // <-----        keyword.statement.smithy
 //    ^^^        entity.name.type.smithy
+//       ^       meta.keyword.statement.apply.smithy
+//       ^       - invalid.illegal.apply.smithy
 //        ^      punctuation.definition.annotation.smithy
 //         ^^^^^ storage.type.annotation.smithy
 
