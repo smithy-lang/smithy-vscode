@@ -72,7 +72,7 @@ function downloadFile(url: string, targetFile: string): Promise<string> {
                 resolve(targetFile);
             });
 
-            file.on('error', (err: { code: string | undefined }) => {
+            file.on('error', (err: NodeJS.ErrnoException) => {
                 if (file) {
                     file.close();
                     fs.unlink(targetFile, () => {}); // Delete temp file

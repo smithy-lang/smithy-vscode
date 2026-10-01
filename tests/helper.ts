@@ -1,7 +1,12 @@
 import { TextDocument, TextEditor, Uri } from 'vscode';
 import { resolve } from 'path';
 import { glob } from 'glob';
-import * as Mocha from 'mocha';
+import * as mochaModule from 'mocha';
+
+// mocha 12 is ESM-only, so the shape `require('mocha')` returns depends on the Node.js version of the
+// extension host: the module namespace on Node.js 22 (VS Code 1.114) and the Mocha class itself on
+// Node.js 24. The named `Mocha` export is present in both.
+const { Mocha } = mochaModule as unknown as { Mocha: typeof mochaModule };
 
 export let doc: TextDocument;
 export let editor: TextEditor;
