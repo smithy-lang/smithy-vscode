@@ -11,7 +11,7 @@
         },
         {
             "name": "meta.keyword.statement.control.smithy",
-            "begin": "^(\\$)([A-Za-z_][A-Za-z0-9_]*)(:)\\s*",
+            "begin": "^(\\$)(\"(?:[^\"\\\\]|\\\\.)*\"|[A-Za-z_][A-Za-z0-9_]*)[ \\t]*(:)[ \\t]*",
             "end": "\\n",
             "beginCaptures": {
                 "1": {
@@ -29,7 +29,7 @@
                     "include": "#value"
                 },
                 {
-                    "match": "[^\\n]",
+                    "match": "[^\\s,]",
                     "name": "invalid.illegal.control.smithy"
                 }
             ]
@@ -73,7 +73,7 @@
                     "include": "#comment"
                 },
                 {
-                    "match": "[^\\n]",
+                    "match": "[^\\s,]",
                     "name": "invalid.illegal.namespace.smithy"
                 }
             ]
@@ -96,7 +96,7 @@
                     "include": "#comment"
                 },
                 {
-                    "match": "[^\\n]",
+                    "match": "[^\\s,]",
                     "name": "invalid.illegal.use.smithy"
                 }
             ]
@@ -106,113 +106,136 @@
         },
         {
             "name": "meta.keyword.statement.shape.smithy",
-            "begin": "^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|union|service|operation|resource|enum|intEnum)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+(with)\\s+(\\[)",
+            "comment": "Simple shapes have no body. The statement still spans any mixin list, which may continue onto later lines.",
+            "begin": "(?:^|(?<=[\\s)]))(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document)\\s+([A-Za-z_][A-Za-z0-9_]*)",
             "beginCaptures": {
                 "1": {
                     "name": "keyword.statement.smithy"
                 },
                 "2": {
                     "name": "entity.name.type.smithy"
-                },
-                "3": {
-                    "name": "keyword.statement.with.smithy"
-                },
-                "4": {
-                    "name": "punctuation.definition.array.begin.smithy"
                 }
             },
-            "end": "\\]",
-            "endCaptures": {
-                "0": {
-                    "name": "punctuation.definition.array.end.smithy"
-                }
-            },
+            "end": "(?<=\\])|(?=^[ \\t]*(?!with\\b|\\[|$)\\S)",
             "patterns": [
                 {
-                    "include": "#shapeid",
-                    "name": "entity.name.type.smithy"
-                },
-                {
-                    "include": "#comment"
-                },
-                {
-                    "match": ",",
-                    "name": "punctuation.separator.array.smithy"
+                    "include": "#shape_header"
                 }
             ]
         },
         {
             "name": "meta.keyword.statement.shape.smithy",
-            "match": "^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|union|service|operation|resource|enum|intEnum)\\s+([A-Za-z_][A-Za-z0-9_]*)",
-            "captures": {
-                "1": {
-                    "name": "keyword.statement.smithy"
-                },
-                "2": {
-                    "name": "entity.name.type.smithy"
-                }
-            }
-        },
-        {
-            "name": "meta.keyword.statement.shape.smithy",
-            "begin": "^(structure)\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+(for)\\s+([0-9a-zA-Z_\\.#]+))?\\s+(with)\\s+(\\[)",
+            "comment": "Aggregate shapes hold shape members, so their body is scoped as members and a brace or bracket on a member target is an inline collection. The body is owned here rather than by the generic brace rule so that the shape's type decides how the body is read.",
+            "begin": "(?:^|(?<=[\\s)]))(list|set|map|structure|union)\\s+([A-Za-z_][A-Za-z0-9_]*)",
             "beginCaptures": {
                 "1": {
                     "name": "keyword.statement.smithy"
                 },
                 "2": {
                     "name": "entity.name.type.smithy"
-                },
-                "3": {
-                    "name": "keyword.statement.for-resource.smithy"
-                },
-                "4": {
-                    "name": "entity.name.type.smithy"
-                },
-                "5": {
-                    "name": "keyword.statement.with.smithy"
-                },
-                "6": {
-                    "name": "punctuation.definition.array.begin.smithy"
                 }
             },
-            "end": "\\]",
-            "endCaptures": {
-                "0": {
-                    "name": "punctuation.definition.array.end.smithy"
-                }
-            },
+            "end": "(?<=\\})|(?=^[ \\t]*(?!with\\b|//|\\{|$)\\S)",
             "patterns": [
                 {
-                    "include": "#shapeid",
-                    "name": "entity.name.type.smithy"
+                    "include": "#shape_header"
                 },
                 {
-                    "include": "#comment"
-                },
-                {
-                    "match": ",",
-                    "name": "punctuation.separator.array.smithy"
+                    "begin": "\\{",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.dictionary.begin.smithy"
+                        }
+                    },
+                    "end": "\\}|(?=^(?:apply|byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|enum|intEnum|service|resource|operation)[ \\t]+[A-Za-z_])",
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.dictionary.end.smithy"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#member_body"
+                        }
+                    ]
                 }
             ]
         },
         {
             "name": "meta.keyword.statement.shape.smithy",
-            "match": "^(structure)\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+(for)\\s+([0-9a-zA-Z_\\.#]+))?",
-            "captures": {
+            "comment": "Enum members are bare identifiers with an optional value assignment. They have no target, so nothing in an enum body can be an inline collection or carry a member index.",
+            "begin": "(?:^|(?<=[\\s)]))(enum|intEnum)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+            "beginCaptures": {
                 "1": {
                     "name": "keyword.statement.smithy"
                 },
                 "2": {
                     "name": "entity.name.type.smithy"
+                }
+            },
+            "end": "(?<=\\})|(?=^[ \\t]*(?!with\\b|//|\\{|$)\\S)",
+            "patterns": [
+                {
+                    "include": "#shape_header"
                 },
-                "3": {
-                    "name": "keyword.statement.for-resource.smithy"
+                {
+                    "begin": "\\{",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.dictionary.begin.smithy"
+                        }
+                    },
+                    "end": "\\}|(?=^(?:apply|byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|enum|intEnum|service|resource|operation)[ \\t]+[A-Za-z_])",
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.dictionary.end.smithy"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#enum_body"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "meta.keyword.statement.shape.smithy",
+            "comment": "Service, resource and operation bodies are node objects whose keys are property names, so a brace or bracket here is a node value. This is what keeps `identifiers: { sprocketId: String }` and `operations: [GetThing]` from reading as inline collections.",
+            "begin": "(?:^|(?<=[\\s)]))(service|resource|operation)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+            "beginCaptures": {
+                "1": {
+                    "name": "keyword.statement.smithy"
                 },
-                "4": {
+                "2": {
                     "name": "entity.name.type.smithy"
                 }
-            }
+            },
+            "end": "(?<=\\})|(?=^[ \\t]*(?!with\\b|//|\\{|$)\\S)",
+            "patterns": [
+                {
+                    "include": "#shape_header"
+                },
+                {
+                    "begin": "\\{",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.dictionary.begin.smithy"
+                        }
+                    },
+                    "end": "\\}|(?=^(?:apply|byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|enum|intEnum|service|resource|operation)[ \\t]+[A-Za-z_])",
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.dictionary.end.smithy"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#node_body"
+                        }
+                    ]
+                }
+            ]
         },
         {
             "begin": "\\{",
@@ -221,7 +244,7 @@
                     "name": "punctuation.definition.dictionary.begin.smithy"
                 }
             },
-            "end": "\\}",
+            "end": "\\}|(?=^(?:apply|byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|enum|intEnum|service|resource|operation)[ \\t]+[A-Za-z_])",
             "endCaptures": {
                 "0": {
                     "name": "punctuation.definition.dictionary.end.smithy"
@@ -229,7 +252,7 @@
             },
             "patterns": [
                 {
-                    "include": "#shape_inner"
+                    "include": "#member_body"
                 }
             ]
         },
@@ -282,26 +305,32 @@
                     "include": "#comment"
                 },
                 {
-                    "match": "[^\\n]",
+                    "match": "[^\\s,]",
                     "name": "invalid.illegal.apply.smithy"
                 }
             ]
         },
         {
             "name": "meta.keyword.statement.member.smithy",
-            "begin": "^([A-Za-z_][A-Za-z0-9_]*)(:)\\s*",
+            "begin": "^(?:([1-9][0-9]*)(\\.)[ \\t]+)?([A-Za-z_][A-Za-z0-9_]*)(:)\\s*",
             "end": "\\n",
             "beginCaptures": {
                 "1": {
-                    "name": "support.type.property-name.smithy"
+                    "name": "constant.numeric.member-index.smithy"
                 },
                 "2": {
+                    "name": "punctuation.separator.member-index.smithy"
+                },
+                "3": {
+                    "name": "support.type.property-name.smithy"
+                },
+                "4": {
                     "name": "punctuation.separator.dictionary.pair.smithy"
                 }
             },
             "patterns": [
                 {
-                    "include": "#shapeid"
+                    "include": "#member_target"
                 },
                 {
                     "include": "#comment"
@@ -311,22 +340,24 @@
     ],
     "repository": {
         "with_statement": {
-            "begin": "(with)\\s+(\\[)",
+            "comment": "Mixins. The ABNF allows WS between `with` and `[`, which includes newlines and comments, so the bracket cannot live in the begin pattern.",
+            "begin": "\\b(with)\\b",
             "beginCaptures": {
                 "1": {
                     "name": "keyword.statement.with.smithy"
-                },
-                "2": {
-                    "name": "punctuation.definition.array.begin.smithy"
                 }
             },
-            "end": "\\]",
+            "end": "\\]|(?=^[^\\s])",
             "endCaptures": {
                 "0": {
                     "name": "punctuation.definition.array.end.smithy"
                 }
             },
             "patterns": [
+                {
+                    "match": "\\[",
+                    "name": "punctuation.definition.array.begin.smithy"
+                },
                 {
                     "match": ",",
                     "name": "punctuation.separator.array.smithy"
@@ -361,7 +392,7 @@
             "patterns": [
                 {
                     "name": "meta.keyword.statement.trait.smithy",
-                    "begin": "(@)([0-9a-zA-Z_\\.#]+)(\\()",
+                    "begin": "(@)([A-Za-z_][A-Za-z0-9_]*(?:[.#][A-Za-z_][A-Za-z0-9_]*)*)(\\()",
                     "beginCaptures": {
                         "1": {
                             "name": "punctuation.definition.annotation.smithy"
@@ -390,7 +421,7 @@
                 },
                 {
                     "name": "meta.keyword.statement.trait.smithy",
-                    "match": "(@)([0-9a-zA-Z_\\.#]+)",
+                    "match": "(@)([A-Za-z_][A-Za-z0-9_]*(?:[.#][A-Za-z_][A-Za-z0-9_]*)*)",
                     "captures": {
                         "1": {
                             "name": "punctuation.definition.annotation.smithy"
@@ -506,23 +537,274 @@
                 }
             ]
         },
-        "shape_inner": {
+        "shape_header": {
+            "comment": "What may sit between a shape name and its body: a resource to project from, a mixin list, and comments. A mixin list can span lines, which is why the body is reached through here rather than from the shape's begin pattern.",
             "patterns": [
                 {
-                    "include": "#trait"
-                },
-                {
-                    "match": ":=",
-                    "name": "punctuation.separator.dictionary.inline-struct.smithy"
+                    "include": "#for_resource"
                 },
                 {
                     "include": "#with_statement"
                 },
                 {
+                    "include": "#comment"
+                }
+            ]
+        },
+        "for_resource": {
+            "match": "\\b(for)\\s+([A-Za-z_][A-Za-z0-9_]*(?:[.#][A-Za-z_][A-Za-z0-9_]*)*)",
+            "captures": {
+                "1": {
+                    "name": "keyword.statement.for-resource.smithy"
+                },
+                "2": {
+                    "name": "entity.name.type.smithy"
+                }
+            }
+        },
+        "member_body": {
+            "comment": "The inside of an aggregate shape body: shape members, whose targets may be inline collections. Reached only from a shape that actually holds members, so no member name needs to be treated specially.",
+            "patterns": [
+                {
+                    "include": "#trait"
+                },
+                {
+                    "include": "#member_index"
+                },
+                {
                     "include": "#elided_target"
                 },
                 {
+                    "include": "#inline_list_member"
+                },
+                {
+                    "include": "#inline_map_member"
+                },
+                {
                     "include": "#object_inner"
+                }
+            ]
+        },
+        "enum_body": {
+            "patterns": [
+                {
+                    "include": "#trait"
+                },
+                {
+                    "include": "#object_inner"
+                }
+            ]
+        },
+        "node_body": {
+            "comment": "The inside of a service, resource or operation body. Inline operation input and output are the one place a member block can appear here, so they are routed through inline_structure.",
+            "patterns": [
+                {
+                    "include": "#trait"
+                },
+                {
+                    "include": "#inline_structure"
+                },
+                {
+                    "include": "#object_inner"
+                }
+            ]
+        },
+        "inline_structure": {
+            "comment": "The body of an inline operation input or output holds real shape members, not a node object, so it is routed through member_body to pick up member indexes, inline collection targets and target elision. Traits, `for` and mixins may sit between the `:=` and the brace.",
+            "begin": "(:=)",
+            "beginCaptures": {
+                "1": {
+                    "name": "punctuation.separator.dictionary.inline-struct.smithy"
+                }
+            },
+            "end": "(?<=\\})|(?=^(?!\\s|\\{|//))",
+            "patterns": [
+                {
+                    "include": "#trait"
+                },
+                {
+                    "include": "#for_resource"
+                },
+                {
+                    "include": "#with_statement"
+                },
+                {
+                    "include": "#comment"
+                },
+                {
+                    "begin": "\\{",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.dictionary.begin.smithy"
+                        }
+                    },
+                    "end": "\\}|(?=^(?:apply|byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|structure|union|enum|intEnum|service|resource|operation)[ \\t]+[A-Za-z_])",
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.dictionary.end.smithy"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#member_body"
+                        }
+                    ]
+                }
+            ]
+        },
+        "member_index": {
+            "comment": "IDL 2.1 shorthand for the idx trait. The digits must not be preceded by a sign or by other number or shape id characters, and the dot must be followed by at least one space or tab, so `1.0`, `v1.2` and `+1.` are left to the number and shape id rules.",
+            "match": "(?<![-+0-9A-Za-z_.$#])([1-9][0-9]*)(\\.)(?=[ \\t])",
+            "captures": {
+                "1": {
+                    "name": "constant.numeric.member-index.smithy"
+                },
+                "2": {
+                    "name": "punctuation.separator.member-index.smithy"
+                }
+            }
+        },
+        "inline_list_member": {
+            "comment": "A member whose target is an IDL 2.1 inline list, such as `tags: [String]`.",
+            "name": "meta.structure.inline-list.smithy",
+            "begin": "([A-Za-z_][A-Za-z0-9_]*)[ \\t]*(:)[ \\t]*(\\[)",
+            "beginCaptures": {
+                "1": {
+                    "name": "support.type.property-name.smithy"
+                },
+                "2": {
+                    "name": "punctuation.separator.dictionary.key-value.smithy"
+                },
+                "3": {
+                    "name": "punctuation.definition.array.begin.smithy"
+                }
+            },
+            "end": "\\]|(?=^[^\\s])",
+            "endCaptures": {
+                "0": {
+                    "name": "punctuation.definition.array.end.smithy"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#inline_list_inner"
+                }
+            ]
+        },
+        "inline_map_member": {
+            "comment": "A member whose target is an IDL 2.1 inline map, such as `tags: {String: String}`. The key and value are shape references, not property names, which is why this cannot be the node object rule.",
+            "name": "meta.structure.inline-map.smithy",
+            "begin": "([A-Za-z_][A-Za-z0-9_]*)[ \\t]*(:)[ \\t]*(\\{)",
+            "beginCaptures": {
+                "1": {
+                    "name": "support.type.property-name.smithy"
+                },
+                "2": {
+                    "name": "punctuation.separator.dictionary.key-value.smithy"
+                },
+                "3": {
+                    "name": "punctuation.definition.dictionary.begin.smithy"
+                }
+            },
+            "end": "\\}|(?=^[^\\s])",
+            "endCaptures": {
+                "0": {
+                    "name": "punctuation.definition.dictionary.end.smithy"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#inline_map_inner"
+                }
+            ]
+        },
+        "member_target": {
+            "patterns": [
+                {
+                    "include": "#inline_list_target"
+                },
+                {
+                    "include": "#inline_map_target"
+                },
+                {
+                    "include": "#comment"
+                },
+                {
+                    "include": "#shapeid"
+                }
+            ]
+        },
+        "inline_list_target": {
+            "name": "meta.structure.inline-list.smithy",
+            "begin": "\\[",
+            "beginCaptures": {
+                "0": {
+                    "name": "punctuation.definition.array.begin.smithy"
+                }
+            },
+            "end": "\\]|(?=^[^\\s])",
+            "endCaptures": {
+                "0": {
+                    "name": "punctuation.definition.array.end.smithy"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#inline_list_inner"
+                }
+            ]
+        },
+        "inline_map_target": {
+            "name": "meta.structure.inline-map.smithy",
+            "begin": "\\{",
+            "beginCaptures": {
+                "0": {
+                    "name": "punctuation.definition.dictionary.begin.smithy"
+                }
+            },
+            "end": "\\}|(?=^[^\\s])",
+            "endCaptures": {
+                "0": {
+                    "name": "punctuation.definition.dictionary.end.smithy"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#inline_map_inner"
+                }
+            ]
+        },
+        "inline_list_inner": {
+            "patterns": [
+                {
+                    "include": "#member_target"
+                },
+                {
+                    "match": ",",
+                    "name": "punctuation.separator.array.smithy"
+                },
+                {
+                    "match": "[^\\s\\]]",
+                    "name": "invalid.illegal.inline-list.smithy"
+                }
+            ]
+        },
+        "inline_map_inner": {
+            "patterns": [
+                {
+                    "match": ":",
+                    "name": "punctuation.separator.dictionary.key-value.smithy"
+                },
+                {
+                    "include": "#member_target"
+                },
+                {
+                    "match": ",",
+                    "name": "punctuation.separator.dictionary.pair.smithy"
+                },
+                {
+                    "match": "[^\\s\\}]",
+                    "name": "invalid.illegal.inline-map.smithy"
                 }
             ]
         },
@@ -538,7 +820,7 @@
         },
         "identifier_key": {
             "name": "support.type.property-name.smithy",
-            "match": "[A-Za-z0-9_\\.#$]+(?=\\s*:)"
+            "match": "(?<![A-Za-z0-9_.#$])[A-Za-z_][A-Za-z0-9_]*(?:[.#$][A-Za-z_][A-Za-z0-9_]*)*(?=\\s*:)"
         },
         "dquote_key": {
             "name": "support.type.property-name.smithy",
@@ -547,6 +829,9 @@
         "string": {
             "patterns": [
                 {
+                    "include": "#tagged_literal"
+                },
+                {
                     "include": "#textblock"
                 },
                 {
@@ -554,6 +839,71 @@
                 },
                 {
                     "include": "#shapeid"
+                }
+            ]
+        },
+        "tagged_literal": {
+            "comment": "IDL 2.1 tagged string literals. The tag set is closed to re, b, hex and timestamp, and a quote must follow the tag, which is what keeps shape ids such as `com.example#b` from being mistaken for one. The bodies are raw, so the only backslash the lexer acts on is the one protecting a quote; every other backslash pair is consumed without being marked an escape, which keeps regex atoms like \\d plain.",
+            "patterns": [
+                {
+                    "name": "string.quoted.double.raw.smithy",
+                    "begin": "(#)(timestamp|hex|re|b)(?![A-Za-z0-9_])[ \\t]*(\"\"\")",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.definition.tag.smithy"
+                        },
+                        "2": {
+                            "name": "storage.type.tag.smithy"
+                        },
+                        "3": {
+                            "name": "punctuation.definition.string.begin.smithy"
+                        }
+                    },
+                    "end": "\"\"\"",
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.string.end.smithy"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "match": "\\\\\"",
+                            "name": "constant.character.escape.smithy"
+                        },
+                        {
+                            "match": "\\\\."
+                        }
+                    ]
+                },
+                {
+                    "name": "string.quoted.double.raw.smithy",
+                    "begin": "(#)(timestamp|hex|re|b)(?![A-Za-z0-9_])[ \\t]*(\")",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.definition.tag.smithy"
+                        },
+                        "2": {
+                            "name": "storage.type.tag.smithy"
+                        },
+                        "3": {
+                            "name": "punctuation.definition.string.begin.smithy"
+                        }
+                    },
+                    "end": "\"",
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.string.end.smithy"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "match": "\\\\\"",
+                            "name": "constant.character.escape.smithy"
+                        },
+                        {
+                            "match": "\\\\."
+                        }
+                    ]
                 }
             ]
         },
@@ -573,8 +923,16 @@
             },
             "patterns": [
                 {
-                    "match": "\\\\.",
+                    "match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4})",
                     "name": "constant.character.escape.smithy"
+                },
+                {
+                    "match": "\\\\$",
+                    "name": "constant.character.escape.smithy"
+                },
+                {
+                    "match": "\\\\.",
+                    "name": "invalid.illegal.escape.smithy"
                 }
             ]
         },
@@ -594,14 +952,18 @@
             },
             "patterns": [
                 {
-                    "match": "\\\\.",
+                    "match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4})",
                     "name": "constant.character.escape.smithy"
+                },
+                {
+                    "match": "\\\\$",
+                    "name": "constant.character.escape.smithy"
+                },
+                {
+                    "match": "\\\\.",
+                    "name": "invalid.illegal.escape.smithy"
                 }
             ]
-        },
-        "identifier": {
-            "name": "entity.name.type.smithy",
-            "match": "[A-Za-z_][A-Za-z0-9_]*"
         },
         "shapeid": {
             "name": "entity.name.type.smithy",
