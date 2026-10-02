@@ -1,10 +1,9 @@
+import { suite, test } from 'node:test';
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { getDocUri, waitForServerStartup } from './../helper';
 
 suite('broken model tests', function () {
-    this.timeout(0);
-
     test('Should provide diagnostics', async () => {
         const smithyMainUri = getDocUri('suite2/main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);

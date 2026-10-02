@@ -1,10 +1,9 @@
+import { suite, test } from 'node:test';
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { getDocUri, waitForServerStartup } from '../helper';
 
 suite('formatting tests', function () {
-    this.timeout(0);
-
     test('Should register Smithy formatter', async () => {
         const smithyMainUri = getDocUri('suite5/smithy/main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
