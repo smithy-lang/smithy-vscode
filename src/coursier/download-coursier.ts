@@ -1,8 +1,9 @@
 import * as path from 'path';
-import { https } from 'follow-redirects';
-import { IncomingMessage } from 'http';
 import * as fs from 'fs';
 import { access, mkdir } from 'fs/promises';
+import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
+import type { ReadableStream } from 'stream/web';
 
 export default function downloadCoursierIfRequired(extensionPath: string, versionPath: string): Promise<string> {
     function binPath(filename: string) {
@@ -46,49 +47,30 @@ function validBinFileExists(file: string): Promise<boolean> {
         .catch(() => false);
 }
 
-function downloadFile(url: string, targetFile: string): Promise<string> {
-    function promiseGet(url: string): Promise<IncomingMessage> {
-        return new Promise((resolve, reject) => {
-            https.get(url, (response) => {
-                if (response.statusCode === 200) {
-                    resolve(response);
-                } else {
-                    reject(new Error(`Server responded with ${response.statusCode}: ${response.statusMessage}`));
-                }
-            });
-        });
+async function downloadFile(url: string, targetFile: string): Promise<string> {
+    // fetch follows redirects by default, which GitHub release asset URLs rely on.
+    const response = await fetch(url);
+    if (response.status !== 200 || !response.body) {
+        await response.body?.cancel();
+        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
     }
 
-    function writeToDisk(response: IncomingMessage): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const file = fs.createWriteStream(targetFile, {
-                flags: 'wx',
-                mode: 0o755,
-            });
-            response.pipe(file);
-
-            file.on('finish', () => {
-                console.log(`Finished downloaded file at ${targetFile}`);
-                resolve(targetFile);
-            });
-
-            file.on('error', (err: NodeJS.ErrnoException) => {
-                if (file) {
-                    file.close();
-                    fs.unlink(targetFile, () => {}); // Delete temp file
-                }
-
-                if (err.code === 'EEXIST') {
-                    console.log(`File already exists at ${targetFile}`);
-                    resolve(targetFile);
-                } else {
-                    console.error(`File error while downloading file at ${targetFile}`);
-                    console.error(err);
-                    reject(err);
-                }
-            });
-        });
+    try {
+        await pipeline(
+            Readable.fromWeb(response.body as ReadableStream<Uint8Array>),
+            fs.createWriteStream(targetFile, { flags: 'wx', mode: 0o755 })
+        );
+    } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+            console.log(`File already exists at ${targetFile}`);
+            return targetFile;
+        }
+        fs.unlink(targetFile, () => {}); // Delete partially written file
+        console.error(`File error while downloading file at ${targetFile}`);
+        console.error(err);
+        throw err;
     }
-    // adapted from https://stackoverflow.com/a/45007624
-    return promiseGet(url).then((resp) => writeToDisk(resp));
+
+    console.log(`Finished downloaded file at ${targetFile}`);
+    return targetFile;
 }
