@@ -3,6 +3,7 @@
 ## next
 
 - Switched the extension bundler from webpack to rolldown [#160](https://github.com/smithy-lang/smithy-vscode/pull/160)
+- Fixed the Coursier download hanging on network errors, and deleting an existing Coursier download when another window tried to download it [#156](https://github.com/smithy-lang/smithy-vscode/pull/156)
 
 ## 0.10.0 (2026-10-05)
 
