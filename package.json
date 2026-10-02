@@ -6,7 +6,7 @@
     "icon": "images/smithy_anvil_red.png",
     "publisher": "smithy",
     "engines": {
-        "vscode": "^1.84.1"
+        "vscode": "^1.114.0"
     },
     "repository": {
         "type": "git",
@@ -193,9 +193,9 @@
         "@types/follow-redirects": "^1.14.4",
         "@types/glob": "^8.1.0",
         "@types/mocha": "^10.0.4",
-        "@types/node": "^18.18.9",
+        "@types/node": "^22.20.4",
         "@types/sinon": "^10.0.20",
-        "@types/vscode": "^1.84.1",
+        "@types/vscode": "1.110.0",
         "@vscode/test-electron": "^2.4.0",
         "@vscode/vsce": "^3.9.2",
         "glob": "^9.3.5",

@@ -1,5 +1,9 @@
 # Smithy VSCode Extension Changelog
 
+## Unreleased
+
+- Raised the minimum supported VS Code version from 1.84.1 to 1.114.0
+
 ## 0.9.2 (2026-06-08)
 
 - Added a prompt to change the language server version when a project-specific version is detected [#129](https://github.com/smithy-lang/smithy-vscode/pull/129)

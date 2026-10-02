@@ -12,9 +12,13 @@ import * as assert from 'assert';
 async function go() {
     try {
         const extensionDevelopmentPath = resolve(__dirname, '../../');
+        // VS Code version to test against, such as `1.114.0`. Defaults to the latest Stable release.
+        const version = process.env.VSCODE_TEST_VERSION || 'stable';
+        console.log(`Running extension tests against VS Code ${version}`);
 
         // Suite 1 - Extension registration and launching language server
         await runTests({
+            version,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, './suite1'),
             launchArgs: [resolve(__dirname, '../../test-fixtures/suite1')],
@@ -22,6 +26,7 @@ async function go() {
 
         // Suite 2 - Diagnostics from broken model
         await runTests({
+            version,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, './suite2'),
             launchArgs: [resolve(__dirname, '../../test-fixtures/suite2')],
@@ -29,6 +34,7 @@ async function go() {
 
         // Suite 3 - Selector commands
         await runTests({
+            version,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, './suite3'),
             launchArgs: [resolve(__dirname, '../../test-fixtures/suite3')],
@@ -36,6 +42,7 @@ async function go() {
 
         // Suite 4 - User-specific root
         await runTests({
+            version,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, './suite4'),
             launchArgs: [resolve(__dirname, '../../test-fixtures/suite4')],
@@ -43,6 +50,7 @@ async function go() {
 
         // Suite 5 - Formatter
         await runTests({
+            version,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, './suite5'),
             launchArgs: [resolve(__dirname, '../../test-fixtures/suite5')],
@@ -50,13 +58,14 @@ async function go() {
 
         // Suite 6 - Startup
         await runTests({
+            version,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, './suite6'),
             launchArgs: [resolve(__dirname, '../../test-fixtures/suite6')],
         });
 
         // Confirm that webpacked and vsce packaged extension can be installed.
-        const vscodeExecutablePath = await downloadAndUnzipVSCode();
+        const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
         const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
 
         const result = spawnSync(cli, [...args, '--install-extension', 'smithy-vscode.vsix', '--force'], {
