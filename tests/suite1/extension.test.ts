@@ -1,10 +1,9 @@
+import { suite, test } from 'node:test';
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { getDocUri, waitForServerStartup } from './../helper';
 
 suite('Extension tests', function () {
-    this.timeout(0);
-
     test('Should start extension and Language Server', async () => {
         const smithyMainUri = getDocUri('suite1/main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
