@@ -1,0 +1,160 @@
+# Publishes the extension to Open VSX with trusted publishing.
+#
+# The filename and the `release` environment are registered as a trusted publisher on Open VSX.
+# Renaming either breaks publishing until the registration is recreated.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Full SHA of the version bump commit on main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      vsix: ${{ steps.package.outputs.vsix }}
+    steps:
+      - name: Require dispatch from main
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Release must be dispatched from refs/heads/main, got $REF"
+            exit 1
+          fi
+
+      - name: Validate commit input
+        env:
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          if ! [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::commit must be a full 40-character lowercase SHA, got '$COMMIT'"
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out commit if it is on main
+        env:
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          if ! git merge-base --is-ancestor "$COMMIT" origin/main; then
+            echo "::error::$COMMIT is not an ancestor of origin/main"
+            exit 1
+          fi
+          git checkout --detach "$COMMIT"
+
+      - name: Read version and require it to be unreleased
+        id: version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
+            echo "::error::Tag $VERSION already exists"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: xvfb-run -a npm test
+
+      - name: Package extension
+        id: package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          VSIX="smithy-vscode-extension-$VERSION.vsix"
+          npx --no-install vsce package --out "$VSIX"
+          echo "vsix=$VSIX" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vsix
+          path: ${{ steps.package.outputs.vsix }}
+          if-no-files-found: error
+
+  publish-open-vsx:
+    name: Publish to Open VSX
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: release
+      url: https://open-vsx.org/extension/smithy/smithy-vscode-extension/${{ needs.build.outputs.version }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      VSIX: ${{ needs.build.outputs.vsix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      # Only ovsx is needed here. Skip install scripts in the job that can mint a publishing token.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: vsix
+
+      - name: Publish
+        run: npx --no-install ovsx publish --packagePath "$VSIX" --trusted-publishing --skip-duplicate
+
+      - name: Wait for version on Open VSX
+        run: |
+          URL="https://open-vsx.org/api/smithy/smithy-vscode-extension/$VERSION"
+          for _ in $(seq 1 40); do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$URL")
+            if [ "$STATUS" = "200" ]; then
+              echo "$URL returned 200"
+              exit 0
+            fi
+            echo "$URL returned $STATUS, retrying in 15 seconds"
+            sleep 15
+          done
+          echo "::error::$VERSION did not appear on Open VSX within 10 minutes"
+          exit 1
+
+      - name: Write job summary
+        env:
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          {
+            echo "## Released $VERSION to Open VSX"
+            echo
+            echo "- Version: \`$VERSION\`"
+            echo "- Commit: [\`$COMMIT\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$COMMIT)"
+            echo "- Open VSX: https://open-vsx.org/extension/smithy/smithy-vscode-extension/$VERSION"
+          } >> "$GITHUB_STEP_SUMMARY"
