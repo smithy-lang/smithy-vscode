@@ -1,5 +1,9 @@
 # Smithy VSCode Extension Changelog
 
+## next
+
+- Switched the extension bundler from webpack to rolldown [#160](https://github.com/smithy-lang/smithy-vscode/pull/160)
+
 ## 0.10.0 (2026-10-05)
 
 - Raised the minimum supported VS Code version from 1.84.1 to 1.114.0 [#155](https://github.com/smithy-lang/smithy-vscode/pull/155)
