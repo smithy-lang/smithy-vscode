@@ -282,6 +282,9 @@
                     "include": "#comment"
                 },
                 {
+                    "match": "\\s+"
+                },
+                {
                     "match": "[^\\n]",
                     "name": "invalid.illegal.apply.smithy"
                 }
