@@ -205,14 +205,12 @@
         "sinon": "^15.2.0",
         "ts-loader": "^9.5.0",
         "typescript": "^5.2.2",
-        "vscode-nls-dev": "^4.0.4",
         "vscode-tmgrammar-test": "^0.1.2",
         "webpack": "^5.106.1",
         "webpack-cli": "^5.1.4"
     },
     "dependencies": {
         "follow-redirects": "^1.16.0",
-        "vscode-languageclient": "^8.1.0",
-        "vscode-nls": "^5.2.0"
+        "vscode-languageclient": "^8.1.0"
     }
 }
