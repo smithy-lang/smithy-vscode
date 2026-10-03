@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests metadata statments"
+// SYNTAX TEST v1 "source.smithy" "This tests metadata statments"
 $version: "2.0"
 
 metadata foo = "bar"

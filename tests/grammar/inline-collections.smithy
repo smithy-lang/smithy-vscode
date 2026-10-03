@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests IDL 2.1 inline collection declarations"
+// SYNTAX TEST v1 "source.smithy" "This tests IDL 2.1 inline collection declarations"
 $version: "2.1"
 
 namespace com.example

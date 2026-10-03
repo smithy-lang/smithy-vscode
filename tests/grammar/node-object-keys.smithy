@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests node object keys"
+// SYNTAX TEST v1 "source.smithy" "This tests node object keys"
 //
 // An unquoted key must be an identifier, so the last two keys are deliberately invalid.
 $version: "2.1"
@@ -36,13 +36,13 @@ structure Keys {
 //                    ^                     keyword.operator.smithy
 //                      ^                   meta.structure.dictionary.smithy punctuation.definition.dictionary.begin.smithy
 //                       ^                  constant.numeric.smithy
-//                       ^^^^               -support.type.property-name.smithy
+//                       ^^^^               ! support.type.property-name.smithy
 //                        ^^^               entity.name.type.smithy
 //                           ^              punctuation.separator.dictionary.key-value.smithy
 //                             ^            constant.numeric.smithy
 //                              ^           punctuation.separator.dictionary.pair.smithy
 //                               ^^         meta.structure.dictionary.smithy
-//                                ^^^^^     -support.type.property-name.smithy
+//                                ^^^^^     ! support.type.property-name.smithy
 //                                 ^^^^     entity.name.type.smithy
 //                                     ^    punctuation.separator.dictionary.key-value.smithy
 //                                       ^  constant.numeric.smithy

@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests IDL 2.1 member indexes"
+// SYNTAX TEST v1 "source.smithy" "This tests IDL 2.1 member indexes"
 $version: "2.1"
 
 namespace com.example
@@ -109,12 +109,12 @@ structure NotIndexed {
 //           ^             punctuation.separator.dictionary.key-value.smithy
 //             ^^^^^       entity.name.type.smithy
 //                   ^     keyword.operator.smithy
-//                     ^^^ -constant.numeric.member-index.smithy
+//                     ^^^ ! constant.numeric.member-index.smithy
 //                     ^^^ constant.numeric.smithy
 
     1.noSpace: String
 //  ^                 constant.numeric.smithy
-//  ^^^^^^^^^         -constant.numeric.member-index.smithy
+//  ^^^^^^^^^         ! constant.numeric.member-index.smithy
 //   ^                meta.keyword.statement.shape.smithy
 //    ^^^^^^^         entity.name.type.smithy
 //           ^        punctuation.separator.dictionary.key-value.smithy
@@ -122,7 +122,7 @@ structure NotIndexed {
 
     0. zero: String
 //  ^               constant.numeric.smithy
-//  ^^              -constant.numeric.member-index.smithy
+//  ^^              ! constant.numeric.member-index.smithy
 //   ^^             meta.keyword.statement.shape.smithy
 //     ^^^^         support.type.property-name.smithy
 //         ^        punctuation.separator.dictionary.key-value.smithy
@@ -130,7 +130,7 @@ structure NotIndexed {
 
     01. leadingZero: String
 //  ^^                      constant.numeric.smithy
-//  ^^^                     -constant.numeric.member-index.smithy
+//  ^^^                     ! constant.numeric.member-index.smithy
 //    ^^                    meta.keyword.statement.shape.smithy
 //      ^^^^^^^^^^^         support.type.property-name.smithy
 //                 ^        punctuation.separator.dictionary.key-value.smithy
@@ -153,7 +153,7 @@ structure TabSeparated {
 enum NotIndexable {
     1. SPADE
 //  ^        constant.numeric.smithy
-//  ^^       -constant.numeric.member-index.smithy
+//  ^^       ! constant.numeric.member-index.smithy
 //   ^^      meta.keyword.statement.shape.smithy
 //     ^^^^^ entity.name.type.smithy
 }

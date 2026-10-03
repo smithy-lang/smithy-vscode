@@ -184,7 +184,7 @@
         "package": "vsce package -o smithy-vscode.vsix",
         "format": "prettier --write '**/*.{ts,js,json}'",
         "format-check": "prettier --check '**/*.{ts,js,json}'",
-        "test-grammar": "npx vscode-tmgrammar-test -g syntaxes/smithy.tmLanguage.json 'tests/grammar/*'",
+        "test-grammar": "npx textmate-grammar-test -g syntaxes/smithy.tmLanguage.json 'tests/grammar/*'",
         "test-extension": "npm run compile && npm run package && node ./out/tests/runTest.js",
         "test": "npm run format-check && npm run test-grammar && npm run test-extension"
     },
@@ -197,8 +197,8 @@
         "ovsx": "1.2.0",
         "prettier": "^2.8.8",
         "rolldown": "^1.2.12",
-        "typescript": "~7.0.2",
-        "vscode-tmgrammar-test": "^0.1.2"
+        "textmate-grammar-test": "^0.7.1",
+        "typescript": "~7.0.2"
     },
     "dependencies": {
         "vscode-languageclient": "^10.1.2"

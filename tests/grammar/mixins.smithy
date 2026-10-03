@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests using mixins on all shape types"
+// SYNTAX TEST v1 "source.smithy" "This tests using mixins on all shape types"
 $version: "2.0"
 
 namespace smithy.example

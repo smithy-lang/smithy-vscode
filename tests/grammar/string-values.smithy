@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests escaped quotes inside string values"
+// SYNTAX TEST v1 "source.smithy" "This tests escaped quotes inside string values"
 $version: "2.0"
 
 namespace com.example

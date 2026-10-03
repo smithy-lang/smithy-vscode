@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests trait values, including keyed arguments without braces"
+// SYNTAX TEST v1 "source.smithy" "This tests trait values, including keyed arguments without braces"
 $version: "2.1"
 
 namespace com.example

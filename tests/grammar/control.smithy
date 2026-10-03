@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests control statments"
+// SYNTAX TEST v1 "source.smithy" "This tests control statments"
 
 $version: "2.0"
 // <-           keyword.statement.control.smithy

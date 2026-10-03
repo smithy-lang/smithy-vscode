@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests aggregate shapes"
+// SYNTAX TEST v1 "source.smithy" "This tests aggregate shapes"
 $version: "2.0"
 
 namespace com.example
