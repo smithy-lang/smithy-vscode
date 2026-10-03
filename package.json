@@ -177,8 +177,7 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run webpack-package",
-        "webpack-package": "webpack --mode production --devtool hidden-source-map",
+        "vscode:prepublish": "rolldown -c rolldown.config.mjs",
         "compile": "tsc -p ./",
         "install-plugin": "npm run package && code --install-extension smithy-vscode.vsix",
         "uninstall-plugin": "code --uninstall-extension smithy.smithy-vscode-extension",
@@ -202,13 +201,11 @@
         "mocha": "^12.0.3",
         "ovsx": "1.2.0",
         "prettier": "^2.8.8",
+        "rolldown": "^1.2.12",
         "sinon": "^15.2.0",
-        "ts-loader": "^9.5.0",
         "typescript": "^5.2.2",
         "vscode-nls-dev": "^4.0.4",
-        "vscode-tmgrammar-test": "^0.1.2",
-        "webpack": "^5.106.1",
-        "webpack-cli": "^5.1.4"
+        "vscode-tmgrammar-test": "^0.1.2"
     },
     "dependencies": {
         "follow-redirects": "^1.16.0",

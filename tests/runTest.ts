@@ -64,7 +64,7 @@ async function go() {
             launchArgs: [resolve(__dirname, '../../test-fixtures/suite6')],
         });
 
-        // Confirm that webpacked and vsce packaged extension can be installed.
+        // Confirm that bundled and vsce packaged extension can be installed.
         const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
         const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
 
