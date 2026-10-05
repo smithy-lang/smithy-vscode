@@ -3,6 +3,7 @@
 ## 0.10.0 (2026-10-05)
 
 - Raised the minimum supported VS Code version from 1.84.1 to 1.114.0 [#155](https://github.com/smithy-lang/smithy-vscode/pull/155)
+- Added syntax highlighting support for Smithy IDL 2.1, and fixed several grammar bugs [#154](https://github.com/smithy-lang/smithy-vscode/pull/154)
 - Fixed a number of syntax highlighting bugs, and added support for apply blocks [#137](https://github.com/smithy-lang/smithy-vscode/pull/137)
 - Updated Coursier to v2.0.10, and added support for ARM64 Linux when downloading Coursier [#139](https://github.com/smithy-lang/smithy-vscode/pull/139)
 
