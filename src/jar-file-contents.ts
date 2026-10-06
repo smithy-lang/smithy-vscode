@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
+import LanguageClientHandle, { SERVER_NOT_RUNNING_MESSAGE } from './language-client';
+
 namespace JarFileContentsRequest {
     type Params = lsp.TextDocumentIdentifier;
 
@@ -12,13 +14,17 @@ namespace JarFileContentsRequest {
 }
 
 export default class JarFileContentsProvider implements vscode.TextDocumentContentProvider {
-    private client: lsp.LanguageClient;
+    private client: LanguageClientHandle;
 
-    constructor(client: lsp.LanguageClient) {
+    constructor(client: LanguageClientHandle) {
         this.client = client;
     }
 
-    provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
-        return this.client.sendRequest(JarFileContentsRequest.type, { uri: uri.toString() }, token);
+    async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
+        const client = await this.client.get();
+        if (!client) {
+            throw new Error(SERVER_NOT_RUNNING_MESSAGE);
+        }
+        return client.sendRequest(JarFileContentsRequest.type, { uri: uri.toString() }, token);
     }
 }

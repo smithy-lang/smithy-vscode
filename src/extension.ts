@@ -3,27 +3,26 @@ import * as lsp from 'vscode-languageclient/node';
 
 import * as config from './config';
 import JarFileContentsProvider from './jar-file-contents';
+import LanguageClientHandle from './language-client';
 import SelectorHandler from './selector';
 import getCoursierExecutable from './coursier/coursier';
 
-let client: lsp.LanguageClient;
+let clientHandle: LanguageClientHandle | undefined;
 let versionStatusBarItem: vscode.StatusBarItem;
 
 const VERSION_POLICY_PROMPTED_KEY = 'smithy.versionPolicyPrompted';
 const LATEST_RELEASE = 'latest.release';
 
-export async function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
     promptVersionPolicy(context);
     createVersionStatusBarItem(context);
 
-    const server = await getServer(context);
-    const clientOptions = getClientOptions();
-
-    // Create the language client and start the client.
-    client = new lsp.LanguageClient('smithy', 'Smithy', server, clientOptions);
-
-    const jarFileContentsProvider = new JarFileContentsProvider(client);
-    const selectorHandler = new SelectorHandler(client);
+    // Register commands and providers before setting up the server, so they are available while the
+    // server is starting and can report that it is unavailable if setup fails.
+    const handle = new LanguageClientHandle();
+    clientHandle = handle;
+    const jarFileContentsProvider = new JarFileContentsProvider(handle);
+    const selectorHandler = new SelectorHandler(handle);
 
     context.subscriptions.push(
         vscode.workspace.registerTextDocumentContentProvider('smithyjar', jarFileContentsProvider),
@@ -32,12 +31,33 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('smithy.toggleVersionPolicy', () => toggleVersionPolicy(context))
     );
 
-    // Start the client. This will also launch the server
-    client.start();
+    // Set up and start the server in the background. Resolving the server can download Coursier, and the
+    // server itself can take a while to start, so activation doesn't wait for either.
+    void startLanguageServer(context, handle);
+}
+
+async function startLanguageServer(context: vscode.ExtensionContext, handle: LanguageClientHandle): Promise<void> {
+    let server: lsp.Executable;
+    try {
+        server = await getServer(context);
+    } catch (err) {
+        handle.fail();
+        const message = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(
+            `Failed to set up Smithy Language Server (${message}). ` +
+                'Check your network connection, or set smithy.server.executable to use a local server, then reload the window.'
+        );
+        return;
+    }
+
+    // Starting the client also launches the server. The client reports start failures to the user.
+    const client = new lsp.LanguageClient('smithy', 'Smithy', server, getClientOptions());
+    await handle.start(client);
 }
 
 export function deactivate(): Thenable<void> | undefined {
-    if (!client) {
+    const client = clientHandle?.current;
+    if (!client || client.state === lsp.State.Stopped) {
         return undefined;
     }
     return client.stop();

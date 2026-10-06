@@ -1,5 +1,7 @@
 import { spawnSync } from 'child_process';
-import { resolve } from 'path';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { delimiter, join, resolve } from 'path';
 
 import {
     runTests,
@@ -64,6 +66,44 @@ async function go() {
             launchArgs: [resolve(__dirname, '../../test-fixtures/suite6')],
         });
 
+        // Suites 7-9 use a fresh profile, so the extension has no cached Coursier download, and hide Coursier
+        // from PATH so the extension has to download it.
+        const extensionTestsEnv = { PATH: pathWithoutCoursier() };
+
+        // Suite 7 - Server setup failure. A file where the extension's global storage directory goes makes the
+        // Coursier download fail.
+        await withFreshUserDataDir(async (userDataDir) => {
+            const globalStorage = join(userDataDir, 'User', 'globalStorage');
+            mkdirSync(globalStorage, { recursive: true });
+            writeFileSync(join(globalStorage, 'smithy.smithy-vscode-extension'), '');
+            await runTests({
+                version,
+                extensionDevelopmentPath,
+                extensionTestsPath: resolve(__dirname, './suite7'),
+                extensionTestsEnv,
+                launchArgs: [resolve(__dirname, '../../test-fixtures/suite7'), '--user-data-dir', userDataDir],
+            });
+        });
+
+        // Suite 8 - Server start failure
+        await runTests({
+            version,
+            extensionDevelopmentPath,
+            extensionTestsPath: resolve(__dirname, './suite8'),
+            launchArgs: [resolve(__dirname, '../../test-fixtures/suite8')],
+        });
+
+        // Suite 9 - Slow server setup
+        await withFreshUserDataDir((userDataDir) =>
+            runTests({
+                version,
+                extensionDevelopmentPath,
+                extensionTestsPath: resolve(__dirname, './suite9'),
+                extensionTestsEnv: { ...extensionTestsEnv, SMITHY_TEST_USER_DATA_DIR: userDataDir },
+                launchArgs: [resolve(__dirname, '../../test-fixtures/suite9'), '--user-data-dir', userDataDir],
+            })
+        );
+
         // Confirm that webpacked and vsce packaged extension can be installed.
         const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
         const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
@@ -81,3 +121,20 @@ async function go() {
 }
 
 go();
+
+async function withFreshUserDataDir(fn: (userDataDir: string) => Promise<unknown>): Promise<void> {
+    const userDataDir = mkdtempSync(join(tmpdir(), 'smithy-vscode-test-'));
+    try {
+        await fn(userDataDir);
+    } finally {
+        rmSync(userDataDir, { recursive: true, force: true });
+    }
+}
+
+function pathWithoutCoursier(): string {
+    const executables = process.platform === 'win32' ? ['cs.exe', 'coursier.exe'] : ['cs', 'coursier'];
+    return (process.env.PATH ?? '')
+        .split(delimiter)
+        .filter((dir) => !executables.some((executable) => existsSync(join(dir, executable))))
+        .join(delimiter);
+}
