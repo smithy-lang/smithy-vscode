@@ -49,13 +49,17 @@ function validBinFileExists(file: string): Promise<boolean> {
 function downloadFile(url: string, targetFile: string): Promise<string> {
     function promiseGet(url: string): Promise<IncomingMessage> {
         return new Promise((resolve, reject) => {
-            https.get(url, (response) => {
-                if (response.statusCode === 200) {
-                    resolve(response);
-                } else {
-                    reject(new Error(`Server responded with ${response.statusCode}: ${response.statusMessage}`));
-                }
-            });
+            https
+                .get(url, (response) => {
+                    if (response.statusCode === 200) {
+                        resolve(response);
+                    } else {
+                        response.resume();
+                        reject(new Error(`Server responded with ${response.statusCode}: ${response.statusMessage}`));
+                    }
+                })
+                // Without this, a network error is thrown as an uncaught exception and the download never settles.
+                .on('error', reject);
         });
     }
 

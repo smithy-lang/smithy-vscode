@@ -46,3 +46,5 @@ export function runTests(testsRoot: string, cb: (error: any, failures?: number) 
             return cb(err);
         });
 }
+
+export const SMITHY_COMMANDS = ['smithy.runSelector', 'smithy.clearSelector', 'smithy.toggleVersionPolicy'];

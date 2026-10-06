@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
+import LanguageClientHandle, { SERVER_NOT_RUNNING_MESSAGE } from './language-client';
+
 namespace SelectorCommandRequest {
     type Params = {
         expression: string;
@@ -14,16 +16,21 @@ namespace SelectorCommandRequest {
 }
 
 export default class SelectorHandler {
-    private client: lsp.LanguageClient;
+    private client: LanguageClientHandle;
     private expression: string = 'Enter selector expression';
     private decorationType: vscode.TextEditorDecorationType;
 
-    constructor(client: lsp.LanguageClient) {
+    constructor(client: LanguageClientHandle) {
         this.client = client;
         this.decorationType = createDecorationType();
     }
 
     async run() {
+        if (this.client.isUnavailable()) {
+            vscode.window.showErrorMessage(SERVER_NOT_RUNNING_MESSAGE);
+            return;
+        }
+
         const expression = await vscode.window.showInputBox({
             title: 'Run a selector',
             value: this.expression,
@@ -43,7 +50,18 @@ export default class SelectorHandler {
         await this.clear();
         this.expression = expression;
 
-        const response = await this.client.sendRequest(SelectorCommandRequest.type, { expression });
+        // The server may still be starting, so show progress while waiting for it.
+        const response = await vscode.window.withProgress(
+            { location: vscode.ProgressLocation.Window, title: 'Running Smithy selector' },
+            async () => {
+                const client = await this.client.get();
+                return client?.sendRequest(SelectorCommandRequest.type, { expression });
+            }
+        );
+        if (!response) {
+            vscode.window.showErrorMessage(SERVER_NOT_RUNNING_MESSAGE);
+            return;
+        }
 
         const ranges: vscode.Range[] = [];
         for (const location of response) {
