@@ -6,6 +6,8 @@ export default defineConfig({
     platform: 'node',
     // Provided by VS Code at runtime.
     external: ['vscode'],
+    // engines.vscode ^1.114.0 ships Node 22, so lower only syntax newer than that.
+    transform: { target: 'node22' },
     output: {
         // Matches "main" in package.json.
         file: 'out/src/extension.js',
