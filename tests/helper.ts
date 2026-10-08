@@ -53,7 +53,9 @@ export function runTests(testsRoot: string, cb: (error: any, failures?: number) 
             pending++;
         }
         if (event.type === 'test:pass' || event.type === 'test:fail') {
-            if (event.type === 'test:fail' && event.data.details.type !== 'suite') {
+            // A suite that fails only because its tests failed is already counted through them. Any
+            // other suite failure, such as a throwing hook or suite body, is a failure of its own.
+            if (event.type === 'test:fail' && event.data.details.error?.failureType !== 'subtestsFailed') {
                 failures++;
             }
             if (event.data.nesting === 0 && --pending === 0) {
