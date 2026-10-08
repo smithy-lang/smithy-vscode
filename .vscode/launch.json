@@ -14,9 +14,10 @@
             "args": [
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/tests/suite1",
+                "--extensionTestsPath=${workspaceRoot}/out/tests/helper",
                 "${workspaceRoot}/test-fixtures/suite1",
             ],
+            "env": { "SUITE_DIR": "${workspaceRoot}/out/tests/suite1" },
             "outFiles": ["${workspaceRoot}/out/tests/suite1/*.js"]
         },
         {
@@ -28,9 +29,10 @@
             "args": [
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/tests/suite2",
+                "--extensionTestsPath=${workspaceRoot}/out/tests/helper",
                 "${workspaceRoot}/test-fixtures/suite2",
             ],
+            "env": { "SUITE_DIR": "${workspaceRoot}/out/tests/suite2" },
             "outFiles": ["${workspaceRoot}/out/tests/suite2/*.js"]
         },
         {
@@ -42,9 +44,10 @@
             "args": [
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/tests/suite3",
+                "--extensionTestsPath=${workspaceRoot}/out/tests/helper",
                 "${workspaceRoot}/test-fixtures/suite3",
             ],
+            "env": { "SUITE_DIR": "${workspaceRoot}/out/tests/suite3" },
             "outFiles": ["${workspaceRoot}/out/tests/suite3/*.js"]
         }
     ]
