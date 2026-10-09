@@ -27,7 +27,8 @@ async function go() {
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, 'helper'),
             extensionTestsEnv: { SUITE_DIR: resolve(__dirname, suite) },
-            launchArgs: [resolve(extensionDevelopmentPath, 'test-fixtures', suite)],
+            // --disable-gpu: xvfb has no GPU, so Chromium otherwise logs GPU process init errors.
+            launchArgs: [resolve(extensionDevelopmentPath, 'test-fixtures', suite), '--disable-gpu'],
         });
     }
 

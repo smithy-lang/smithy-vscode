@@ -29,6 +29,7 @@ jobs:
         run: npm install
 
       - name: Run tests
-        run: xvfb-run -a npm test
+        # dbus-run-session provides a session bus so Electron doesn't log dbus connection errors.
+        run: dbus-run-session -- xvfb-run -a npm test
         env:
           VSCODE_TEST_VERSION: ${{ matrix.vscode-version }}
