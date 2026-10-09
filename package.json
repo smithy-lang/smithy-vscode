@@ -189,7 +189,6 @@
         "test": "npm run format-check && npm run test-grammar && npm run test-extension"
     },
     "devDependencies": {
-        "@types/follow-redirects": "^1.14.4",
         "@types/node": "^22.20.4",
         "@types/vscode": "1.110.0",
         "@vscode/test-electron": "^2.4.0",
@@ -201,7 +200,6 @@
         "vscode-tmgrammar-test": "^0.1.2"
     },
     "dependencies": {
-        "follow-redirects": "^1.16.0",
         "vscode-languageclient": "^8.1.0"
     }
 }
