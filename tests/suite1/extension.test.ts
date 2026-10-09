@@ -20,6 +20,7 @@ suite('Extension tests', function () {
 
         assert.notEqual(doc, undefined);
         assert.notEqual(editor, undefined);
+        assert.ok(ext);
         assert.equal(ext.isActive, true);
         assert.deepStrictEqual(diagnostics, []);
     });

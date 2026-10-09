@@ -13,7 +13,8 @@ export function getServerExecutable(): string | undefined {
 }
 
 export function getServerVersion(): string {
-    return getOldOrNewConfig('version', 'server.version');
+    // Fall back to the contributed default if the setting is explicitly set to null.
+    return getOldOrNewConfig<string>('version', 'server.version') ?? 'latest.release';
 }
 
 function getOldOrNewConfig<T>(oldKey: string, newKey: string): T | undefined {
