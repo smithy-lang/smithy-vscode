@@ -1,39 +1,30 @@
-import { TextDocument, TextEditor, Uri } from 'vscode';
+import { Uri } from 'vscode';
 import { globSync } from 'fs';
 import { resolve } from 'path';
-import { run } from 'node:test';
+import { run as runNodeTests } from 'node:test';
 import { spec } from 'node:test/reporters';
+import { setTimeout } from 'node:timers/promises';
 
-export let doc: TextDocument;
-export let editor: TextEditor;
+export const getDocUri = (p: string) => Uri.file(resolve(__dirname, '../../test-fixtures', p));
 
-export const getDocPath = (p: string) => {
-    return resolve(__dirname, '../../test-fixtures', p);
-};
+// Wait for Smithy Language Server to start
+export const waitForServerStartup = () => setTimeout(9000);
 
-export const getDocUri = (p: string) => {
-    return Uri.file(getDocPath(p));
-};
-
-export async function waitForServerStartup() {
-    // Wait for Smithy Language Server to start
-    await new Promise((resolve) => setTimeout(resolve, 9000));
-}
-
-export function runTests(testsRoot: string, cb: (error: any, failures?: number) => void): void {
-    let files: string[];
-    try {
-        files = globSync('**/**.test.js', { cwd: testsRoot }).map((f) => resolve(testsRoot, f));
-    } catch (err) {
-        return cb(err);
+// Test runner entry point for the extension host (runTest.ts sets this file as extensionTestsPath),
+// which fails the run if the returned promise rejects. The suite directory comes from SUITE_DIR.
+export async function run(): Promise<void> {
+    const testsRoot = process.env.SUITE_DIR;
+    if (!testsRoot) {
+        throw new Error('SUITE_DIR is not set');
     }
+    const files = globSync('**/*.test.js', { cwd: testsRoot }).map((f) => resolve(testsRoot, f));
     if (files.length === 0) {
-        return cb(null, 0);
+        return;
     }
 
     // Tests must run inside the extension host to reach the `vscode` API, so they can't use the
     // default per-file child processes.
-    const stream = run({ files, isolation: 'none', concurrency: false });
+    const stream = runNodeTests({ files, isolation: 'none', concurrency: false });
     const reporter = new spec();
     reporter.on('data', (data) => process.stdout.write(data));
 
@@ -41,27 +32,32 @@ export function runTests(testsRoot: string, cb: (error: any, failures?: number) 
     // happens in the extension host. Instead, wait until every top-level test has reported its
     // result, then end the reporter so it flushes all output before reporting back. Results
     // (test:pass/test:fail) arrive in report order after test:complete, so they mark the end.
-    let pending = 0;
-    let failures = 0;
-    reporter.on('end', () => cb(null, failures));
-    stream.on('data', (event) => {
-        if (reporter.writableEnded) {
-            return;
-        }
-        reporter.write(event);
-        if (event.type === 'test:enqueue' && event.data.nesting === 0) {
-            pending++;
-        }
-        if (event.type === 'test:pass' || event.type === 'test:fail') {
-            // A suite that fails only because its tests failed is already counted through them. Any
-            // other suite failure, such as a throwing hook or suite body, is a failure of its own.
-            if (event.type === 'test:fail' && event.data.details.error?.failureType !== 'subtestsFailed') {
-                failures++;
+    const failures = await new Promise<number>((resolve, reject) => {
+        let pending = 0;
+        let failures = 0;
+        reporter.on('end', () => resolve(failures));
+        stream.on('error', reject);
+        stream.on('data', (event) => {
+            if (reporter.writableEnded) {
+                return;
             }
-            if (event.data.nesting === 0 && --pending === 0) {
-                reporter.end();
+            reporter.write(event);
+            if (event.type === 'test:enqueue' && event.data.nesting === 0) {
+                pending++;
             }
-        }
+            if (event.type === 'test:pass' || event.type === 'test:fail') {
+                // A suite that fails only because its tests failed is already counted through them. Any
+                // other suite failure, such as a throwing hook or suite body, is a failure of its own.
+                if (event.type === 'test:fail' && event.data.details.error?.failureType !== 'subtestsFailed') {
+                    failures++;
+                }
+                if (event.data.nesting === 0 && --pending === 0) {
+                    reporter.end();
+                }
+            }
+        });
     });
-    stream.on('error', (err) => cb(err));
+    if (failures > 0) {
+        throw new Error(`${failures} test(s) failed`);
+    }
 }
