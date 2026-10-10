@@ -189,6 +189,7 @@
         "test": "npm run format-check && npm run test-grammar && npm run test-extension"
     },
     "devDependencies": {
+        "@tsconfig/node22": "^22.0.6",
         "@types/node": "^22.20.4",
         "@types/vscode": "1.110.0",
         "@vscode/test-electron": "^2.4.0",
@@ -196,7 +197,7 @@
         "ovsx": "1.2.0",
         "prettier": "^2.8.8",
         "rolldown": "^1.2.12",
-        "typescript": "^5.2.2",
+        "typescript": "~7.0.2",
         "vscode-tmgrammar-test": "^0.1.2"
     },
     "dependencies": {

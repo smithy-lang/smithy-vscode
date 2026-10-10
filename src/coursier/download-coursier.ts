@@ -16,7 +16,7 @@ export default function downloadCoursierIfRequired(extensionPath: string, versio
         });
     }
 
-    const urls = {
+    const urls: Partial<Record<NodeJS.Platform, Partial<Record<NodeJS.Architecture, string>> & { default: string }>> = {
         darwin: {
             default: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-apple-darwin`,
         },
@@ -28,14 +28,18 @@ export default function downloadCoursierIfRequired(extensionPath: string, versio
             default: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-pc-win32.exe`,
         },
     };
-    const targets = {
+    const targets: Partial<Record<NodeJS.Platform, string>> = {
         darwin: binPath('coursier'),
         linux: binPath('coursier'),
         win32: binPath('coursier.exe'),
     };
 
     const targetFile = targets[process.platform];
-    const downloadUrl = urls[process.platform]?.[process.arch] ?? urls[process.platform].default;
+    const platformUrls = urls[process.platform];
+    if (!targetFile || !platformUrls) {
+        return Promise.reject(new Error(`Coursier download is not supported on platform: ${process.platform}`));
+    }
+    const downloadUrl = platformUrls[process.arch] ?? platformUrls.default;
     return validBinFileExists(targetFile).then((valid) => {
         return valid ? targetFile : createDir().then(() => downloadFile(downloadUrl, targetFile));
     });
