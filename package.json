@@ -201,6 +201,6 @@
         "vscode-tmgrammar-test": "^0.1.2"
     },
     "dependencies": {
-        "vscode-languageclient": "^8.1.0"
+        "vscode-languageclient": "^10.1.2"
     }
 }
