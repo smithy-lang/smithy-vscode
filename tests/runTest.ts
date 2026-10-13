@@ -1,4 +1,5 @@
 import { spawnSync } from 'child_process';
+import { mkdirSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 
 import { runTests, downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath } from '@vscode/test-electron';
@@ -21,14 +22,36 @@ async function go() {
     const version = process.env.VSCODE_TEST_VERSION || 'stable';
     console.log(`Running extension tests against VS Code ${version}`);
 
+    // VS Code prints its own log to stdout during extension tests. To keep the test output readable:
+    // - An empty built-in extensions folder skips scanning built-ins such as Copilot Chat, whose API
+    //   proposal mismatch is otherwise logged in full for every suite.
+    // - Disabling AI features in user settings stops the chat and agent host services from logging.
+    const testDataPath = resolve(extensionDevelopmentPath, '.vscode-test');
+    const builtinExtensionsDir = resolve(testDataPath, 'empty-builtin-extensions');
+    mkdirSync(builtinExtensionsDir, { recursive: true });
+
+    const userDataDir = resolve(testDataPath, 'user-data');
+    mkdirSync(resolve(userDataDir, 'User'), { recursive: true });
+    writeFileSync(
+        resolve(userDataDir, 'User', 'settings.json'),
+        JSON.stringify({
+            'chat.disableAIFeatures': true,
+        })
+    );
+
     for (const suite of suites) {
         await runTests({
             version,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, 'helper'),
             extensionTestsEnv: { SUITE_DIR: resolve(__dirname, suite) },
-            // --disable-gpu: xvfb has no GPU, so Chromium otherwise logs GPU process init errors.
-            launchArgs: [resolve(extensionDevelopmentPath, 'test-fixtures', suite), '--disable-gpu'],
+            launchArgs: [
+                resolve(extensionDevelopmentPath, 'test-fixtures', suite),
+                // xvfb has no GPU, so Chromium otherwise logs GPU process init errors.
+                '--disable-gpu',
+                `--builtin-extensions-dir=${builtinExtensionsDir}`,
+                `--user-data-dir=${userDataDir}`,
+            ],
         });
     }
 
