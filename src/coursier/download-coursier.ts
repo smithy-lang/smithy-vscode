@@ -41,7 +41,11 @@ export default function downloadCoursierIfRequired(extensionPath: string, versio
     }
     const downloadUrl = platformUrls[process.arch] ?? platformUrls.default;
     return validBinFileExists(targetFile).then((valid) => {
-        return valid ? targetFile : createDir().then(() => downloadFile(downloadUrl, targetFile));
+        if (valid) {
+            return targetFile;
+        }
+        console.log('Coursier not found on path, downloading it instead.');
+        return createDir().then(() => downloadFile(downloadUrl, targetFile));
     });
 }
 
