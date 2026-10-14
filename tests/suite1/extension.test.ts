@@ -1,7 +1,7 @@
 import { suite, test } from 'node:test';
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { getDocUri, waitForServerStartup } from './../helper';
+import { getDocUri, waitForPublishedDiagnostics } from './../helper';
 
 suite('Extension tests', function () {
     test('Should start extension and Language Server', async () => {
@@ -9,7 +9,7 @@ suite('Extension tests', function () {
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
         const editor = await vscode.window.showTextDocument(doc);
         const ext = vscode.extensions.getExtension('smithy.smithy-vscode-extension');
-        await waitForServerStartup();
+        await waitForPublishedDiagnostics(smithyMainUri);
         const diagnostics = vscode.languages.getDiagnostics(smithyMainUri);
 
         // Grab model file directly

@@ -32,8 +32,9 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('smithy.toggleVersionPolicy', () => toggleVersionPolicy(context))
     );
 
-    // Start the client. This will also launch the server
-    client.start();
+    // Start the client. This will also launch the server. Activation completes once the server has
+    // initialized, so awaiting activation means the server is ready.
+    await client.start();
 }
 
 export function deactivate(): Thenable<void> | undefined {
