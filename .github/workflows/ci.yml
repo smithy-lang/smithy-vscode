@@ -29,6 +29,57 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Resolve the versions of everything the tests download, so each cache key changes when the
+      # version it caches changes:
+      # - @vscode/test-electron downloads VS Code into .vscode-test/vscode-<platform>-<version>.
+      #   "stable" is resolved to a concrete version so a new Stable release gets a new key.
+      # - The extension downloads the Coursier binary (COURSIER_VERSION in src/coursier/coursier.ts)
+      #   into its global storage.
+      # - Coursier downloads the JVM (COURSIER_JVM in src/extension.ts) into ~/.cache/coursier/jvm
+      #   and the language server ("latest.release") into ~/.cache/coursier/v1.
+      - name: Resolve versions
+        id: versions
+        env:
+          VSCODE_VERSION: ${{ matrix.vscode-version }}
+        run: |
+          vscode="$VSCODE_VERSION"
+          if [ "$vscode" = "stable" ]; then
+            vscode=$(curl -fsSL --retry 3 https://update.code.visualstudio.com/api/releases/stable | jq -r '.[0]')
+          fi
+          coursier=$(sed -n "s/^const COURSIER_VERSION = '\(.*\)';$/\1/p" src/coursier/coursier.ts)
+          # Replace ':' in the JVM id, such as corretto:21, to keep the cache key readable.
+          jvm=$(sed -n "s/^const COURSIER_JVM = '\(.*\)';$/\1/p" src/extension.ts | tr ':' '-')
+          lsp=$(curl -fsSL --retry 3 https://repo1.maven.org/maven2/software/amazon/smithy/smithy-language-server/maven-metadata.xml \
+            | sed -n 's:.*<release>\(.*\)</release>.*:\1:p')
+          if [ -z "$vscode" ] || [ "$vscode" = "null" ] || [ -z "$coursier" ] || [ -z "$jvm" ] || [ -z "$lsp" ]; then
+            echo "::error::Could not resolve versions: VS Code '$vscode', Coursier '$coursier', JVM '$jvm', language server '$lsp'"
+            exit 1
+          fi
+          {
+            echo "vscode=$vscode"
+            echo "coursier=$coursier"
+            echo "jvm=$jvm"
+            echo "lsp=$lsp"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Cache VS Code download
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .vscode-test/vscode-linux-x64-${{ steps.versions.outputs.vscode }}
+          key: vscode-${{ runner.os }}-${{ runner.arch }}-${{ steps.versions.outputs.vscode }}
+
+      - name: Cache Coursier binary
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .vscode-test/user-data/User/globalStorage/smithy.smithy-vscode-extension/coursier
+          key: coursier-bin-${{ runner.os }}-${{ runner.arch }}-${{ steps.versions.outputs.coursier }}
+
+      - name: Cache Coursier JVM and language server
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/coursier
+          key: coursier-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.versions.outputs.coursier }}-${{ steps.versions.outputs.jvm }}-lsp${{ steps.versions.outputs.lsp }}
+
       - name: Run tests
         # dbus-run-session provides a session bus so Electron doesn't log dbus connection errors.
         run: dbus-run-session -- xvfb-run -a npm test

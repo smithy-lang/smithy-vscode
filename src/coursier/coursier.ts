@@ -2,6 +2,9 @@ import * as child_process from 'child_process';
 import * as vscode from 'vscode';
 import downloadCoursierIfRequired from './download-coursier';
 
+// Version of Coursier downloaded when neither `cs` nor `coursier` is on the PATH.
+const COURSIER_VERSION = 'v2.0.10';
+
 export default async function getCoursierExecutable(context: vscode.ExtensionContext): Promise<string> {
     for (const command of ['cs', 'coursier']) {
         if (await availableOnPath(command, ['--help'])) {
@@ -9,7 +12,7 @@ export default async function getCoursierExecutable(context: vscode.ExtensionCon
         }
     }
 
-    return await downloadCoursierIfRequired(context.globalStoragePath, 'v2.0.10');
+    return await downloadCoursierIfRequired(context.globalStoragePath, COURSIER_VERSION);
 }
 
 function availableOnPath(command: string, args: string[]): Promise<boolean> {

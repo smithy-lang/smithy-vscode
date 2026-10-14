@@ -185,6 +185,10 @@ function getClientOptions(): lsp.LanguageClientOptions {
 // as a standalone executable, and will no longer need couriser to manage the jvm version.
 const COURSIER_JVM_INDEX = 'https://raw.githubusercontent.com/coursier/jvm-index/master/index.json';
 
+// JVM that Coursier launches the language server with.
+// By default, coursier uses AdoptOpenJDK: https://get-coursier.io/docs/2.0.6/cli-java
+const COURSIER_JVM = 'corretto:21';
+
 async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executable> {
     const serverExecutable = config.getServerExecutable();
     if (serverExecutable) {
@@ -202,10 +206,7 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
                 'software.amazon.smithy:smithy-language-server:' + languageServerVersion,
                 // Configure couriser to use java 21
                 '--jvm',
-                // By default, coursier uses AdoptOpenJDK: https://get-coursier.io/docs/2.0.6/cli-java
-                // We could just say '21' here, and let coursier default to adopt jdk
-                // 21, but later versions of the jdk are released under the name adoptium.
-                'corretto:21',
+                COURSIER_JVM,
                 // The location to download the jvm from is provided by the jvm index.
                 '--jvm-index',
                 COURSIER_JVM_INDEX,
