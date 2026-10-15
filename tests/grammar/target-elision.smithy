@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests target elision"
+// SYNTAX TEST v1 "source.smithy" "This tests target elision"
 $version: "2.0"
 
 namespace smithy.example

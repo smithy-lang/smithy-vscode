@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests IDL 2.1 tagged string literals"
+// SYNTAX TEST v1 "source.smithy" "This tests IDL 2.1 tagged string literals"
 $version: "2.1"
 
 namespace com.example
@@ -17,7 +17,7 @@ use com.other#b
 //        ^^                        storage.type.tag.smithy
 //           ^                      punctuation.definition.string.begin.smithy
 //            ^^^^^^^^^^^^^^^^^^^   string.quoted.double.raw.smithy
-//             ^^                   -constant.character.escape.smithy
+//             ^^                   ! constant.character.escape.smithy
 //                               ^  punctuation.definition.string.end.smithy
 //                                ^ punctuation.definition.dictionary.end.smithy
 string Ssn
@@ -112,7 +112,7 @@ structure Literals {
 //              ^^     storage.type.tag.smithy
 //                 ^^^ punctuation.definition.string.begin.smithy
     a multi-line raw
-// <--------------------- string.quoted.double.raw.smithy
+// <-------------------- string.quoted.double.raw.smithy
     pattern
     """)
 //  ^^^  punctuation.definition.string.end.smithy
@@ -149,7 +149,7 @@ enum Suit {
 @smithy.protocols#idx(20)
 // <-                     punctuation.definition.annotation.smithy
 // <~-------------------- storage.type.annotation.smithy
-//               ^^^^     -storage.type.tag.smithy
+//               ^^^^     ! storage.type.tag.smithy
 //                   ^    punctuation.definition.dictionary.begin.smithy
 //                    ^^  constant.numeric.smithy
 //                      ^ punctuation.definition.dictionary.end.smithy
@@ -161,14 +161,14 @@ structure NotTagged {
 //  ^^                 support.type.property-name.smithy
 //    ^                punctuation.separator.dictionary.key-value.smithy
 //      ^^^^^^^^^^^^^^ entity.name.type.smithy
-//                 ^^^ -storage.type.tag.smithy
+//                 ^^^ ! storage.type.tag.smithy
 
     upper: String = #RE "plain string"
 //  ^^^^^                              support.type.property-name.smithy
 //       ^                             punctuation.separator.dictionary.key-value.smithy
 //         ^^^^^^                      entity.name.type.smithy
 //                ^                    keyword.operator.smithy
-//                  ^^^                -storage.type.tag.smithy
+//                  ^^^                ! storage.type.tag.smithy
 //                   ^^                entity.name.type.smithy
 //                      ^              punctuation.definition.string.begin.smithy
 //                       ^^^^^^^^^^^^  string.quoted.double.smithy
@@ -179,7 +179,7 @@ structure NotTagged {
 //         ^                                punctuation.separator.dictionary.key-value.smithy
 //           ^^^^^^                         entity.name.type.smithy
 //                  ^                       keyword.operator.smithy
-//                    ^^^^^^                -storage.type.tag.smithy
+//                    ^^^^^^                ! storage.type.tag.smithy
 //                     ^^^^^                entity.name.type.smithy
 //                           ^              punctuation.definition.string.begin.smithy
 //                            ^^^^^^^^^^^^  string.quoted.double.smithy

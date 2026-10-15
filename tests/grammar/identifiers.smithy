@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests identifier and shape-id boundaries"
+// SYNTAX TEST v1 "source.smithy" "This tests identifier and shape-id boundaries"
 $version: "2.0"
 
 namespace com.example
@@ -8,7 +8,7 @@ structure my_trait {}
 
 // Identifiers may start with and contain underscores.
 string _Underscore_Name
-//     ^^^^^^^^^^^^^^^^^ entity.name.type.smithy
+//     ^^^^^^^^^^^^^^^^ entity.name.type.smithy
 
 // Trait shape ids may be namespaced and contain underscores.
 @com.example#my_trait

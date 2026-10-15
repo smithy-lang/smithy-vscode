@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests enum and intEnum shapes"
+// SYNTAX TEST v1 "source.smithy" "This tests enum and intEnum shapes"
 $version: "2.0"
 
 namespace com.example

@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests how a shape's type decides how its body is read"
+// SYNTAX TEST v1 "source.smithy" "This tests how a shape's type decides how its body is read"
 $version: "2.1"
 
 namespace com.example

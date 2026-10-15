@@ -1,11 +1,11 @@
-// SYNTAX TEST "source.smithy" "This tests metadata with non-string values"
+// SYNTAX TEST v1 "source.smithy" "This tests metadata with non-string values"
 $version: "2.0"
 
 // A value containing '=' must not be mistaken for the key/operator separator.
 metadata withEquals = "a = b"
 //       ^^^^^^^^^^             variable.other.smithy
 //                  ^          keyword.operator.smithy
-//                    ^^^^^^^^ string.quoted.double.smithy
+//                    ^^^^^^^ string.quoted.double.smithy
 
 metadata anArray = [1, 2, 3]
 //       ^^^^^^^ variable.other.smithy

@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.smithy" "This tests node value literals in trait arguments"
+// SYNTAX TEST v1 "source.smithy" "This tests node value literals in trait arguments"
 $version: "2.0"
 
 namespace com.example
