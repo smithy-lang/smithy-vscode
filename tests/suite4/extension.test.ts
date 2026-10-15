@@ -1,14 +1,14 @@
 import { suite, test } from 'node:test';
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { getDocUri, waitForServerStartup } from '../helper';
+import { getDocUri, waitForPublishedDiagnostics } from '../helper';
 
 suite('User-specific root', function () {
     test('Should download jars even when not in workspace root', async () => {
         const smithyMainUri = getDocUri('suite4/smithy/main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
         await vscode.window.showTextDocument(doc);
-        await waitForServerStartup();
+        await waitForPublishedDiagnostics(smithyMainUri);
         const diagnostics = vscode.languages.getDiagnostics(smithyMainUri);
 
         // We would have diagnostics for unknown traits if the jars weren't downloaded
