@@ -37,6 +37,8 @@ jobs:
       #   into its global storage.
       # - Coursier downloads the JVM (COURSIER_JVM in src/extension.ts) into ~/.cache/coursier/jvm
       #   and the language server ("latest.release") into ~/.cache/coursier/v1.
+      #   COURSIER_JVM, such as corretto:21, is resolved through COURSIER_JVM_INDEX to the exact JDK
+      #   version Coursier picks, so a new patch release gets a new key.
       - name: Resolve versions
         id: versions
         env:
@@ -47,12 +49,22 @@ jobs:
             vscode=$(curl -fsSL --retry 3 https://update.code.visualstudio.com/api/releases/stable | jq -r '.[0]')
           fi
           coursier=$(sed -n "s/^const COURSIER_VERSION = '\(.*\)';$/\1/p" src/coursier/coursier.ts)
-          # Replace ':' in the JVM id, such as corretto:21, to keep the cache key readable.
-          jvm=$(sed -n "s/^const COURSIER_JVM = '\(.*\)';$/\1/p" src/extension.ts | tr ':' '-')
+          jvm_id=$(sed -n "s/^const COURSIER_JVM = '\(.*\)';$/\1/p" src/extension.ts)
+          jvm_index=$(sed -n "s/^const COURSIER_JVM_INDEX = '\(.*\)';$/\1/p" src/extension.ts)
+          jvm_name=${jvm_id%%:*}
+          jvm_major=${jvm_id#*:}
+          jdk=""
+          if [ -n "$jvm_id" ] && [ -n "$jvm_index" ]; then
+            # Keys are versions such as 21.0.9.11.1. sort -V orders 21.0.10 after 21.0.9.
+            jdk=$(curl -fsSL --retry 3 "$jvm_index" \
+              | jq -r --arg n "jdk@$jvm_name" '.linux.amd64[$n] // {} | keys[]' \
+              | grep -E "^${jvm_major}\." | sort -V | tail -n 1)
+          fi
+          jvm="${jvm_name}-${jdk}"
           lsp=$(curl -fsSL --retry 3 https://repo1.maven.org/maven2/software/amazon/smithy/smithy-language-server/maven-metadata.xml \
             | sed -n 's:.*<release>\(.*\)</release>.*:\1:p')
-          if [ -z "$vscode" ] || [ "$vscode" = "null" ] || [ -z "$coursier" ] || [ -z "$jvm" ] || [ -z "$lsp" ]; then
-            echo "::error::Could not resolve versions: VS Code '$vscode', Coursier '$coursier', JVM '$jvm', language server '$lsp'"
+          if [ -z "$vscode" ] || [ "$vscode" = "null" ] || [ -z "$coursier" ] || [ -z "$jdk" ] || [ -z "$lsp" ]; then
+            echo "::error::Could not resolve versions: VS Code '$vscode', Coursier '$coursier', JVM '$jvm_id' -> '$jdk', language server '$lsp'"
             exit 1
           fi
           {
