@@ -1,11 +1,15 @@
 # Smithy VSCode Extension Changelog
 
+## next
+
+- Moved extension and language server logs to the "Smithy" output channel (previously "Smithy Language Server") [#181](https://github.com/smithy-lang/smithy-vscode/pull/181)
+
 ## 0.10.1 (2026-10-20)
 
 - Switched the extension bundler from webpack to rolldown [#160](https://github.com/smithy-lang/smithy-vscode/pull/160)
 - Fixed the Coursier download hanging on network errors, and deleting an existing Coursier download when another window tried to download it [#156](https://github.com/smithy-lang/smithy-vscode/pull/156)
 - Fixed the language server failing to start when `smithy.server.version` is set to `null`, and added a clear error when Coursier can't be downloaded for the current platform [#169](https://github.com/smithy-lang/smithy-vscode/pull/169)
-- Updated vscode-languageclient from 8.1 to 10.1 [#170](https://github.com/smithy-lang/smithy-vscode/pull/170)
+- Updated vscode-languageclient from 8.1 to 10.1. LSP message traces are no longer shown by default; set the output channel's log level to Trace to enable them, with `smithy.trace.server` controlling their verbosity [#170](https://github.com/smithy-lang/smithy-vscode/pull/170)
 - Changed extension activation to complete once the language server has started, so a server that fails to start is reported as an activation failure [#176](https://github.com/smithy-lang/smithy-vscode/pull/176)
 
 ## 0.10.0 (2026-10-05)
