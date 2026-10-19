@@ -81,7 +81,9 @@ export async function run(): Promise<void> {
     // default per-file child processes.
     const stream = runNodeTests({ files, isolation: 'none', concurrency: false });
     const reporter = new spec();
-    reporter.on('data', (data) => process.stdout.write(data));
+    // VS Code relays extension host stdout at info level and stderr at error level. runTest.ts sets
+    // --log=warn to hide VS Code's own info logs, so the report goes to stderr to stay visible.
+    reporter.on('data', (data) => process.stderr.write(data));
 
     // With isolation 'none', node:test only ends the run once the event loop drains, which never
     // happens in the extension host. Instead, wait until every top-level test has reported its
