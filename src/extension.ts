@@ -5,6 +5,7 @@ import * as config from './config';
 import JarFileContentsProvider from './jar-file-contents';
 import SelectorHandler from './selector';
 import getCoursierExecutable from './coursier/coursier';
+import { logger } from './logger';
 
 let client: lsp.LanguageClient;
 let versionStatusBarItem: vscode.StatusBarItem;
@@ -13,6 +14,9 @@ const VERSION_POLICY_PROMPTED_KEY = 'smithy.versionPolicyPrompted';
 const LATEST_RELEASE = 'latest.release';
 
 export async function activate(context: vscode.ExtensionContext) {
+    // The client doesn't dispose a channel passed in via options, so we own its lifecycle.
+    context.subscriptions.push(logger);
+
     promptVersionPolicy(context);
     createVersionStatusBarItem(context);
 
@@ -162,7 +166,7 @@ function getClientOptions(): lsp.LanguageClientOptions {
     };
 
     return {
-        outputChannelName: 'Smithy Language Server',
+        outputChannel: logger,
         // Don't switch to output window when the server returns output.
         revealOutputChannelOn: lsp.RevealOutputChannelOn.Never,
         progressOnInitialization: true,
@@ -192,6 +196,7 @@ const COURSIER_JVM = 'corretto:21';
 async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executable> {
     const serverExecutable = config.getServerExecutable();
     if (serverExecutable) {
+        logger.info(`Using configured language server executable: ${serverExecutable}`);
         return {
             command: serverExecutable,
             args: ['0'],
@@ -199,6 +204,7 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
     } else {
         const coursierExecutable = await getCoursierExecutable(context);
         const languageServerVersion = config.getServerVersion();
+        logger.info(`Launching smithy-language-server ${languageServerVersion} via ${coursierExecutable}`);
         return {
             command: coursierExecutable,
             args: [

@@ -4,6 +4,7 @@ import { access, mkdir } from 'fs/promises';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import type { ReadableStream } from 'stream/web';
+import { logger } from '../logger';
 
 export default function downloadCoursierIfRequired(extensionPath: string, versionPath: string): Promise<string> {
     function binPath(filename: string) {
@@ -44,7 +45,7 @@ export default function downloadCoursierIfRequired(extensionPath: string, versio
         if (valid) {
             return targetFile;
         }
-        console.log('Coursier not found on path, downloading it instead.');
+        logger.info(`Coursier not found on path, downloading it from ${downloadUrl}`);
         return createDir().then(() => downloadFile(downloadUrl, targetFile));
     });
 }
@@ -70,15 +71,15 @@ async function downloadFile(url: string, targetFile: string): Promise<string> {
         );
     } catch (err) {
         if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
-            console.log(`File already exists at ${targetFile}`);
+            logger.info(`File already exists at ${targetFile}`);
             return targetFile;
         }
         fs.unlink(targetFile, () => {}); // Delete partially written file
-        console.error(`File error while downloading file at ${targetFile}`);
-        console.error(err);
+        logger.error(`File error while downloading file at ${targetFile}`);
+        logger.error(err instanceof Error ? err : String(err));
         throw err;
     }
 
-    console.log(`Finished downloaded file at ${targetFile}`);
+    logger.info(`Finished downloading file at ${targetFile}`);
     return targetFile;
 }
