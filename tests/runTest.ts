@@ -39,9 +39,11 @@ async function go() {
         })
     );
 
+    // Resolve and download VS Code once, rather than have runTests log the lookup for every suite.
+    const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
     for (const suite of suites) {
         await runTests({
-            version,
+            vscodeExecutablePath,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(__dirname, 'helper'),
             extensionTestsEnv: { SUITE_DIR: resolve(__dirname, suite) },
@@ -51,12 +53,15 @@ async function go() {
                 '--disable-gpu',
                 `--builtin-extensions-dir=${builtinExtensionsDir}`,
                 `--user-data-dir=${userDataDir}`,
+                // VS Code logs its own info messages (startup, storage, accounts, extension host)
+                // for every suite. Only show warnings and errors. This also hides extension host
+                // stdout, so helper.ts writes the test report to stderr.
+                '--log=warn',
             ],
         });
     }
 
     // Confirm that bundled and vsce packaged extension can be installed.
-    const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
     const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
 
     const result = spawnSync(cli, [...args, '--install-extension', 'smithy-vscode.vsix', '--force'], {
