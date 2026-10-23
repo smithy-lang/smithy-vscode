@@ -12,6 +12,7 @@ permissions:
 jobs:
   test-extension:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     name: Test Textmate syntax and extension (VS Code ${{ matrix.vscode-version }})
     strategy:
       fail-fast: false
