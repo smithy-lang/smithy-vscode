@@ -185,8 +185,9 @@
         "format": "prettier --write '**/*.{ts,js,json}'",
         "format-check": "prettier --check '**/*.{ts,js,json}'",
         "test-grammar": "npx textmate-grammar-test -g syntaxes/smithy.tmLanguage.json 'tests/grammar/*'",
+        "check": "npm run format-check && npm run test-grammar",
         "test-extension": "npm run compile && npm run package && node ./out/tests/runTest.js",
-        "test": "npm run format-check && npm run test-grammar && npm run test-extension"
+        "test": "npm run check && npm run test-extension"
     },
     "devDependencies": {
         "@tsconfig/node22": "^22.0.6",
