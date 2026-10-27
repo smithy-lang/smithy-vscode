@@ -10,10 +10,30 @@ permissions:
   contents: read
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: Check
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run checks
+        run: npm run check
+
   test-extension:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    name: Test Textmate syntax and extension (VS Code ${{ matrix.vscode-version }})
+    name: Test extension (VS Code ${{ matrix.vscode-version }})
     strategy:
       fail-fast: false
       matrix:
@@ -97,7 +117,7 @@ jobs:
 
       - name: Run tests
         # dbus-run-session provides a session bus so Electron doesn't log dbus connection errors.
-        run: dbus-run-session -- xvfb-run -a npm test
+        run: dbus-run-session -- xvfb-run -a npm run test-extension
         env:
           # The exact version from "Resolve versions", such as 1.142.0 instead of "stable", so the
           # tests use the VS Code install restored by "Cache VS Code download".
