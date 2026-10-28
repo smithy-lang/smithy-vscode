@@ -1,6 +1,6 @@
 import { suite, test } from 'node:test';
 import * as assert from 'assert';
-import * as vscode from 'vscode';
+import { vscode } from '../helper.ts';
 
 suite('Startup', function () {
     test('Should start without opening a smithy file', async () => {

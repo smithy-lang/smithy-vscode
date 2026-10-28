@@ -5,7 +5,7 @@ import { resolve } from 'path';
 import { runTests, downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath } from '@vscode/test-electron';
 import * as assert from 'assert';
 
-// Each suite runs the *.test.js files in its directory in its own VS Code instance, opened on
+// Each suite runs the *.test.ts files in its directory in its own VS Code instance, opened on
 // test-fixtures/<suite>.
 const suites = [
     'suite1', // Extension registration and launching language server
@@ -17,7 +17,7 @@ const suites = [
 ];
 
 async function go() {
-    const extensionDevelopmentPath = resolve(__dirname, '../../');
+    const extensionDevelopmentPath = resolve(import.meta.dirname, '..');
     // VS Code version to test against, such as `1.114.0`. Defaults to the latest Stable release.
     const version = process.env.VSCODE_TEST_VERSION || 'stable';
     console.log(`Running extension tests against VS Code ${version}`);
@@ -45,8 +45,8 @@ async function go() {
         await runTests({
             vscodeExecutablePath,
             extensionDevelopmentPath,
-            extensionTestsPath: resolve(__dirname, 'helper'),
-            extensionTestsEnv: { SUITE_DIR: resolve(__dirname, suite) },
+            extensionTestsPath: resolve(import.meta.dirname, 'helper.ts'),
+            extensionTestsEnv: { SUITE_DIR: resolve(import.meta.dirname, suite) },
             launchArgs: [
                 resolve(extensionDevelopmentPath, 'test-fixtures', suite),
                 // xvfb has no GPU, so Chromium otherwise logs GPU process init errors.

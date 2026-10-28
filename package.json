@@ -178,15 +178,15 @@
     },
     "scripts": {
         "vscode:prepublish": "rolldown -c rolldown.config.mjs",
-        "compile": "tsc -p ./",
         "install-plugin": "npm run package && code --install-extension smithy-vscode.vsix",
         "uninstall-plugin": "code --uninstall-extension smithy.smithy-vscode-extension",
         "package": "vsce package -o smithy-vscode.vsix",
         "format": "prettier --write '**/*.{ts,js,json}'",
         "format-check": "prettier --check '**/*.{ts,js,json}'",
         "test-grammar": "npx textmate-grammar-test -g syntaxes/smithy.tmLanguage.json 'tests/grammar/*'",
-        "check": "npm run format-check && npm run test-grammar",
-        "test-extension": "npm run compile && npm run package && node ./out/tests/runTest.js",
+        "typecheck": "tsc -p ./",
+        "check": "npm run format-check && npm run test-grammar && npm run typecheck",
+        "test-extension": "npm run package && node ./tests/runTest.ts",
         "test": "npm run check && npm run test-extension"
     },
     "devDependencies": {
