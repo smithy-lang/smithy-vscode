@@ -1,6 +1,5 @@
 import { suite, test } from 'node:test';
-import * as vscode from 'vscode';
-import { getDocUri, waitForServerStartup } from './../helper';
+import { getDocUri, waitForServerStartup, vscode } from '../helper.ts';
 
 suite('Selector tests', function () {
     test('Can run selectors', async (t) => {

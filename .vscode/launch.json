@@ -9,15 +9,15 @@
             "name": "Extension - Test Suite",
             "type": "extensionHost",
             "request": "launch",
-            "preLaunchTask": "compile",
+            "preLaunchTask": "bundle",
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/tests/helper",
+                "--extensionTestsPath=${workspaceFolder}/tests/helper.ts",
                 "${workspaceFolder}/test-fixtures/${input:suite}"
             ],
-            "env": { "SUITE_DIR": "${workspaceFolder}/out/tests/${input:suite}" },
+            "env": { "SUITE_DIR": "${workspaceFolder}/tests/${input:suite}" },
             "outFiles": ["${workspaceFolder}/out/**/*.js"]
         }
     ],
