@@ -6,7 +6,8 @@
         {
             "label": "bundle",
             "command": "npm",
-            "args": ["run", "vscode:prepublish"]
+            "args": ["run", "vscode:prepublish"],
+            "options": { "env": { "SMITHY_VSCODE_DEBUG_BUNDLE": "1" } }
         }
     ]
 }

@@ -18,7 +18,10 @@
                 "${workspaceFolder}/test-fixtures/${input:suite}"
             ],
             "env": { "SUITE_DIR": "${workspaceFolder}/tests/${input:suite}" },
-            "outFiles": ["${workspaceFolder}/out/**/*.js"]
+            "outFiles": ["${workspaceFolder}/out/**/*.js"],
+            // The bundle's source map can load after activate() has already run, so wait for it
+            // before running the script. Otherwise breakpoints in src/*.ts may not bind.
+            "pauseForSourceMap": true
         }
     ],
     "inputs": [
