@@ -3,52 +3,38 @@
 // Hover to view descriptions of existing attributes.
 // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 {
-	"version": "0.2.0",
+    "version": "0.2.0",
     "configurations": [
         {
-            "name": "Extension - Test Suite 1 - Language Registration",
+            "name": "Extension - Test Suite",
             "type": "extensionHost",
             "request": "launch",
             "preLaunchTask": "compile",
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--disable-extensions",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/tests/helper",
-                "${workspaceRoot}/test-fixtures/suite1",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/tests/helper",
+                "${workspaceFolder}/test-fixtures/${input:suite}"
             ],
-            "env": { "SUITE_DIR": "${workspaceRoot}/out/tests/suite1" },
-            "outFiles": ["${workspaceRoot}/out/tests/suite1/*.js"]
-        },
+            "env": { "SUITE_DIR": "${workspaceFolder}/out/tests/${input:suite}" },
+            "outFiles": ["${workspaceFolder}/out/**/*.js"]
+        }
+    ],
+    "inputs": [
         {
-            "name": "Extension - Test Suite 2 - Diagnostics",
-            "type": "extensionHost",
-            "request": "launch",
-            "preLaunchTask": "compile",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "--disable-extensions",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/tests/helper",
-                "${workspaceRoot}/test-fixtures/suite2",
+            "id": "suite",
+            "type": "pickString",
+            "description": "Test suite to run",
+            "options": [
+                { "label": "suite1 - Language registration", "value": "suite1" },
+                { "label": "suite2 - Diagnostics", "value": "suite2" },
+                { "label": "suite3 - Selectors", "value": "suite3" },
+                { "label": "suite4 - User-specific root", "value": "suite4" },
+                { "label": "suite5 - Formatter", "value": "suite5" },
+                { "label": "suite6 - Startup", "value": "suite6" }
             ],
-            "env": { "SUITE_DIR": "${workspaceRoot}/out/tests/suite2" },
-            "outFiles": ["${workspaceRoot}/out/tests/suite2/*.js"]
-        },
-        {
-            "name": "Extension - Test Suite 3 - Selectors",
-            "type": "extensionHost",
-            "request": "launch",
-            "preLaunchTask": "compile",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "--disable-extensions",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/tests/helper",
-                "${workspaceRoot}/test-fixtures/suite3",
-            ],
-            "env": { "SUITE_DIR": "${workspaceRoot}/out/tests/suite3" },
-            "outFiles": ["${workspaceRoot}/out/tests/suite3/*.js"]
+            "default": "suite1"
         }
     ]
 }
