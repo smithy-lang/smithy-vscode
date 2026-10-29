@@ -1,7 +1,12 @@
-# Publishes the extension to Open VSX with trusted publishing.
+# Publishes the extension to the Visual Studio Marketplace and Open VSX with trusted publishing,
+# waits for both to list the new version, and tags the released commit.
 #
-# The filename and the `release` environment are registered as a trusted publisher on Open VSX.
-# Renaming either breaks publishing until the registration is recreated.
+# The filename and the `release` environment are registered as a trusted publisher on the Visual
+# Studio Marketplace and on Open VSX. Renaming either breaks publishing until both registrations
+# are recreated.
+#
+# If a run fails after a publish job started, use "Re-run failed jobs". Both publish steps skip a
+# version that already exists, and the build job rejects a version that is already published.
 name: release
 
 on:
@@ -18,6 +23,9 @@ permissions:
 concurrency:
   group: release
   cancel-in-progress: false
+
+env:
+  EXTENSION_ID: smithy.smithy-vscode-extension
 
 jobs:
   build:
@@ -79,7 +87,7 @@ jobs:
           fi
           git checkout --detach "$COMMIT"
 
-      - name: Read version and require it to be unreleased
+      - name: Read version and require it to be untagged
         id: version
         run: |
           VERSION=$(jq -r .version package.json)
@@ -97,6 +105,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Require version to be unpublished
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          MARKETPLACE=$(npx --no-install vsce show "$EXTENSION_ID" --json)
+          if jq -e --arg v "$VERSION" 'any(.versions[]; .version == $v)' <<< "$MARKETPLACE" > /dev/null; then
+            echo "::error::$VERSION is already on the Visual Studio Marketplace"
+            exit 1
+          fi
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' "https://open-vsx.org/api/smithy/smithy-vscode-extension/$VERSION")
+          if [ "$STATUS" != "404" ]; then
+            echo "::error::Expected 404 for $VERSION on Open VSX, got $STATUS"
+            exit 1
+          fi
+
       - name: Package extension
         id: package
         env:
@@ -112,9 +135,76 @@ jobs:
           path: ${{ steps.package.outputs.vsix }}
           if-no-files-found: error
 
+  # Publishes to the Marketplace first. Open VSX doesn't support unpublishing, so it only gets the
+  # version after the Marketplace accepted it.
+  publish-marketplace:
+    name: Publish to Visual Studio Marketplace
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: release
+      url: https://marketplace.visualstudio.com/items?itemName=smithy.smithy-vscode-extension
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      VSIX: ${{ needs.build.outputs.vsix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: vsix
+
+      - name: Publish
+        run: npx --no-install vsce publish --oidc --packagePath "$VSIX" --skip-duplicate
+
+      - name: Wait for version on the Marketplace
+        run: |
+          for _ in $(seq 1 40); do
+            if npx --no-install vsce show "$EXTENSION_ID" --json | jq -e --arg v "$VERSION" 'any(.versions[]; .version == $v)' > /dev/null; then
+              echo "$VERSION is on the Visual Studio Marketplace"
+              exit 0
+            fi
+            echo "$VERSION is not on the Visual Studio Marketplace yet, retrying in 15 seconds"
+            sleep 15
+          done
+          echo "::error::$VERSION did not appear on the Visual Studio Marketplace within 10 minutes"
+          exit 1
+
+      # The Marketplace serves the uploaded .vsix gzip-compressed. `gzip -cdf` also passes through
+      # an uncompressed download.
+      - name: Compare Marketplace download with the packaged extension
+        run: |
+          URL="https://marketplace.visualstudio.com/_apis/public/gallery/publishers/smithy/vsextensions/smithy-vscode-extension/$VERSION/vspackage"
+          curl -sSfL -o marketplace.download "$URL"
+          EXPECTED=$(sha256sum "$VSIX" | cut -d ' ' -f 1)
+          ACTUAL=$(gzip -cdf marketplace.download | sha256sum | cut -d ' ' -f 1)
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "::error::The Marketplace serves sha256 $ACTUAL, expected $EXPECTED"
+            exit 1
+          fi
+          echo "The Marketplace serves the packaged extension (sha256 $ACTUAL)"
+
   publish-open-vsx:
     name: Publish to Open VSX
-    needs: build
+    # TODO: Run in parallel with publish-marketplace once a few releases have published to the
+    # Marketplace with trusted publishing. Change this to `needs: build` and make `tag` need
+    # `[build, publish-marketplace, publish-open-vsx]`.
+    needs: [build, publish-marketplace]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -162,14 +252,50 @@ jobs:
           echo "::error::$VERSION did not appear on Open VSX within 10 minutes"
           exit 1
 
+      - name: Compare Open VSX download with the packaged extension
+        run: |
+          URL="https://open-vsx.org/api/smithy/smithy-vscode-extension/$VERSION/file/$EXTENSION_ID-$VERSION.vsix"
+          curl -sSfL -o open-vsx.vsix "$URL"
+          EXPECTED=$(sha256sum "$VSIX" | cut -d ' ' -f 1)
+          ACTUAL=$(sha256sum open-vsx.vsix | cut -d ' ' -f 1)
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "::error::Open VSX serves sha256 $ACTUAL, expected $EXPECTED"
+            exit 1
+          fi
+          echo "Open VSX serves the packaged extension (sha256 $ACTUAL)"
+
+  tag:
+    name: Tag release
+    needs: [build, publish-open-vsx]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      COMMIT: ${{ inputs.commit }}
+      VERSION: ${{ needs.build.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Push tag
+        run: |
+          if ! TAG_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" --jq .object.sha 2> /dev/null); then
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$VERSION" -f sha="$COMMIT" > /dev/null
+            TAG_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" --jq .object.sha)
+          fi
+          if [ "$TAG_SHA" != "$COMMIT" ]; then
+            echo "::error::Tag $VERSION points to $TAG_SHA, expected $COMMIT"
+            exit 1
+          fi
+          echo "Tag $VERSION points to $COMMIT"
+
       - name: Write job summary
-        env:
-          COMMIT: ${{ inputs.commit }}
         run: |
           {
-            echo "## Released $VERSION to Open VSX"
+            echo "## Released $VERSION"
             echo
             echo "- Version: \`$VERSION\`"
             echo "- Commit: [\`$COMMIT\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$COMMIT)"
+            echo "- Tag: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$VERSION"
+            echo "- Visual Studio Marketplace: https://marketplace.visualstudio.com/items?itemName=$EXTENSION_ID"
             echo "- Open VSX: https://open-vsx.org/extension/smithy/smithy-vscode-extension/$VERSION"
           } >> "$GITHUB_STEP_SUMMARY"
