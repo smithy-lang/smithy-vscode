@@ -1,8 +1,8 @@
 {
     "extends": "@tsconfig/node22/tsconfig.json",
     "compilerOptions": {
-        "outDir": "out",
-        "sourceMap": true
+        "noEmit": true,
+        "allowImportingTsExtensions": true
     },
     "include": ["src", "tests"],
     "exclude": ["node_modules", ".vscode-test"]

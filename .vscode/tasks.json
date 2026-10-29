@@ -4,9 +4,10 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "compile",
+            "label": "bundle",
             "command": "npm",
-            "args": ["run", "compile"]
+            "args": ["run", "vscode:prepublish"],
+            "options": { "env": { "SMITHY_VSCODE_DEBUG_BUNDLE": "1" } }
         }
     ]
 }

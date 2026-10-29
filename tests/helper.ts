@@ -1,11 +1,16 @@
-import { extensions, languages, Uri } from 'vscode';
+import type { Uri } from 'vscode';
 import { globSync } from 'fs';
+import { createRequire } from 'module';
 import { resolve } from 'path';
 import { run as runNodeTests } from 'node:test';
 import { spec } from 'node:test/reporters';
 import { setTimeout } from 'node:timers/promises';
 
-export const getDocUri = (p: string) => Uri.file(resolve(__dirname, '../../test-fixtures', p));
+// TODO: Replace with `import * as vscode from 'vscode'` once the engines.vscode floor supports it.
+// On VS Code 1.114.0, importing 'vscode' from an ES module hangs the extension host.
+export const vscode: typeof import('vscode') = createRequire(import.meta.url)('vscode');
+
+export const getDocUri = (p: string) => vscode.Uri.file(resolve(import.meta.dirname, '../test-fixtures', p));
 
 // Generous, since the first suite on a fresh machine has Coursier download a JVM and the language server.
 const DEFAULT_TIMEOUT_MS = 180_000;
@@ -37,7 +42,7 @@ export async function waitFor<T>(
 // Waits for the extension to activate, which completes once the language server has finished
 // `initialize`. That loads the workspace's projects and their Maven dependencies.
 export async function waitForServerStartup(timeoutMs = DEFAULT_TIMEOUT_MS): Promise<void> {
-    const ext = extensions.getExtension('smithy.smithy-vscode-extension');
+    const ext = vscode.extensions.getExtension('smithy.smithy-vscode-extension');
     if (!ext) {
         throw new Error('Smithy extension is not installed');
     }
@@ -61,7 +66,7 @@ export async function waitForServerStartup(timeoutMs = DEFAULT_TIMEOUT_MS): Prom
 export async function waitForPublishedDiagnostics(uri: Uri): Promise<void> {
     await waitForServerStartup();
     await waitFor(`diagnostics to be published for ${uri.fsPath}`, () =>
-        languages.getDiagnostics().some(([published]) => published.toString() === uri.toString())
+        vscode.languages.getDiagnostics().some(([published]) => published.toString() === uri.toString())
     );
 }
 
@@ -72,7 +77,7 @@ export async function run(): Promise<void> {
     if (!testsRoot) {
         throw new Error('SUITE_DIR is not set');
     }
-    const files = globSync('**/*.test.js', { cwd: testsRoot }).map((f) => resolve(testsRoot, f));
+    const files = globSync('**/*.test.ts', { cwd: testsRoot }).map((f) => resolve(testsRoot, f));
     if (files.length === 0) {
         return;
     }
