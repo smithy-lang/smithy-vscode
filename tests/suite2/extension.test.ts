@@ -1,7 +1,6 @@
 import { suite, test } from 'node:test';
 import * as assert from 'assert';
-import * as vscode from 'vscode';
-import { getDocUri, waitFor, waitForServerStartup } from './../helper';
+import { getDocUri, waitFor, waitForServerStartup, vscode } from '../helper.ts';
 
 suite('broken model tests', function () {
     test('Should provide diagnostics', async () => {

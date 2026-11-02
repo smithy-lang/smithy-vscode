@@ -9,16 +9,19 @@
             "name": "Extension - Test Suite",
             "type": "extensionHost",
             "request": "launch",
-            "preLaunchTask": "compile",
+            "preLaunchTask": "bundle",
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/tests/helper",
+                "--extensionTestsPath=${workspaceFolder}/tests/helper.ts",
                 "${workspaceFolder}/test-fixtures/${input:suite}"
             ],
-            "env": { "SUITE_DIR": "${workspaceFolder}/out/tests/${input:suite}" },
-            "outFiles": ["${workspaceFolder}/out/**/*.js"]
+            "env": { "SUITE_DIR": "${workspaceFolder}/tests/${input:suite}" },
+            "outFiles": ["${workspaceFolder}/out/**/*.js"],
+            // The bundle's source map can load after activate() has already run, so wait for it
+            // before running the script. Otherwise breakpoints in src/*.ts may not bind.
+            "pauseForSourceMap": true
         }
     ],
     "inputs": [

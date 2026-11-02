@@ -1,7 +1,6 @@
 import { suite, test } from 'node:test';
 import * as assert from 'assert';
-import * as vscode from 'vscode';
-import { getDocUri, waitForPublishedDiagnostics } from './../helper';
+import { getDocUri, waitForPublishedDiagnostics, vscode } from '../helper.ts';
 
 suite('Extension tests', function () {
     test('Should start extension and Language Server', async () => {
