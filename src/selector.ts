@@ -1,17 +1,9 @@
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
-namespace SelectorCommandRequest {
-    type Params = {
-        expression: string;
-    };
-
-    type Result = lsp.Location[];
-
-    const method = 'smithy/selectorCommand';
-
-    export const type = new lsp.RequestType<Params, Result, void>(method);
-}
+const SelectorCommandRequest = {
+    type: new lsp.RequestType<{ expression: string }, lsp.Location[], void>('smithy/selectorCommand'),
+};
 
 export default class SelectorHandler {
     private client: lsp.LanguageClient;

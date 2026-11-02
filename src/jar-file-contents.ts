@@ -1,15 +1,9 @@
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
-namespace JarFileContentsRequest {
-    type Params = lsp.TextDocumentIdentifier;
-
-    type Result = string;
-
-    const method = 'smithy/jarFileContents';
-
-    export const type = new lsp.RequestType<Params, Result, void>(method);
-}
+const JarFileContentsRequest = {
+    type: new lsp.RequestType<lsp.TextDocumentIdentifier, string, void>('smithy/jarFileContents'),
+};
 
 export default class JarFileContentsProvider implements vscode.TextDocumentContentProvider {
     private client: lsp.LanguageClient;

@@ -2,7 +2,8 @@
     "extends": "@tsconfig/node22/tsconfig.json",
     "compilerOptions": {
         "outDir": "out",
-        "sourceMap": true
+        "sourceMap": true,
+        "erasableSyntaxOnly": true
     },
     "include": ["src", "tests"],
     "exclude": ["node_modules", ".vscode-test"]
