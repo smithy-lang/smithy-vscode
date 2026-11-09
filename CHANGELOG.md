@@ -1,6 +1,6 @@
 # Smithy VSCode Extension Changelog
 
-## next
+## 0.10.2 (2026-11-09)
 
 - Moved extension and language server logs to the "Smithy" output channel (previously "Smithy Language Server") [#181](https://github.com/smithy-lang/smithy-vscode/pull/181)
 
