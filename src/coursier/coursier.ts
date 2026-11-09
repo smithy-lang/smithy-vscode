@@ -5,6 +5,9 @@ import { logger } from '../logger';
 
 // Version of Coursier downloaded when neither `cs` nor `coursier` is on the PATH.
 const COURSIER_VERSION = 'v2.0.10';
+// Coursier 2.0.x has no native Apple Silicon build. The x86_64 build only runs there under
+// Rosetta, and without Rosetta spawning it fails with EBADARCH ("Unknown system error -86").
+const APPLE_SILICON_COURSIER_VERSION = 'v2.1.26';
 
 export default async function getCoursierExecutable(context: vscode.ExtensionContext): Promise<string> {
     for (const command of ['cs', 'coursier']) {
@@ -14,7 +17,11 @@ export default async function getCoursierExecutable(context: vscode.ExtensionCon
         }
     }
 
-    return await downloadCoursierIfRequired(context.globalStoragePath, COURSIER_VERSION);
+    return await downloadCoursierIfRequired(
+        context.globalStoragePath,
+        COURSIER_VERSION,
+        APPLE_SILICON_COURSIER_VERSION
+    );
 }
 
 function availableOnPath(command: string, args: string[]): Promise<boolean> {

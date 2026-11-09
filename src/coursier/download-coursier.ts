@@ -4,9 +4,21 @@ import { access, mkdir } from 'fs/promises';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import type { ReadableStream } from 'stream/web';
+import { createGunzip } from 'zlib';
 import { logger } from '../logger';
 
-export default function downloadCoursierIfRequired(extensionPath: string, versionPath: string): Promise<string> {
+interface CoursierAsset {
+    url: string;
+    file: string;
+    // Whether the release asset is gzip-compressed and must be decompressed after download.
+    gzipped?: boolean;
+}
+
+export default function downloadCoursierIfRequired(
+    extensionPath: string,
+    versionPath: string,
+    appleSiliconVersionPath: string
+): Promise<string> {
     function binPath(filename: string) {
         return path.join(extensionPath, filename);
     }
@@ -17,36 +29,43 @@ export default function downloadCoursierIfRequired(extensionPath: string, versio
         });
     }
 
-    const urls: Partial<Record<NodeJS.Platform, Partial<Record<NodeJS.Architecture, string>> & { default: string }>> = {
+    function releaseUrl(version: string, asset: string) {
+        return `https://github.com/coursier/coursier/releases/download/${version}/${asset}`;
+    }
+
+    const assets: Partial<
+        Record<NodeJS.Platform, Partial<Record<NodeJS.Architecture, CoursierAsset>> & { default: CoursierAsset }>
+    > = {
         darwin: {
-            default: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-apple-darwin`,
+            // Uses its own file name so that an x86_64 binary downloaded by an earlier version of
+            // the extension isn't reused on Apple Silicon.
+            arm64: {
+                url: releaseUrl(appleSiliconVersionPath, 'cs-aarch64-apple-darwin.gz'),
+                file: binPath('coursier-aarch64'),
+                gzipped: true,
+            },
+            default: { url: releaseUrl(versionPath, 'cs-x86_64-apple-darwin'), file: binPath('coursier') },
         },
         linux: {
-            arm64: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-aarch64-pc-linux`,
-            default: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-pc-linux`,
+            arm64: { url: releaseUrl(versionPath, 'cs-aarch64-pc-linux'), file: binPath('coursier') },
+            default: { url: releaseUrl(versionPath, 'cs-x86_64-pc-linux'), file: binPath('coursier') },
         },
         win32: {
-            default: `https://github.com/coursier/coursier/releases/download/${versionPath}/cs-x86_64-pc-win32.exe`,
+            default: { url: releaseUrl(versionPath, 'cs-x86_64-pc-win32.exe'), file: binPath('coursier.exe') },
         },
     };
-    const targets: Partial<Record<NodeJS.Platform, string>> = {
-        darwin: binPath('coursier'),
-        linux: binPath('coursier'),
-        win32: binPath('coursier.exe'),
-    };
 
-    const targetFile = targets[process.platform];
-    const platformUrls = urls[process.platform];
-    if (!targetFile || !platformUrls) {
+    const platformAssets = assets[process.platform];
+    if (!platformAssets) {
         return Promise.reject(new Error(`Coursier download is not supported on platform: ${process.platform}`));
     }
-    const downloadUrl = platformUrls[process.arch] ?? platformUrls.default;
-    return validBinFileExists(targetFile).then((valid) => {
+    const asset = platformAssets[process.arch] ?? platformAssets.default;
+    return validBinFileExists(asset.file).then((valid) => {
         if (valid) {
-            return targetFile;
+            return asset.file;
         }
-        logger.info(`Coursier not found on path, downloading it from ${downloadUrl}`);
-        return createDir().then(() => downloadFile(downloadUrl, targetFile));
+        logger.info(`Coursier not found on path, downloading it from ${asset.url}`);
+        return createDir().then(() => downloadFile(asset.url, asset.file, asset.gzipped ?? false));
     });
 }
 
@@ -56,7 +75,7 @@ function validBinFileExists(file: string): Promise<boolean> {
         .catch(() => false);
 }
 
-async function downloadFile(url: string, targetFile: string): Promise<string> {
+async function downloadFile(url: string, targetFile: string, gzipped: boolean): Promise<string> {
     // fetch follows redirects by default, which GitHub release asset URLs rely on.
     const response = await fetch(url);
     if (response.status !== 200 || !response.body) {
@@ -65,10 +84,13 @@ async function downloadFile(url: string, targetFile: string): Promise<string> {
     }
 
     try {
-        await pipeline(
-            Readable.fromWeb(response.body as ReadableStream<Uint8Array>),
-            fs.createWriteStream(targetFile, { flags: 'wx', mode: 0o755 })
-        );
+        const source = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
+        const destination = fs.createWriteStream(targetFile, { flags: 'wx', mode: 0o755 });
+        if (gzipped) {
+            await pipeline(source, createGunzip(), destination);
+        } else {
+            await pipeline(source, destination);
+        }
     } catch (err) {
         if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
             logger.info(`File already exists at ${targetFile}`);
