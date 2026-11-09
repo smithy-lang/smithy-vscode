@@ -135,8 +135,6 @@ jobs:
           path: ${{ steps.package.outputs.vsix }}
           if-no-files-found: error
 
-  # Publishes to the Marketplace first. Open VSX doesn't support unpublishing, so it only gets the
-  # version after the Marketplace accepted it.
   publish-marketplace:
     name: Publish to Visual Studio Marketplace
     needs: build
@@ -201,10 +199,7 @@ jobs:
 
   publish-open-vsx:
     name: Publish to Open VSX
-    # TODO: Run in parallel with publish-marketplace once a few releases have published to the
-    # Marketplace with trusted publishing. Change this to `needs: build` and make `tag` need
-    # `[build, publish-marketplace, publish-open-vsx]`.
-    needs: [build, publish-marketplace]
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -266,7 +261,7 @@ jobs:
 
   tag:
     name: Tag release
-    needs: [build, publish-open-vsx]
+    needs: [build, publish-marketplace, publish-open-vsx]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
