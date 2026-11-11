@@ -4,7 +4,11 @@ import * as lsp from 'vscode-languageclient/node';
 import * as config from './config';
 import JarFileContentsProvider from './jar-file-contents';
 import SelectorHandler from './selector';
-import getCoursierExecutable from './coursier/coursier';
+import downloadLanguageServerIfRequired, {
+    deleteCoursier,
+    isSupportedVersion,
+    MINIMUM_VERSION,
+} from './download-language-server';
 import { logger } from './logger';
 
 let client: lsp.LanguageClient;
@@ -89,8 +93,7 @@ function updateVersionStatusBarItem(): void {
     const version = config.getServerVersion();
     if (version === LATEST_RELEASE) {
         versionStatusBarItem.text = '$(check) Smithy LS (latest)';
-        versionStatusBarItem.tooltip =
-            'Smithy Language Server: using latest from Maven Central. Click to pin a version.';
+        versionStatusBarItem.tooltip = 'Smithy Language Server: using the latest release. Click to pin a version.';
     } else {
         versionStatusBarItem.text = '$(pin) Smithy LS v' + version;
         versionStatusBarItem.tooltip = 'Smithy Language Server: pinned to v' + version + '. Click to switch to latest.';
@@ -103,8 +106,11 @@ async function fetchAvailableVersions(): Promise<string[]> {
     try {
         const response = await fetch(metadataUrl);
         const text = await response.text();
-        const versions = [...text.matchAll(/<version>([^<]+)<\/version>/g)].map((m) => m[1]).reverse();
-        return versions;
+        // Only versions with a release zip can be downloaded.
+        return [...text.matchAll(/<version>([^<]+)<\/version>/g)]
+            .map((m) => m[1])
+            .filter(isSupportedVersion)
+            .reverse();
     } catch {
         return [];
     }
@@ -181,18 +187,6 @@ function getClientOptions(): lsp.LanguageClientOptions {
     };
 }
 
-// Couriser uses an index to determine where to download jvms from: https://get-coursier.io/docs/2.0.6/cli-java#jvm-index
-// Newer versions of coursier use this index, which is more up to date than the one
-// used by the coursier version used by the extension.
-// This is a temporary solution to avoid adding logic that determines the version of
-// coursier on the local machine. In the near future, we will vend the language server
-// as a standalone executable, and will no longer need couriser to manage the jvm version.
-const COURSIER_JVM_INDEX = 'https://raw.githubusercontent.com/coursier/jvm-index/master/index.json';
-
-// JVM that Coursier launches the language server with.
-// By default, coursier uses AdoptOpenJDK: https://get-coursier.io/docs/2.0.6/cli-java
-const COURSIER_JVM = 'corretto:21';
-
 async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executable> {
     const serverExecutable = config.getServerExecutable();
     if (serverExecutable) {
@@ -202,27 +196,30 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
             args: ['0'],
         };
     } else {
-        const coursierExecutable = await getCoursierExecutable(context);
         const languageServerVersion = config.getServerVersion();
-        logger.info(`Launching smithy-language-server ${languageServerVersion} via ${coursierExecutable}`);
-        return {
-            command: coursierExecutable,
-            args: [
-                'launch',
-                'software.amazon.smithy:smithy-language-server:' + languageServerVersion,
-                // Configure couriser to use java 21
-                '--jvm',
-                COURSIER_JVM,
-                // The location to download the jvm from is provided by the jvm index.
-                '--jvm-index',
-                COURSIER_JVM_INDEX,
-                '-r',
-                'm2local',
-                '-M',
-                'software.amazon.smithy.lsp.Main',
-                '--',
-                '0',
-            ],
-        };
+        if (languageServerVersion !== LATEST_RELEASE && !isSupportedVersion(languageServerVersion)) {
+            promptUnsupportedVersion(languageServerVersion);
+            throw new Error(`Unsupported smithy-language-server version: ${languageServerVersion}`);
+        }
+        await deleteCoursier(context.globalStoragePath);
+        const launchScript = await downloadLanguageServerIfRequired(context.globalStoragePath, languageServerVersion);
+        logger.info(`Launching smithy-language-server ${languageServerVersion} via ${launchScript}`);
+        if (process.platform === 'win32') {
+            // Node can only run .bat files through a shell. Quote the path, which may contain spaces.
+            return { command: `"${launchScript}"`, args: ['0'], options: { shell: true } };
+        }
+        return { command: launchScript, args: ['0'] };
+    }
+}
+
+async function promptUnsupportedVersion(version: string): Promise<void> {
+    const pickVersion = 'Pick a version';
+    const choice = await vscode.window.showErrorMessage(
+        `Smithy Language Server ${version} isn't supported. Pick version ${MINIMUM_VERSION} or later, ` +
+            'or set smithy.server.executable to run your own installation. If smithyLsp.version is set, remove it.',
+        pickVersion
+    );
+    if (choice === pickVersion) {
+        await pickAndPinVersion();
     }
 }
