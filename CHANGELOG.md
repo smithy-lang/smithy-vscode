@@ -1,5 +1,9 @@
 # Smithy VSCode Extension Changelog
 
+## next
+
+- Replaced Coursier with smithy-language-server's self-contained release zips, which include a Java runtime and run natively on Apple Silicon. `smithy.server.version` must now be `latest.release` or an exact version of 0.7.0 or later. To run a local build, use `smithy.server.executable`
+
 ## 0.10.2 (2026-11-09)
 
 - Moved extension and language server logs to the "Smithy" output channel (previously "Smithy Language Server") [#181](https://github.com/smithy-lang/smithy-vscode/pull/181)

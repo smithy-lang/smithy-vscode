@@ -22,7 +22,7 @@ following settings are supported:
 | smithy.maxNumberOfProblems                | Controls the maximum number of problems produced by the server.<br/>Default: `100`                                                                                                                                                             |
 | smithy.trace.server                       | Traces the communication between VS Code and smithy-language-server.<br/>Options: `"off"`, `"messages"`, `"verbose"`<br/>Default: `"verbose"`                                                                                                  |
 | smithy.server.executable                  | Executable to run smithy-language-server, instead of the one managed by the extension. Can be the executable name if it is on your PATH, or an absolute path to the executable. If `null`, the extension will download it.<br/>Default: `null` |
-| smithy.server.version                     | Version of smithy-language-server to use. Ignored if `smithy.server.executable` is provided.                                                                                                                                                   |
+| smithy.server.version                     | Version of smithy-language-server to use: `latest.release`, or a version such as `0.9.0`. Must be 0.7.0 or later. Ignored if `smithy.server.executable` is provided.                                                                           |
 | smithy.server.diagnostics.minimumSeverity | Minimum severity of Smithy validation events to display in the editor.<br/>Options: `"NOTE"`, `"WARNING"`, `"DANGER"`, `"ERROR"`<br/>Default: `"WARNING"`                                                                                      |`
 
 ## Installation
