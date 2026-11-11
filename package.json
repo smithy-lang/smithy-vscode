@@ -160,7 +160,7 @@
                 "smithy.server.version": {
                     "type": "string",
                     "default": "latest.release",
-                    "description": "Version of smithy-language-server to use. Ignored if smithy.server.executable is provided."
+                    "description": "Version of smithy-language-server to use: `latest.release`, or a version such as `0.9.0`. Must be 0.7.0 or later. Ignored if smithy.server.executable is provided."
                 },
                 "smithy.server.diagnostics.minimumSeverity": {
                     "type": "string",
@@ -202,6 +202,7 @@
         "typescript": "~7.0.2"
     },
     "dependencies": {
+        "node-stream-zip": "^1.16.0",
         "vscode-languageclient": "^10.1.2"
     }
 }

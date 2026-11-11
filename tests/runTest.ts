@@ -14,6 +14,7 @@ const suites = [
     'suite4', // User-specific root
     'suite5', // Formatter
     'suite6', // Startup
+    'suite7', // Unsupported language server version
 ];
 
 async function go() {

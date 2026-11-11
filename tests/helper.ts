@@ -12,7 +12,7 @@ export const vscode: typeof import('vscode') = createRequire(import.meta.url)('v
 
 export const getDocUri = (p: string) => vscode.Uri.file(resolve(import.meta.dirname, '../test-fixtures', p));
 
-// Generous, since the first suite on a fresh machine has Coursier download a JVM and the language server.
+// Generous, since the first suite on a fresh machine downloads the language server.
 const DEFAULT_TIMEOUT_MS = 180_000;
 const POLL_INTERVAL_MS = 100;
 
