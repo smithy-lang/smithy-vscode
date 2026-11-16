@@ -96,3 +96,14 @@ jobs:
           # The exact version from "Resolve versions", such as 1.142.0 instead of "stable", so the
           # tests use the VS Code install restored by "Cache VS Code download".
           VSCODE_TEST_VERSION: ${{ steps.versions.outputs.vscode }}
+
+  ci-gate:
+    name: ci-gate
+    needs: [check, test-extension]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require all jobs to pass
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
