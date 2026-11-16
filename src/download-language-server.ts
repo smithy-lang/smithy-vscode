@@ -97,6 +97,13 @@ export default async function downloadLanguageServerIfRequired(storagePath: stri
                 throw err;
             }
         }
+    } catch (err) {
+        const installed = version === 'latest.release' ? await newestInstalledVersion(installRoot) : undefined;
+        if (!installed) {
+            throw err;
+        }
+        logger.warn(`Couldn't download smithy-language-server ${resolvedVersion}, using ${installed}: ${err}`);
+        return getLaunchScript(path.join(installRoot, installed));
     } finally {
         await rm(tempDir, { recursive: true, force: true }).catch((err) =>
             logger.warn(`Couldn't delete ${tempDir}: ${err}`)
