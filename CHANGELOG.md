@@ -3,8 +3,7 @@
 ## next
 
 - Replaced Coursier with smithy-language-server's self-contained release zips, which include a Java runtime and run natively on Apple Silicon. The language server is now downloaded only from GitHub releases, and the first start downloads about 30 MB instead of about 270 MB. `smithy.server.version` accepts `latest.release` or an exact version from 0.4.0 onward. To run a local build, use `smithy.server.executable` [#198](https://github.com/smithy-lang/smithy-vscode/pull/198)
-- Fixed smithy-language-server 0.7.0 and earlier failing to start with Smithy 1.74.0 and later [#198](https://github.com/smithy-lang/smithy-vscode/pull/198)
-
+- Fixed smithy-language-server 0.4.0 to 0.7.0 failing to start with Smithy 1.74.0 and later [#198](https://github.com/smithy-lang/smithy-vscode/pull/198)
 
 ## 0.10.2 (2026-11-09)
 
