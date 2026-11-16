@@ -23,6 +23,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
     promptVersionPolicy(context);
     createVersionStatusBarItem(context);
+    // Registered before getServer, so the status bar item still works if the server can't be set up.
+    context.subscriptions.push(
+        vscode.commands.registerCommand('smithy.toggleVersionPolicy', () => toggleVersionPolicy(context))
+    );
 
     const server = await getServer(context);
     const clientOptions = getClientOptions();
@@ -36,8 +40,7 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.workspace.registerTextDocumentContentProvider('smithyjar', jarFileContentsProvider),
         vscode.commands.registerCommand('smithy.runSelector', selectorHandler.run, selectorHandler),
-        vscode.commands.registerCommand('smithy.clearSelector', selectorHandler.clear, selectorHandler),
-        vscode.commands.registerCommand('smithy.toggleVersionPolicy', () => toggleVersionPolicy(context))
+        vscode.commands.registerCommand('smithy.clearSelector', selectorHandler.clear, selectorHandler)
     );
 
     // Start the client. This will also launch the server. Activation completes once the server has
