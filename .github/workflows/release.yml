@@ -1,5 +1,9 @@
 # Publishes the extension to the Visual Studio Marketplace and Open VSX with trusted publishing,
-# waits for both to list the new version, and tags the released commit.
+# waits for both to list the new version, tags the released commit, and creates a GitHub release
+# from the version's CHANGELOG.md section.
+#
+# Runs after ci.yml passes on a push to main, and releases the version in package.json if that
+# version has no tag yet.
 #
 # The filename and the `release` environment are registered as a trusted publisher on the Visual
 # Studio Marketplace and on Open VSX. Renaming either breaks publishing until both registrations
@@ -10,12 +14,10 @@
 name: release
 
 on:
-  workflow_dispatch:
-    inputs:
-      commit:
-        description: Full SHA of the version bump commit on main
-        required: true
-        type: string
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -26,76 +28,71 @@ concurrency:
 
 env:
   EXTENSION_ID: smithy.smithy-vscode-extension
+  COMMIT: ${{ github.event.workflow_run.head_sha }}
 
 jobs:
+  check-version:
+    name: Check for an unreleased version
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      release: ${{ steps.check.outputs.release }}
+    steps:
+      - name: Check whether the commit's version is untagged
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(gh api -H "Accept: application/vnd.github.raw+json" "repos/$GITHUB_REPOSITORY/contents/package.json?ref=$COMMIT" | jq -r .version)
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" > /dev/null 2>&1; then
+            echo "Tag $VERSION already exists, skipping release"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$VERSION has no tag, releasing $COMMIT"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     name: Build
+    needs: check-version
+    if: needs.check-version.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
-      actions: read
     outputs:
       version: ${{ steps.version.outputs.version }}
+      notes: ${{ steps.notes.outputs.notes }}
       vsix: ${{ steps.package.outputs.vsix }}
     steps:
-      - name: Require dispatch from main
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          if [ "$REF" != "refs/heads/main" ]; then
-            echo "::error::Release must be dispatched from refs/heads/main, got $REF"
-            exit 1
-          fi
-
-      - name: Validate commit input
-        env:
-          COMMIT: ${{ inputs.commit }}
-        run: |
-          if ! [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "::error::commit must be a full 40-character lowercase SHA, got '$COMMIT'"
-            exit 1
-          fi
-
-      # The extension tests already ran in ci.yml on the PR and on the push to main, against both
-      # the minimum supported and the latest Stable VS Code. Require that push run to have passed
-      # instead of re-running the tests here.
-      - name: Require ci.yml to have passed on the commit
-        env:
-          COMMIT: ${{ inputs.commit }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          COUNT=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$COMMIT&event=push&branch=main&status=success" --jq .total_count)
-          if [ "$COUNT" -eq 0 ]; then
-            echo "::error::ci.yml has no successful push run on main for $COMMIT"
-            exit 1
-          fi
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
-          fetch-depth: 0
+          ref: ${{ env.COMMIT }}
           persist-credentials: false
 
-      - name: Check out commit if it is on main
-        env:
-          COMMIT: ${{ inputs.commit }}
-        run: |
-          if ! git merge-base --is-ancestor "$COMMIT" origin/main; then
-            echo "::error::$COMMIT is not an ancestor of origin/main"
-            exit 1
-          fi
-          git checkout --detach "$COMMIT"
-
-      - name: Read version and require it to be untagged
+      - name: Read version
         id: version
+        run: echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Read release notes from CHANGELOG.md
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION=$(jq -r .version package.json)
-          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
-            echo "::error::Tag $VERSION already exists"
+          NOTES=$(awk -v heading="## $VERSION (" '
+            /^## / { if (found || index($0, heading) != 1) exit; found = 1; next }
+            found { print }
+          ' CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            echo "::error::CHANGELOG.md's first section must be a '## $VERSION (YYYY-MM-DD)' heading with entries"
             exit 1
           fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo "notes<<EOF_RELEASE_NOTES"
+            echo "$NOTES"
+            echo "EOF_RELEASE_NOTES"
+          } >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -111,12 +108,12 @@ jobs:
         run: |
           MARKETPLACE=$(npx --no-install vsce show "$EXTENSION_ID" --json)
           if jq -e --arg v "$VERSION" 'any(.versions[]; .version == $v)' <<< "$MARKETPLACE" > /dev/null; then
-            echo "::error::$VERSION is already on the Visual Studio Marketplace"
+            echo "::error::$VERSION is already on the Visual Studio Marketplace. If an earlier release run failed after publishing, use \"Re-run failed jobs\" on that run."
             exit 1
           fi
           STATUS=$(curl -s -o /dev/null -w '%{http_code}' "https://open-vsx.org/api/smithy/smithy-vscode-extension/$VERSION")
           if [ "$STATUS" != "404" ]; then
-            echo "::error::Expected 404 for $VERSION on Open VSX, got $STATUS"
+            echo "::error::Expected 404 for $VERSION on Open VSX, got $STATUS. If an earlier release run failed after publishing, use \"Re-run failed jobs\" on that run."
             exit 1
           fi
 
@@ -152,7 +149,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.commit }}
+          ref: ${{ env.COMMIT }}
           persist-credentials: false
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -214,7 +211,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.commit }}
+          ref: ${{ env.COMMIT }}
           persist-credentials: false
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -260,14 +257,13 @@ jobs:
           echo "Open VSX serves the packaged extension (sha256 $ACTUAL)"
 
   tag:
-    name: Tag release
+    name: Tag and create GitHub release
     needs: [build, publish-marketplace, publish-open-vsx]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
     env:
-      COMMIT: ${{ inputs.commit }}
       VERSION: ${{ needs.build.outputs.version }}
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -283,6 +279,16 @@ jobs:
           fi
           echo "Tag $VERSION points to $COMMIT"
 
+      - name: Create GitHub release
+        env:
+          NOTES: ${{ needs.build.outputs.notes }}
+        run: |
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "GitHub release $VERSION already exists"
+            exit 0
+          fi
+          gh release create "$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$VERSION" --notes "$NOTES"
+
       - name: Write job summary
         run: |
           {
@@ -290,7 +296,7 @@ jobs:
             echo
             echo "- Version: \`$VERSION\`"
             echo "- Commit: [\`$COMMIT\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$COMMIT)"
-            echo "- Tag: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$VERSION"
+            echo "- GitHub release: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$VERSION"
             echo "- Visual Studio Marketplace: https://marketplace.visualstudio.com/items?itemName=$EXTENSION_ID"
             echo "- Open VSX: https://open-vsx.org/extension/smithy/smithy-vscode-extension/$VERSION"
           } >> "$GITHUB_STEP_SUMMARY"
