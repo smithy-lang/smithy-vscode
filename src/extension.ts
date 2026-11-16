@@ -200,18 +200,25 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
         };
     } else {
         const languageServerVersion = config.getServerVersion();
+
         if (languageServerVersion !== LATEST_RELEASE && !isSupportedVersion(languageServerVersion)) {
             promptUnsupportedVersion(languageServerVersion);
             throw new Error(`Unsupported smithy-language-server version: ${languageServerVersion}`);
         }
+
+        // TODO: Remove deleteCoursier once most users have run a version after 0.10.2, which deletes
+        // the Coursier binary that 0.10.2 and earlier downloaded.
         await deleteCoursier(context.globalStoragePath);
+
         const launchScript = await downloadLanguageServerIfRequired(context.globalStoragePath, languageServerVersion);
         logger.info(`Launching smithy-language-server ${languageServerVersion} via ${launchScript}`);
+
         if (process.platform === 'win32') {
             // Node can only run .bat files through a shell. Quote the path, which may contain spaces.
             // Pass the argument in the command, since Node deprecates args with shell (DEP0190).
             return { command: `"${launchScript}" 0`, args: [], options: { shell: true } };
         }
+
         return { command: launchScript, args: ['0'] };
     }
 }
