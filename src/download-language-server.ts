@@ -1,10 +1,8 @@
 import { createHash, randomUUID } from 'crypto';
-import * as fs from 'fs';
+import { createWriteStream } from 'fs';
 import { access, chmod, mkdir, mkdtemp, readdir, rename, rm, stat, writeFile } from 'fs/promises';
 import * as path from 'path';
-import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
-import type { ReadableStream } from 'stream/web';
 import StreamZip from 'node-stream-zip';
 import { logger } from './logger';
 
@@ -13,46 +11,26 @@ const RELEASES_URL = 'https://github.com/smithy-lang/smithy-language-server/rele
 // The oldest release with a self-contained zip for each platform.
 export const MINIMUM_VERSION = '0.4.0';
 
-// Parses an exact version such as 0.9.0. Returns undefined for anything else, such as a range.
-export function parseVersion(version: string): [number, number, number] | undefined {
-    const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
-    return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : undefined;
-}
+// Matches an exact version such as 0.9.0, and not anything else, such as a range.
+const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
+
+// Compares the numbers in versions, so 0.10.0 sorts after 0.9.0.
+const compareVersions = new Intl.Collator('en', { numeric: true }).compare;
 
 export function isSupportedVersion(version: string): boolean {
-    const parsed = parseVersion(version);
-    return parsed !== undefined && compareVersions(parsed, parseVersion(MINIMUM_VERSION)!) >= 0;
-}
-
-function compareVersions(a: number[], b: number[]): number {
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) {
-            return a[i] - b[i];
-        }
-    }
-    return 0;
+    return EXACT_VERSION.test(version) && compareVersions(version, MINIMUM_VERSION) >= 0;
 }
 
 // Names of the release zip for this platform, without the `smithy-language-server-` prefix and
 // `.zip` suffix, in order of preference.
 function platformNames(): string[] {
     const arch = process.arch === 'arm64' ? 'aarch64' : process.arch === 'x64' ? 'x86_64' : undefined;
-    switch (process.platform) {
-        case 'darwin':
-        case 'linux':
-            if (arch) {
-                return [`${process.platform}-${arch}`];
-            }
-            break;
-        case 'win32':
-            // There is no Windows arm64 build. Windows on arm64 runs the x86_64 build under
-            // emulation. 0.7.0 named it windows-x64.
-            if (arch) {
-                return ['windows-x86_64', 'windows-x64'];
-            }
-            break;
+    if (!arch || !['darwin', 'linux', 'win32'].includes(process.platform)) {
+        throw new Error(`smithy-language-server isn't available for ${process.platform}-${process.arch}`);
     }
-    throw new Error(`smithy-language-server isn't available for ${process.platform}-${process.arch}`);
+    // There is no Windows arm64 build. Windows on arm64 runs the x86_64 build under emulation.
+    // 0.7.0 named it windows-x64.
+    return process.platform === 'win32' ? ['windows-x86_64', 'windows-x64'] : [`${process.platform}-${arch}`];
 }
 
 // Returns the path of the smithy-language-server launch script for `version` (an exact version, or
@@ -133,7 +111,8 @@ async function installLanguageServer(storagePath: string, version: string): Prom
 // Each window writes `.in-use-<extension host pid>` into the version it runs, so other windows don't
 // delete that version while its server is running, or for 30 days after it last started.
 const IN_USE_PREFIX = '.in-use-';
-const KEEP_UNUSED_MS = 30 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const KEEP_UNUSED_MS = 30 * DAY_MS;
 
 // Deletes installed versions other than `keep` that no running window uses and that no window
 // started in the last 30 days, and temporary directories left by interrupted downloads or deletions.
@@ -142,16 +121,22 @@ async function pruneInstalls(installRoot: string, keep: string): Promise<void> {
         let dir = path.join(installRoot, name);
         try {
             if (name === keep) {
-                await deleteStaleMarkers(dir);
+                // Delete the markers of windows that have exited, so they don't pile up.
+                for (const marker of await readMarkers(dir)) {
+                    if (!marker.running) {
+                        await rm(marker.path, { force: true });
+                    }
+                }
                 continue;
             }
             if (name.startsWith('.download-')) {
                 // Another window may still be downloading into it.
-                if (Date.now() - (await stat(dir)).mtimeMs < 24 * 60 * 60 * 1000) {
+                if (Date.now() - (await stat(dir)).mtimeMs < DAY_MS) {
                     continue;
                 }
             } else if (!name.startsWith('.delete-')) {
-                if (await isRunningOrRecentlyUsed(dir)) {
+                const markers = await readMarkers(dir);
+                if (markers.some((marker) => marker.running || Date.now() - marker.mtimeMs < KEEP_UNUSED_MS)) {
                     continue;
                 }
                 // Rename first, so a partly deleted version is never used. On Windows, this fails
@@ -168,30 +153,18 @@ async function pruneInstalls(installRoot: string, keep: string): Promise<void> {
     }
 }
 
-async function isRunningOrRecentlyUsed(installDir: string): Promise<boolean> {
-    for (const [pid, running] of await inUsePids(installDir)) {
-        const marker = path.join(installDir, `${IN_USE_PREFIX}${pid}`);
-        if (running || Date.now() - (await stat(marker)).mtimeMs < KEEP_UNUSED_MS) {
-            return true;
-        }
-    }
-    return false;
-}
-
-async function deleteStaleMarkers(installDir: string): Promise<void> {
-    for (const [pid, running] of await inUsePids(installDir)) {
-        if (!running) {
-            await rm(path.join(installDir, `${IN_USE_PREFIX}${pid}`), { force: true });
-        }
-    }
-}
-
-async function inUsePids(installDir: string): Promise<[number, boolean][]> {
-    const entries = await readdir(installDir);
-    return entries
-        .filter((name) => name.startsWith(IN_USE_PREFIX))
-        .map((name) => Number(name.slice(IN_USE_PREFIX.length)))
-        .map((pid) => [pid, isRunning(pid)]);
+async function readMarkers(installDir: string): Promise<{ path: string; running: boolean; mtimeMs: number }[]> {
+    const names = (await readdir(installDir)).filter((name) => name.startsWith(IN_USE_PREFIX));
+    return Promise.all(
+        names.map(async (name) => {
+            const markerPath = path.join(installDir, name);
+            return {
+                path: markerPath,
+                running: isRunning(Number(name.slice(IN_USE_PREFIX.length))),
+                mtimeMs: (await stat(markerPath)).mtimeMs,
+            };
+        })
+    );
 }
 
 function isRunning(pid: number): boolean {
@@ -220,7 +193,7 @@ function getLaunchScript(installDir: string): string {
 async function resolveLatestVersion(installRoot: string): Promise<string> {
     try {
         const version = (await fetchText(`${RELEASES_URL}/latest/download/VERSION`)).trim();
-        if (!parseVersion(version)) {
+        if (!EXACT_VERSION.test(version)) {
             throw new Error(`Unexpected latest smithy-language-server version: ${version}`);
         }
         return version;
@@ -236,10 +209,9 @@ async function resolveLatestVersion(installRoot: string): Promise<string> {
 
 async function newestInstalledVersion(installRoot: string): Promise<string | undefined> {
     const entries = await readdir(installRoot).catch(() => []);
-    const versions = entries
-        .filter(isSupportedVersion)
-        .sort((a, b) => compareVersions(parseVersion(a)!, parseVersion(b)!));
-    for (const version of versions.reverse()) {
+    // Newest first.
+    const versions = entries.filter(isSupportedVersion).sort((a, b) => compareVersions(b, a));
+    for (const version of versions) {
         if (await exists(getLaunchScript(path.join(installRoot, version)))) {
             return version;
         }
@@ -259,33 +231,34 @@ function parseChecksums(text: string): Map<string, string> {
     return checksums;
 }
 
-async function fetchText(url: string): Promise<string> {
+// Fetches `url`, and throws unless it responds with a body and a 2xx status.
+async function fetchOk(url: string, init?: RequestInit): Promise<Response> {
     // fetch follows redirects by default, which GitHub release asset URLs rely on.
-    const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
-    if (!response.ok) {
-        await response.body?.cancel();
-        throw new Error(`${url} responded with ${response.status}: ${response.statusText}`);
-    }
-    return response.text();
-}
-
-// Downloads `url` to `file` and returns its SHA-256.
-async function downloadFile(url: string, file: string): Promise<string> {
-    const response = await fetch(url);
+    const response = await fetch(url, init);
     if (!response.ok || !response.body) {
         await response.body?.cancel();
         throw new Error(`${url} responded with ${response.status}: ${response.statusText}`);
     }
+    return response;
+}
+
+async function fetchText(url: string): Promise<string> {
+    return (await fetchOk(url, { signal: AbortSignal.timeout(30_000) })).text();
+}
+
+// Downloads `url` to `file` and returns its SHA-256.
+async function downloadFile(url: string, file: string): Promise<string> {
+    const response = await fetchOk(url);
     const hash = createHash('sha256');
     await pipeline(
-        Readable.fromWeb(response.body as ReadableStream<Uint8Array>),
-        async function* (source: AsyncIterable<Buffer>) {
+        response.body!,
+        async function* (source: AsyncIterable<Uint8Array>) {
             for await (const chunk of source) {
                 hash.update(chunk);
                 yield chunk;
             }
         },
-        fs.createWriteStream(file)
+        createWriteStream(file)
     );
     return hash.digest('hex');
 }
