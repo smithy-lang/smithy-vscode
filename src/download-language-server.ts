@@ -1,6 +1,6 @@
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import * as fs from 'fs';
-import { access, chmod, mkdir, mkdtemp, readdir, rename, rm } from 'fs/promises';
+import { access, chmod, mkdir, mkdtemp, readdir, rename, rm, stat, writeFile } from 'fs/promises';
 import * as path from 'path';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
@@ -56,8 +56,24 @@ function platformNames(): string[] {
 }
 
 // Returns the path of the smithy-language-server launch script for `version` (an exact version, or
-// latest.release), downloading the release zip into `storagePath` if needed.
+// latest.release), downloading the release zip into `storagePath` if needed. Then deletes the
+// versions that no window uses.
 export default async function downloadLanguageServerIfRequired(storagePath: string, version: string): Promise<string> {
+    const launchScript = await installLanguageServer(storagePath, version);
+    const installDir = path.dirname(path.dirname(launchScript));
+    try {
+        await writeFile(path.join(installDir, `${IN_USE_PREFIX}${process.pid}`), '');
+        // Not awaited, so pruning doesn't delay starting the server.
+        pruneInstalls(path.dirname(installDir), path.basename(installDir)).catch((err) =>
+            logger.warn(`Couldn't delete old smithy-language-server versions: ${err}`)
+        );
+    } catch (err) {
+        logger.warn(`Couldn't mark ${installDir} as in use: ${err}`);
+    }
+    return launchScript;
+}
+
+async function installLanguageServer(storagePath: string, version: string): Promise<string> {
     const installRoot = path.join(storagePath, 'language-server');
     const resolvedVersion = version === 'latest.release' ? await resolveLatestVersion(installRoot) : version;
     const installDir = path.join(installRoot, resolvedVersion);
@@ -112,6 +128,80 @@ export default async function downloadLanguageServerIfRequired(storagePath: stri
 
     logger.info(`Installed smithy-language-server ${resolvedVersion} at ${installDir}`);
     return launchScript;
+}
+
+// Each window writes `.in-use-<extension host pid>` into the version it runs, so other windows don't
+// delete that version while its server is running, or for 30 days after it last started.
+const IN_USE_PREFIX = '.in-use-';
+const KEEP_UNUSED_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Deletes installed versions other than `keep` that no running window uses and that no window
+// started in the last 30 days, and temporary directories left by interrupted downloads or deletions.
+async function pruneInstalls(installRoot: string, keep: string): Promise<void> {
+    for (const name of await readdir(installRoot)) {
+        let dir = path.join(installRoot, name);
+        try {
+            if (name === keep) {
+                await deleteStaleMarkers(dir);
+                continue;
+            }
+            if (name.startsWith('.download-')) {
+                // Another window may still be downloading into it.
+                if (Date.now() - (await stat(dir)).mtimeMs < 24 * 60 * 60 * 1000) {
+                    continue;
+                }
+            } else if (!name.startsWith('.delete-')) {
+                if (await isRunningOrRecentlyUsed(dir)) {
+                    continue;
+                }
+                // Rename first, so a partly deleted version is never used. On Windows, this fails
+                // if the version is running.
+                const deleteDir = path.join(installRoot, `.delete-${randomUUID()}`);
+                await rename(dir, deleteDir);
+                dir = deleteDir;
+            }
+            await rm(dir, { recursive: true, force: true });
+            logger.info(`Deleted ${path.join(installRoot, name)}`);
+        } catch (err) {
+            logger.warn(`Couldn't delete ${dir}: ${err}`);
+        }
+    }
+}
+
+async function isRunningOrRecentlyUsed(installDir: string): Promise<boolean> {
+    for (const [pid, running] of await inUsePids(installDir)) {
+        const marker = path.join(installDir, `${IN_USE_PREFIX}${pid}`);
+        if (running || Date.now() - (await stat(marker)).mtimeMs < KEEP_UNUSED_MS) {
+            return true;
+        }
+    }
+    return false;
+}
+
+async function deleteStaleMarkers(installDir: string): Promise<void> {
+    for (const [pid, running] of await inUsePids(installDir)) {
+        if (!running) {
+            await rm(path.join(installDir, `${IN_USE_PREFIX}${pid}`), { force: true });
+        }
+    }
+}
+
+async function inUsePids(installDir: string): Promise<[number, boolean][]> {
+    const entries = await readdir(installDir);
+    return entries
+        .filter((name) => name.startsWith(IN_USE_PREFIX))
+        .map((name) => Number(name.slice(IN_USE_PREFIX.length)))
+        .map((pid) => [pid, isRunning(pid)]);
+}
+
+function isRunning(pid: number): boolean {
+    try {
+        process.kill(pid, 0);
+        return true;
+    } catch (err) {
+        // EPERM means the process exists but belongs to another user.
+        return (err as NodeJS.ErrnoException).code === 'EPERM';
+    }
 }
 
 // Deletes Coursier binaries downloaded by earlier versions of the extension.
