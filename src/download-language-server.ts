@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'crypto';
 import { createWriteStream } from 'fs';
 import { access, chmod, mkdir, mkdtemp, readdir, rename, rm, stat, writeFile } from 'fs/promises';
-import * as path from 'path';
+import { basename, dirname, join } from 'path';
 import { pipeline } from 'stream/promises';
 import StreamZip from 'node-stream-zip';
 import { logger } from './logger';
@@ -38,11 +38,11 @@ function platformNames(): string[] {
 // versions that no window uses.
 export default async function downloadLanguageServerIfRequired(storagePath: string, version: string): Promise<string> {
     const launchScript = await installLanguageServer(storagePath, version);
-    const installDir = path.dirname(path.dirname(launchScript));
+    const installDir = dirname(dirname(launchScript));
     try {
-        await writeFile(path.join(installDir, `${IN_USE_PREFIX}${process.pid}`), '');
+        await writeFile(join(installDir, `${IN_USE_PREFIX}${process.pid}`), '');
         // Not awaited, so pruning doesn't delay starting the server.
-        pruneInstalls(path.dirname(installDir), path.basename(installDir)).catch((err) =>
+        pruneInstalls(dirname(installDir), basename(installDir)).catch((err) =>
             logger.warn(`Couldn't delete old smithy-language-server versions: ${err}`)
         );
     } catch (err) {
@@ -52,9 +52,9 @@ export default async function downloadLanguageServerIfRequired(storagePath: stri
 }
 
 async function installLanguageServer(storagePath: string, version: string): Promise<string> {
-    const installRoot = path.join(storagePath, 'language-server');
+    const installRoot = join(storagePath, 'language-server');
     const resolvedVersion = version === 'latest.release' ? await resolveLatestVersion(installRoot) : version;
-    const installDir = path.join(installRoot, resolvedVersion);
+    const installDir = join(installRoot, resolvedVersion);
     const launchScript = getLaunchScript(installDir);
     if (await exists(launchScript)) {
         return launchScript;
@@ -64,7 +64,7 @@ async function installLanguageServer(storagePath: string, version: string): Prom
     await mkdir(installRoot, { recursive: true });
     // Download and extract into a temporary directory that is renamed into place, so a partial
     // download never appears at `installDir`.
-    const tempDir = await mkdtemp(path.join(installRoot, '.download-'));
+    const tempDir = await mkdtemp(join(installRoot, '.download-'));
     try {
         const releaseUrl = `${RELEASES_URL}/download/${resolvedVersion}`;
         const checksums = parseChecksums(await fetchText(`${releaseUrl}/checksums_sha256.txt`));
@@ -75,13 +75,13 @@ async function installLanguageServer(storagePath: string, version: string): Prom
             throw new Error(`smithy-language-server ${resolvedVersion} has no release zip for this platform`);
         }
 
-        const zipFile = path.join(tempDir, asset);
+        const zipFile = join(tempDir, asset);
         const sha256 = await downloadFile(`${releaseUrl}/${asset}`, zipFile);
         if (sha256 !== checksums.get(asset)) {
             throw new Error(`Checksum mismatch for ${asset}: expected ${checksums.get(asset)}, got ${sha256}`);
         }
 
-        const extractDir = path.join(tempDir, 'contents');
+        const extractDir = join(tempDir, 'contents');
         await extractZip(zipFile, extractDir);
         try {
             await rename(await findInstallationRoot(extractDir), installDir);
@@ -97,7 +97,7 @@ async function installLanguageServer(storagePath: string, version: string): Prom
             throw err;
         }
         logger.warn(`Couldn't download smithy-language-server ${resolvedVersion}, using ${installed}: ${err}`);
-        return getLaunchScript(path.join(installRoot, installed));
+        return getLaunchScript(join(installRoot, installed));
     } finally {
         await rm(tempDir, { recursive: true, force: true }).catch((err) =>
             logger.warn(`Couldn't delete ${tempDir}: ${err}`)
@@ -118,7 +118,7 @@ const KEEP_UNUSED_MS = 30 * DAY_MS;
 // started in the last 30 days, and temporary directories left by interrupted downloads or deletions.
 async function pruneInstalls(installRoot: string, keep: string): Promise<void> {
     for (const name of await readdir(installRoot)) {
-        let dir = path.join(installRoot, name);
+        let dir = join(installRoot, name);
         try {
             if (name === keep) {
                 // Delete the markers of windows that have exited, so they don't pile up.
@@ -141,12 +141,12 @@ async function pruneInstalls(installRoot: string, keep: string): Promise<void> {
                 }
                 // Rename first, so a partly deleted version is never used. On Windows, this fails
                 // if the version is running.
-                const deleteDir = path.join(installRoot, `.delete-${randomUUID()}`);
+                const deleteDir = join(installRoot, `.delete-${randomUUID()}`);
                 await rename(dir, deleteDir);
                 dir = deleteDir;
             }
             await rm(dir, { recursive: true, force: true });
-            logger.info(`Deleted ${path.join(installRoot, name)}`);
+            logger.info(`Deleted ${join(installRoot, name)}`);
         } catch (err) {
             logger.warn(`Couldn't delete ${dir}: ${err}`);
         }
@@ -157,7 +157,7 @@ async function readMarkers(installDir: string): Promise<{ path: string; running:
     const names = (await readdir(installDir)).filter((name) => name.startsWith(IN_USE_PREFIX));
     return Promise.all(
         names.map(async (name) => {
-            const markerPath = path.join(installDir, name);
+            const markerPath = join(installDir, name);
             return {
                 path: markerPath,
                 running: isRunning(Number(name.slice(IN_USE_PREFIX.length))),
@@ -180,13 +180,13 @@ function isRunning(pid: number): boolean {
 // Deletes Coursier binaries downloaded by earlier versions of the extension.
 export async function deleteCoursier(storagePath: string): Promise<void> {
     for (const name of ['coursier', 'coursier.exe']) {
-        await rm(path.join(storagePath, name), { force: true }).catch(() => {});
+        await rm(join(storagePath, name), { force: true }).catch(() => {});
     }
 }
 
 function getLaunchScript(installDir: string): string {
     const name = process.platform === 'win32' ? 'smithy-language-server.bat' : 'smithy-language-server';
-    return path.join(installDir, 'bin', name);
+    return join(installDir, 'bin', name);
 }
 
 // Resolves latest.release to the newest released version. Offline, uses the newest installed one.
@@ -212,7 +212,7 @@ async function newestInstalledVersion(installRoot: string): Promise<string | und
     // Newest first.
     const versions = entries.filter(isSupportedVersion).sort((a, b) => compareVersions(b, a));
     for (const version of versions) {
-        if (await exists(getLaunchScript(path.join(installRoot, version)))) {
+        if (await exists(getLaunchScript(join(installRoot, version)))) {
             return version;
         }
     }
@@ -273,7 +273,7 @@ async function extractZip(zipFile: string, dest: string): Promise<void> {
         for (const entry of Object.values(await zip.entries())) {
             const mode = (entry.attr >>> 16) & 0o777;
             if (!entry.isDirectory && mode & 0o111) {
-                await chmod(path.join(dest, entry.name), mode);
+                await chmod(join(dest, entry.name), mode);
             }
         }
     } finally {
@@ -285,7 +285,7 @@ async function extractZip(zipFile: string, dest: string): Promise<void> {
 async function findInstallationRoot(extractDir: string): Promise<string> {
     const entries = await readdir(extractDir);
     if (!entries.includes('bin') && entries.length === 1) {
-        return path.join(extractDir, entries[0]);
+        return join(extractDir, entries[0]);
     }
     return extractDir;
 }
