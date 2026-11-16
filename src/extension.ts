@@ -209,7 +209,8 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
         logger.info(`Launching smithy-language-server ${languageServerVersion} via ${launchScript}`);
         if (process.platform === 'win32') {
             // Node can only run .bat files through a shell. Quote the path, which may contain spaces.
-            return { command: `"${launchScript}"`, args: ['0'], options: { shell: true } };
+            // Pass the argument in the command, since Node deprecates args with shell (DEP0190).
+            return { command: `"${launchScript}" 0`, args: [], options: { shell: true } };
         }
         return { command: launchScript, args: ['0'] };
     }
