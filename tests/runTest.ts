@@ -64,9 +64,13 @@ async function go() {
     // Confirm that bundled and vsce packaged extension can be installed.
     const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
 
-    const result = spawnSync(cli, [...args, '--install-extension', 'smithy-vscode.vsix', '--force'], {
-        encoding: 'utf-8',
-    });
+    const installArgs = [...args, '--install-extension', 'smithy-vscode.vsix', '--force'];
+    // On Windows the CLI is a .cmd file, which Node can only run through a shell. Quote each
+    // argument, since the paths may contain spaces.
+    const result =
+        process.platform === 'win32'
+            ? spawnSync([cli, ...installArgs].map((arg) => `"${arg}"`).join(' '), { encoding: 'utf-8', shell: true })
+            : spawnSync(cli, installArgs, { encoding: 'utf-8' });
     assert.equal(result.status, 0);
     assert.match(result.stdout, /Extension 'smithy-vscode.vsix' was successfully installed./);
 }
