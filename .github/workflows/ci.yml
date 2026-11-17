@@ -30,6 +30,28 @@ jobs:
       - name: Run checks
         run: npm run check
 
+      # release.yml releases a push to main whose version is untagged, so check here that the
+      # release won't fail on the version's CHANGELOG.md section.
+      - name: Check CHANGELOG.md for an unreleased version
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(jq -r .version package.json)
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" > /dev/null 2>&1; then
+            echo "Version $VERSION is already released"
+            exit 0
+          fi
+          NOTES=$(awk -v heading="## $VERSION (" '
+            /^## / { if (found || index($0, heading) != 1) exit; found = 1; next }
+            found { print }
+          ' CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            echo "::error::CHANGELOG.md's first section must be a '## $VERSION (YYYY-MM-DD)' heading with entries"
+            exit 1
+          fi
+          echo "CHANGELOG.md has entries for unreleased version $VERSION"
+
   test-extension:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
