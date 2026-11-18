@@ -2,8 +2,11 @@
 # waits for both to list the new version, tags the released commit, and creates a GitHub release
 # from the version's CHANGELOG.md section.
 #
-# Runs after ci.yml passes on a push to main, and releases the version in package.json if that
-# version has no tag yet.
+# post-merge.yml starts this workflow on main after CI passes on a push to main whose
+# package.json version has no tag yet. The check-version job runs only when started by
+# github-actions[bot], and requires the given post-merge.yml run to be a push to main for the
+# commit whose ci-gate job passed. It repeats the tag check because an earlier queued run may have
+# released the version already.
 #
 # The filename and the `release` environment are registered as a trusted publisher on the Visual
 # Studio Marketplace and on Open VSX. Renaming either breaks publishing until both registrations
@@ -14,10 +17,16 @@
 name: release
 
 on:
-  workflow_run:
-    workflows: [ci]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Full SHA of a commit on main that passed CI
+        required: true
+        type: string
+      post-merge-run-id:
+        description: ID of the post-merge.yml run for the commit
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -28,17 +37,42 @@ concurrency:
 
 env:
   EXTENSION_ID: smithy.smithy-vscode-extension
-  COMMIT: ${{ github.event.workflow_run.head_sha }}
+  COMMIT: ${{ inputs.commit }}
+  POST_MERGE_RUN_ID: ${{ inputs.post-merge-run-id }}
 
 jobs:
   check-version:
     name: Check for an unreleased version
-    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success'
+    if: github.actor == 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       release: ${{ steps.check.outputs.release }}
     steps:
+      - name: Require CI to have passed in post-merge.yml for the commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ ! "$COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::commit must be a full 40-character SHA, got '$COMMIT'"
+            exit 1
+          fi
+          if [[ ! "$POST_MERGE_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::post-merge-run-id must be a run ID, got '$POST_MERGE_RUN_ID'"
+            exit 1
+          fi
+          RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$POST_MERGE_RUN_ID" --jq '[.path, .event, .head_branch, .head_sha] | join(" ")')
+          if [ "$RUN" != ".github/workflows/post-merge.yml push main $COMMIT" ]; then
+            echo "::error::Run $POST_MERGE_RUN_ID must be a post-merge.yml push to main for $COMMIT, got '$RUN'"
+            exit 1
+          fi
+          GATE=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$POST_MERGE_RUN_ID/jobs?per_page=100" --jq '[.jobs[] | select(.name == "ci / ci-gate") | .conclusion] | join(" ")')
+          if [ "$GATE" != "success" ]; then
+            echo "::error::ci / ci-gate in run $POST_MERGE_RUN_ID must have passed, got '$GATE'"
+            exit 1
+          fi
+          echo "Run $POST_MERGE_RUN_ID passed CI for $COMMIT"
+
       - name: Check whether the commit's version is untagged
         id: check
         env:
