@@ -22,6 +22,10 @@ async function go() {
     const version = process.env.VSCODE_TEST_VERSION || 'stable';
     console.log(`Running extension tests against VS Code ${version}`);
 
+    // TODO: Remove this check once the minimum VS Code version (engines.vscode) is 1.147.0 or later.
+    const [major, minor] = version.split('.').map(Number);
+    const supportsHiddenWindow = version === 'stable' || major > 1 || minor >= 147;
+
     // VS Code prints its own log to stdout during extension tests. To keep the test output readable:
     // - An empty built-in extensions folder skips scanning built-ins such as Copilot Chat, whose API
     //   proposal mismatch is otherwise logged in full for every suite.
@@ -57,6 +61,9 @@ async function go() {
                 // for every suite. Only show warnings and errors. This also hides extension host
                 // stdout, so helper.ts writes the test report to stderr.
                 '--log=warn',
+                // Keep test windows hidden on macOS so they don't take focus. On Linux and Windows,
+                // the formatter test fails in a hidden window.
+                ...(supportsHiddenWindow && process.platform === 'darwin' ? ['--hidden-window'] : []),
             ],
         });
     }
