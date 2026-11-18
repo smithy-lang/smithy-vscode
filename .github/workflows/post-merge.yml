@@ -1,0 +1,34 @@
+# Runs CI on a push to main, then starts release.yml if the package.json version has no tag yet.
+name: post-merge
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  start-release:
+    name: Start release for an untagged version
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Start release.yml if the version is untagged
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(gh api -H "Accept: application/vnd.github.raw+json" "repos/$GITHUB_REPOSITORY/contents/package.json?ref=$GITHUB_SHA" | jq -r .version)
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" > /dev/null 2>&1; then
+            echo "Tag $VERSION already exists, not starting a release"
+            exit 0
+          fi
+          gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref main -f commit="$GITHUB_SHA" -f post-merge-run-id="$GITHUB_RUN_ID"
+          echo "Started release.yml for $VERSION at $GITHUB_SHA"

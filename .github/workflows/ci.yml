@@ -1,10 +1,10 @@
 name: ci
 
+# Runs on pull requests. post-merge.yml calls this workflow on pushes to main.
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:
 
 permissions:
   contents: read
@@ -30,8 +30,8 @@ jobs:
       - name: Run checks
         run: npm run check
 
-      # release.yml releases a push to main whose version is untagged, so check here that the
-      # release won't fail on the version's CHANGELOG.md section.
+      # post-merge.yml starts a release for a push to main whose version is untagged, so check here
+      # that the release won't fail on the version's CHANGELOG.md section.
       - name: Check CHANGELOG.md for an unreleased version
         if: github.event_name == 'pull_request'
         env:
