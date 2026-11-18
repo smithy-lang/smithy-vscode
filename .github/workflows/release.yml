@@ -115,10 +115,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           NOTES=$(awk -v heading="## $VERSION (" '
-            /^## / { if (found || index($0, heading) != 1) exit; found = 1; next }
+            /^## / { if (found || index($0, heading) != 1) exit; found = 1; print; next }
             found { print }
           ' CHANGELOG.md)
-          if [ -z "$NOTES" ]; then
+          if [ "$(printf '%s\n' "$NOTES" | grep -c .)" -lt 2 ]; then
             echo "::error::CHANGELOG.md's first section must be a '## $VERSION (YYYY-MM-DD)' heading with entries"
             exit 1
           fi
