@@ -121,8 +121,9 @@ jobs:
       - name: Run tests
         if: runner.os == 'Linux'
         # xvfb provides a display. dbus-run-session provides a session bus so Electron doesn't log
-        # dbus connection errors.
-        run: dbus-run-session -- xvfb-run -a npm run test-extension
+        # dbus connection errors. The bus config has no service directories, so dbus-daemon doesn't
+        # log failed attempts to start org.freedesktop.systemd1.
+        run: dbus-run-session --config-file=.github/ci/dbus-session.conf -- xvfb-run -a npm run test-extension
         env:
           VSCODE_TEST_VERSION: ${{ steps.versions.outputs.vscode }}
       - name: Run tests
