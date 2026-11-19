@@ -13,7 +13,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
 
   start-release:
-    name: Start release for an untagged version
+    name: Start release if the version is untagged
     needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -21,14 +21,24 @@ jobs:
       actions: write
       contents: read
     steps:
-      - name: Start release.yml if the version is untagged
+      - name: Check whether the version is untagged
+        id: check
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(gh api -H "Accept: application/vnd.github.raw+json" "repos/$GITHUB_REPOSITORY/contents/package.json?ref=$GITHUB_SHA" | jq -r .version)
           if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" > /dev/null 2>&1; then
             echo "Tag $VERSION already exists, not starting a release"
-            exit 0
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$VERSION has no tag, starting a release"
+            echo "release=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Start release.yml
+        if: steps.check.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
           gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref main -f commit="$GITHUB_SHA" -f post-merge-run-id="$GITHUB_RUN_ID"
-          echo "Started release.yml for $VERSION at $GITHUB_SHA"
+          echo "Started release.yml for $GITHUB_SHA"
