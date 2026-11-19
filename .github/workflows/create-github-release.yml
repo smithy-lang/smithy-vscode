@@ -1,0 +1,59 @@
+# Creates a GitHub release for an existing tag from the version's CHANGELOG.md section, with the
+# same format as release.yml.
+# The published .vsix is downloaded from the Visual Studio Marketplace and attached.
+#
+# Temporary: delete this workflow after GitHub releases are created for all existing git tags.
+name: create-github-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Tagged version, e.g. 0.10.2
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Create GitHub release from CHANGELOG.md with the Marketplace .vsix
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version '$VERSION'"
+            exit 1
+          fi
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "GitHub release $VERSION already exists"
+            exit 0
+          fi
+          NOTES=$(awk -v heading="## $VERSION (" '
+            /^## / { if (found) exit; if (index($0, heading) == 1) { found = 1; print; next } }
+            found { print }
+          ' CHANGELOG.md)
+          if [ "$(printf '%s\n' "$NOTES" | grep -c .)" -lt 2 ]; then
+            echo "::error::No '## $VERSION (YYYY-MM-DD)' section with entries in CHANGELOG.md"
+            exit 1
+          fi
+          VSIX="smithy-vscode-extension-$VERSION.vsix"
+          URL="https://marketplace.visualstudio.com/_apis/public/gallery/publishers/smithy/vsextensions/smithy-vscode-extension/$VERSION/vspackage"
+          curl -sSfL -o marketplace.download "$URL"
+          gzip -cdf marketplace.download > "$VSIX"
+          PACKAGED=$(unzip -p "$VSIX" extension/package.json | jq -r .version)
+          if [ "$PACKAGED" != "$VERSION" ]; then
+            echo "::error::The Marketplace .vsix has version '$PACKAGED', expected $VERSION"
+            exit 1
+          fi
+          gh release create "$VERSION" "$VSIX" --repo "$GITHUB_REPOSITORY" --verify-tag --latest=false --title "$VERSION" --notes "$NOTES"
+          echo "Created $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$VERSION"
