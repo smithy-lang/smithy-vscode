@@ -1,6 +1,6 @@
 # Publishes the extension to the Visual Studio Marketplace and Open VSX with trusted publishing,
 # waits for both to list the new version, tags the released commit, and creates a GitHub release
-# from the version's CHANGELOG.md section.
+# from the version's CHANGELOG.md section with the published .vsix attached.
 #
 # post-merge.yml starts this workflow on main after CI passes on a push to main whose
 # package.json version has no tag yet. The check-version job runs only when started by
@@ -299,8 +299,13 @@ jobs:
       contents: write
     env:
       VERSION: ${{ needs.build.outputs.version }}
+      VSIX: ${{ needs.build.outputs.vsix }}
       GH_TOKEN: ${{ github.token }}
     steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: vsix
+
       - name: Push tag
         run: |
           if ! TAG_SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" --jq .object.sha 2> /dev/null); then
@@ -321,7 +326,7 @@ jobs:
             echo "GitHub release $VERSION already exists"
             exit 0
           fi
-          gh release create "$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$VERSION" --notes "$NOTES"
+          gh release create "$VERSION" "$VSIX" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$VERSION" --notes "$NOTES"
 
       - name: Write job summary
         run: |
