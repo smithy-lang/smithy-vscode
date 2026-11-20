@@ -1,5 +1,4 @@
 import { suite, test } from 'node:test';
-import * as assert from 'assert';
 import type { TextEdit } from 'vscode';
 import { getDocUri, waitFor, waitForServerStartup, vscode } from '../helper.ts';
 
@@ -20,9 +19,17 @@ suite('formatting tests', function () {
             return edits && edits.length > 0;
         });
 
+        // editor.action.formatDocument does nothing until the workbench has finished starting up,
+        // which takes seconds longer with --hidden-window
+        // (https://github.com/microsoft/vscode/issues/349541). Retry it until it changes the document.
         const beforeEditText = doc.getText();
-        await vscode.commands.executeCommand('editor.action.formatDocument', smithyMainUri);
-        const afterEditText = doc.getText();
-        assert.notStrictEqual(afterEditText, beforeEditText);
+        await waitFor(
+            'editor.action.formatDocument to change the document',
+            async () => {
+                await vscode.commands.executeCommand('editor.action.formatDocument', smithyMainUri);
+                return doc.getText() !== beforeEditText;
+            },
+            30_000
+        );
     });
 });
