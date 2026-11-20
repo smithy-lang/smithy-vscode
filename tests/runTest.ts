@@ -14,6 +14,8 @@ const suites = [
     'suite4', // User-specific root
     'suite5', // Formatter
     'suite6', // Startup
+    'suite5', // DEBUG: repeat to check whether the failure is consistent
+    'suite5',
 ];
 
 async function go() {
@@ -63,7 +65,7 @@ async function go() {
                 '--log=warn',
                 // Keep test windows hidden on macOS so they don't take focus. On Linux and Windows,
                 // the formatter test fails in a hidden window.
-                ...(supportsHiddenWindow && process.platform === 'darwin' ? ['--hidden-window'] : []),
+                ...(supportsHiddenWindow ? ['--hidden-window'] : []),
             ],
         });
     }
