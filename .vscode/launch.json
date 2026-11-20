@@ -33,6 +33,8 @@
                 "activation",
                 "diagnostics",
                 "formatter",
+                "java-home",
+                "java-home-missing",
                 "selector",
                 "startup",
                 "subdirectory-project"

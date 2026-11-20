@@ -1,5 +1,5 @@
 import { spawnSync } from 'child_process';
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'fs';
 import { delimiter, resolve } from 'path';
 
 import { runTests, downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath } from '@vscode/test-electron';
@@ -12,9 +12,14 @@ import * as assert from 'assert';
 const suites = readdirSync(import.meta.dirname)
     .filter((name) => existsSync(resolve(import.meta.dirname, name, 'workspace')))
     .sort();
-// Suites that need their own VS Code instance. The activation suite checks that smithy-build.json
-// alone activates the extension, which the other suites' .smithy files would also do.
-const isolatedSuites = ['activation'];
+
+// Suites that need their own VS Code instance:
+// - activation: checks that smithy-build.json alone activates the extension, which the other
+//   suites' .smithy files would also do.
+// - java-home: sets smithy.server.javaHome, which applies to the whole instance, so the shared
+//   suites keep using the Java runtime included in the download.
+// - java-home-missing: sets smithy.server.javaHome to a path without Java, which fails activation.
+const isolatedSuites = ['activation', 'java-home', 'java-home-missing'];
 
 async function go() {
     const extensionDevelopmentPath = resolve(import.meta.dirname, '..');
@@ -36,12 +41,13 @@ async function go() {
 
     const userDataDir = resolve(testDataPath, 'user-data');
     mkdirSync(resolve(userDataDir, 'User'), { recursive: true });
-    writeFileSync(
-        resolve(userDataDir, 'User', 'settings.json'),
-        JSON.stringify({
-            'chat.disableAIFeatures': true,
-        })
-    );
+    // smithy.server.javaHome can only be set in user settings, so those suites get their own.
+    const suiteSettings: Record<string, () => Record<string, unknown>> = {
+        'java-home': () => ({
+            'smithy.server.javaHome': copyJavaRuntime(userDataDir, resolve(testDataPath, 'java-home')),
+        }),
+        'java-home-missing': () => ({ 'smithy.server.javaHome': resolve(testDataPath, 'java-home-missing') }),
+    };
 
     // Resolve and download VS Code once, rather than have runTests log the lookup for every suite.
     const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
@@ -59,11 +65,19 @@ async function go() {
             .map((suite) => ({
                 suites: [suite],
                 workspace: resolve(import.meta.dirname, suite, 'workspace'),
+                settings: suiteSettings[suite],
             })),
-        { suites: sharedSuites, workspace: sharedWorkspace },
+        { suites: sharedSuites, workspace: sharedWorkspace, settings: undefined },
     ];
 
     for (const run of runs) {
+        writeFileSync(
+            resolve(userDataDir, 'User', 'settings.json'),
+            JSON.stringify({
+                'chat.disableAIFeatures': true,
+                ...run.settings?.(),
+            })
+        );
         await runTests({
             vscodeExecutablePath,
             extensionDevelopmentPath,
@@ -99,6 +113,26 @@ async function go() {
             : spawnSync(cli, installArgs, { encoding: 'utf-8' });
     assert.equal(result.status, 0);
     assert.match(result.stdout, /Extension 'smithy-vscode.vsix' was successfully installed./);
+}
+
+// Copies the Java runtime included in the language server download, which the activation suite
+// installed, to `javaHome`, so the server can run with a Java installation outside its own directory.
+function copyJavaRuntime(userDataDir: string, javaHome: string): string {
+    const installRoot = resolve(
+        userDataDir,
+        'User',
+        'globalStorage',
+        'smithy.smithy-vscode-extension',
+        'language-server'
+    );
+    const versions = readdirSync(installRoot).filter((name) => /^\d+\.\d+\.\d+$/.test(name));
+    assert.ok(versions.length > 0, `No language server installed in ${installRoot}`);
+    const newest = versions.sort(new Intl.Collator(undefined, { numeric: true }).compare).at(-1)!;
+    rmSync(javaHome, { recursive: true, force: true });
+    for (const dir of ['bin', 'conf', 'lib']) {
+        cpSync(resolve(installRoot, newest, dir), resolve(javaHome, dir), { recursive: true });
+    }
+    return javaHome;
 }
 
 go().catch((err) => {

@@ -12,6 +12,10 @@ export function getServerExecutable(): string | undefined {
     return getConfig('server.executable');
 }
 
+export function getServerJavaHome(): string | undefined {
+    return getConfig('server.javaHome');
+}
+
 export function getServerVersion(): string {
     // Fall back to the contributed default if the setting is explicitly set to null.
     return getOldOrNewConfig<string>('version', 'server.version') ?? 'latest.release';
