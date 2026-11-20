@@ -94,6 +94,19 @@ suite('formatting tests', function () {
             const editor = vscode.window.activeTextEditor!;
             const applied = await editor.edit((b) => edits?.forEach((e) => b.replace(e.range, e.newText)));
             log(`editor.edit applied=${applied} changed=${doc.getText() !== beforeEditText}`);
+            await vscode.commands.executeCommand('workbench.action.files.revert');
+
+            // formatDocument only runs a provider once the DefaultFormatter workbench contribution
+            // (LifecyclePhase.Restored) has registered its selector. Restored contributions are
+            // created in requestIdleCallback batches. Poll to see whether, and when, it starts working.
+            const start = Date.now();
+            let works = false;
+            while (!works && Date.now() - start < 90_000) {
+                await new Promise((r) => setTimeout(r, 1000));
+                await vscode.commands.executeCommand('editor.action.formatDocument', smithyMainUri);
+                works = doc.getText() !== beforeEditText;
+            }
+            log(`poll works=${works} after=${Date.now() - start}ms extHostUptime=${Math.round(process.uptime())}s`);
         }
         subs.forEach((s) => s.dispose());
         // Discard the edits so a repeated suite5 starts from the unformatted file.
