@@ -76,6 +76,24 @@ suite('formatting tests', function () {
                     doc.getText() !== beforeEditText
                 } state=${state()} events=${JSON.stringify(events)}`
             );
+
+            // Does an editor command without a precondition reach this editor? Core cursor
+            // commands use the same focused-or-active editor lookup as formatDocument.
+            events.length = 0;
+            await vscode.commands.executeCommand('cursorBottom');
+            log(`cursorBottom state=${state()} events=${JSON.stringify(events)}`);
+
+            // Does an editor action whose only precondition is `writable` run? If it does,
+            // formatDocument's notInCompositeEditor or hasDocumentFormattingProvider key is false.
+            events.length = 0;
+            await vscode.commands.executeCommand('editor.action.indentLines');
+            log(`indentLines changed=${doc.getText() !== beforeEditText} events=${JSON.stringify(events)}`);
+            await vscode.commands.executeCommand('workbench.action.files.revert');
+
+            // Can the extension host apply the provider's edits to this editor?
+            const editor = vscode.window.activeTextEditor!;
+            const applied = await editor.edit((b) => edits?.forEach((e) => b.replace(e.range, e.newText)));
+            log(`editor.edit applied=${applied} changed=${doc.getText() !== beforeEditText}`);
         }
         subs.forEach((s) => s.dispose());
         // Discard the edits so a repeated suite5 starts from the unformatted file.

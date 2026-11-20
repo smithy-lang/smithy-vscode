@@ -47,6 +47,8 @@ async function go() {
 
     // Resolve and download VS Code once, rather than have runTests log the lookup for every suite.
     const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
+    // DEBUG: keep running the remaining suites after a failure.
+    const failed: string[] = [];
     for (const suite of suites) {
         await runTests({
             vscodeExecutablePath,
@@ -67,8 +69,9 @@ async function go() {
                 // the formatter test fails in a hidden window.
                 ...(supportsHiddenWindow ? ['--hidden-window'] : []),
             ],
-        });
+        }).catch(() => failed.push(suite));
     }
+    assert.deepEqual(failed, [], `Failed suites: ${failed.join(', ')}`);
 
     // Confirm that bundled and vsce packaged extension can be installed.
     const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
