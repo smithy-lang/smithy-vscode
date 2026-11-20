@@ -1,5 +1,5 @@
 import { spawnSync } from 'child_process';
-import { mkdirSync, writeFileSync } from 'fs';
+import { cpSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 
 import { runTests, downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath } from '@vscode/test-electron';
@@ -14,6 +14,8 @@ const suites = [
     'suite4', // User-specific root
     'suite5', // Formatter
     'suite6', // Startup
+    'suite7', // Language server run with smithy.server.javaHome
+    'suite8', // smithy.server.javaHome without a java executable
 ];
 
 async function go() {
@@ -32,16 +34,22 @@ async function go() {
 
     const userDataDir = resolve(testDataPath, 'user-data');
     mkdirSync(resolve(userDataDir, 'User'), { recursive: true });
-    writeFileSync(
-        resolve(userDataDir, 'User', 'settings.json'),
-        JSON.stringify({
-            'chat.disableAIFeatures': true,
-        })
-    );
+    // smithy.server.javaHome can only be set in user settings, so those suites get their own.
+    const suiteSettings: Record<string, () => Record<string, unknown>> = {
+        suite7: () => ({ 'smithy.server.javaHome': copyJavaRuntime(userDataDir, resolve(testDataPath, 'java-home')) }),
+        suite8: () => ({ 'smithy.server.javaHome': resolve(testDataPath, 'missing-java-home') }),
+    };
 
     // Resolve and download VS Code once, rather than have runTests log the lookup for every suite.
     const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
     for (const suite of suites) {
+        writeFileSync(
+            resolve(userDataDir, 'User', 'settings.json'),
+            JSON.stringify({
+                'chat.disableAIFeatures': true,
+                ...suiteSettings[suite]?.(),
+            })
+        );
         await runTests({
             vscodeExecutablePath,
             extensionDevelopmentPath,
@@ -73,6 +81,26 @@ async function go() {
             : spawnSync(cli, installArgs, { encoding: 'utf-8' });
     assert.equal(result.status, 0);
     assert.match(result.stdout, /Extension 'smithy-vscode.vsix' was successfully installed./);
+}
+
+// Copies the Java runtime included in the language server download, which earlier suites installed,
+// to `javaHome`, so the server can run with a Java installation outside its own directory.
+function copyJavaRuntime(userDataDir: string, javaHome: string): string {
+    const installRoot = resolve(
+        userDataDir,
+        'User',
+        'globalStorage',
+        'smithy.smithy-vscode-extension',
+        'language-server'
+    );
+    const versions = readdirSync(installRoot).filter((name) => /^\d+\.\d+\.\d+$/.test(name));
+    assert.ok(versions.length > 0, `No language server installed in ${installRoot}`);
+    const newest = versions.sort(new Intl.Collator(undefined, { numeric: true }).compare).at(-1)!;
+    rmSync(javaHome, { recursive: true, force: true });
+    for (const dir of ['bin', 'conf', 'lib']) {
+        cpSync(resolve(installRoot, newest, dir), resolve(javaHome, dir), { recursive: true });
+    }
+    return javaHome;
 }
 
 go().catch((err) => {
