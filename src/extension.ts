@@ -1,3 +1,5 @@
+import { existsSync } from 'fs';
+import { dirname, join } from 'path';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
@@ -205,12 +207,25 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
             promptUnsupportedVersion(languageServerVersion);
             throw new Error(`Unsupported smithy-language-server version: ${languageServerVersion}`);
         }
+        const javaHome = config.getServerJavaHome();
+        const java = javaHome && join(javaHome, 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
+        if (java && !existsSync(java)) {
+            const message = `smithy.server.javaHome is set to ${javaHome}, but ${java} doesn't exist.`;
+            vscode.window.showErrorMessage(message);
+            throw new Error(message);
+        }
 
         // TODO: Remove deleteCoursier once most users have run a version after 0.10.2, which deletes
         // the Coursier binary that 0.10.2 and earlier downloaded.
         await deleteCoursier(context.globalStoragePath);
 
         const launchScript = await downloadLanguageServerIfRequired(context.globalStoragePath, languageServerVersion);
+        if (java) {
+            // The launch scripts always use the bundled Java runtime, so run the server's main class directly.
+            logger.info(`Launching smithy-language-server ${languageServerVersion} with ${java}`);
+            const classpath = join(dirname(dirname(launchScript)), 'lib', '*');
+            return { command: java, args: ['-cp', classpath, 'software.amazon.smithy.lsp.Main', '0'] };
+        }
         logger.info(`Launching smithy-language-server ${languageServerVersion} via ${launchScript}`);
 
         if (process.platform === 'win32') {
