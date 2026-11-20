@@ -84,7 +84,8 @@ jobs:
       #   where <platform> is linux-x64, darwin-arm64, or win32-x64-archive.
       #   "stable" is resolved to a concrete version so a new Stable release gets a new key.
       # - The extension downloads the latest language server release into
-      #   language-server/<version> in its global storage.
+      #   language-server/<version> in its global storage. Its version also keys the Maven cache,
+      #   because a release can bundle a Maven resolver that records cached artifacts differently.
       - name: Resolve versions
         id: versions
         env:
@@ -115,6 +116,13 @@ jobs:
         with:
           path: .vscode-test/user-data/User/globalStorage/smithy.smithy-vscode-extension/language-server/${{ steps.versions.outputs.lsp }}
           key: language-server-${{ runner.os }}-${{ runner.arch }}-${{ steps.versions.outputs.lsp }}
+
+      # The language server resolves the fixtures' Maven dependencies into ~/.m2/repository.
+      - name: Cache Maven dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ runner.os }}-${{ steps.versions.outputs.lsp }}-${{ hashFiles('test-fixtures/**/smithy-build.json') }}
 
       # VSCODE_TEST_VERSION is the exact version from "Resolve versions", such as 1.142.0 instead of
       # "stable", so the tests use the VS Code install restored by "Cache VS Code download".
