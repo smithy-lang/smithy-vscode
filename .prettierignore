@@ -3,5 +3,5 @@ node_modules/
 build/
 .vscode/
 .vscode-test/
-test-fixtures/**/build
+tests/*/workspace/**/build
 package-lock.json

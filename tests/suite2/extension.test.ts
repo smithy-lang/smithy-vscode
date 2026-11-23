@@ -4,7 +4,7 @@ import { getDocUri, waitFor, waitForServerStartup, vscode } from '../helper.ts';
 
 suite('broken model tests', function () {
     test('Should provide diagnostics', async () => {
-        const smithyMainUri = getDocUri('suite2/main.smithy');
+        const smithyMainUri = getDocUri('main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
         await vscode.window.showTextDocument(doc);
         await waitForServerStartup();
