@@ -1,20 +1,15 @@
 import { spawnSync } from 'child_process';
-import { mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 
 import { runTests, downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath } from '@vscode/test-electron';
 import * as assert from 'assert';
 
-// Each suite runs the *.test.ts files in its directory in its own VS Code instance, opened on
-// tests/<suite>/workspace.
-const suites = [
-    'suite1', // Extension registration and launching language server
-    'suite2', // Diagnostics from broken model
-    'suite3', // Selector commands
-    'suite4', // User-specific root
-    'suite5', // Formatter
-    'suite6', // Startup
-];
+// Each directory under tests/ with a workspace is a suite. A suite runs the *.test.ts files in its
+// directory in its own VS Code instance, opened on tests/<suite>/workspace.
+const suites = readdirSync(import.meta.dirname).filter((name) =>
+    existsSync(resolve(import.meta.dirname, name, 'workspace'))
+);
 
 async function go() {
     const extensionDevelopmentPath = resolve(import.meta.dirname, '..');
