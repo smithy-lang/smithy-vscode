@@ -7,9 +7,9 @@ import * as assert from 'assert';
 
 // Each directory under tests/ with a workspace is a suite. A suite runs the *.test.ts files in its
 // directory in its own VS Code instance, opened on tests/<suite>/workspace.
-const suites = readdirSync(import.meta.dirname).filter((name) =>
-    existsSync(resolve(import.meta.dirname, name, 'workspace'))
-);
+const suites = readdirSync(import.meta.dirname)
+    .filter((name) => existsSync(resolve(import.meta.dirname, name, 'workspace')))
+    .sort();
 
 async function go() {
     const extensionDevelopmentPath = resolve(import.meta.dirname, '..');
