@@ -15,7 +15,7 @@
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceFolder}",
                 "--extensionTestsPath=${workspaceFolder}/tests/helper.ts",
-                "${workspaceFolder}/test-fixtures/${input:suite}"
+                "${workspaceFolder}/tests/${input:suite}/workspace"
             ],
             "env": { "SUITE_DIR": "${workspaceFolder}/tests/${input:suite}" },
             "outFiles": ["${workspaceFolder}/out/**/*.js"],

@@ -6,7 +6,7 @@ import { runTests, downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePat
 import * as assert from 'assert';
 
 // Each suite runs the *.test.ts files in its directory in its own VS Code instance, opened on
-// test-fixtures/<suite>.
+// tests/<suite>/workspace.
 const suites = [
     'suite1', // Extension registration and launching language server
     'suite2', // Diagnostics from broken model
@@ -52,7 +52,7 @@ async function go() {
             extensionTestsPath: resolve(import.meta.dirname, 'helper.ts'),
             extensionTestsEnv: { SUITE_DIR: resolve(import.meta.dirname, suite) },
             launchArgs: [
-                resolve(extensionDevelopmentPath, 'test-fixtures', suite),
+                resolve(import.meta.dirname, suite, 'workspace'),
                 // xvfb has no GPU, so Chromium otherwise logs GPU process init errors.
                 '--disable-gpu',
                 `--builtin-extensions-dir=${builtinExtensionsDir}`,

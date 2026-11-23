@@ -122,7 +122,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/repository
-          key: maven-${{ runner.os }}-${{ steps.versions.outputs.lsp }}-${{ hashFiles('test-fixtures/**/smithy-build.json') }}
+          key: maven-${{ runner.os }}-${{ steps.versions.outputs.lsp }}-${{ hashFiles('tests/*/workspace/**/smithy-build.json') }}
 
       # VSCODE_TEST_VERSION is the exact version from "Resolve versions", such as 1.142.0 instead of
       # "stable", so the tests use the VS Code install restored by "Cache VS Code download".

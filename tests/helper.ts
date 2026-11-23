@@ -10,7 +10,7 @@ import { setTimeout } from 'node:timers/promises';
 // On VS Code 1.114.0, importing 'vscode' from an ES module hangs the extension host.
 export const vscode: typeof import('vscode') = createRequire(import.meta.url)('vscode');
 
-export const getDocUri = (p: string) => vscode.Uri.file(resolve(import.meta.dirname, '../test-fixtures', p));
+export const getDocUri = (p: string) => vscode.Uri.file(resolve(process.env.SUITE_DIR!, 'workspace', p));
 
 // Generous, since the first suite on a fresh machine downloads the language server.
 const DEFAULT_TIMEOUT_MS = 180_000;
@@ -77,7 +77,7 @@ export async function run(): Promise<void> {
     if (!testsRoot) {
         throw new Error('SUITE_DIR is not set');
     }
-    const files = globSync('**/*.test.ts', { cwd: testsRoot }).map((f) => resolve(testsRoot, f));
+    const files = globSync('*.test.ts', { cwd: testsRoot }).map((f) => resolve(testsRoot, f));
     if (files.length === 0) {
         return;
     }
