@@ -3,7 +3,7 @@ import { getDocUri, waitForServerStartup, vscode } from '../helper.ts';
 
 suite('selector', function () {
     test('Can run selectors', async (t) => {
-        const smithyMainUri = getDocUri('main.smithy');
+        const smithyMainUri = getDocUri(import.meta.dirname, 'main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
         await vscode.window.showTextDocument(doc);
         await waitForServerStartup();

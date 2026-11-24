@@ -1,15 +1,20 @@
 import { spawnSync } from 'child_process';
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import { delimiter, resolve } from 'path';
 
 import { runTests, downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath } from '@vscode/test-electron';
 import * as assert from 'assert';
 
-// Each directory under tests/ with a workspace is a suite. A suite runs the *.test.ts files in its
-// directory in its own VS Code instance, opened on tests/<suite>/workspace.
+// Each directory under tests/ with a workspace is a suite, which runs the *.test.ts files in its
+// directory against tests/<suite>/workspace. To save starting VS Code and the language server for
+// every suite, suites share one VS Code instance, opened on a multi-root workspace with each suite's
+// workspace as a folder.
 const suites = readdirSync(import.meta.dirname)
     .filter((name) => existsSync(resolve(import.meta.dirname, name, 'workspace')))
     .sort();
+// Suites that need their own VS Code instance. The activation suite checks that smithy-build.json
+// alone activates the extension, which the other suites' .smithy files would also do.
+const isolatedSuites = ['activation'];
 
 async function go() {
     const extensionDevelopmentPath = resolve(import.meta.dirname, '..');
@@ -40,14 +45,34 @@ async function go() {
 
     // Resolve and download VS Code once, rather than have runTests log the lookup for every suite.
     const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
-    for (const suite of suites) {
+    const sharedSuites = suites.filter((suite) => !isolatedSuites.includes(suite));
+    const sharedWorkspace = resolve(testDataPath, 'suites.code-workspace');
+    writeFileSync(
+        sharedWorkspace,
+        JSON.stringify({
+            folders: sharedSuites.map((suite) => ({ path: resolve(import.meta.dirname, suite, 'workspace') })),
+        })
+    );
+    const runs = [
+        ...suites
+            .filter((suite) => isolatedSuites.includes(suite))
+            .map((suite) => ({
+                suites: [suite],
+                workspace: resolve(import.meta.dirname, suite, 'workspace'),
+            })),
+        { suites: sharedSuites, workspace: sharedWorkspace },
+    ];
+
+    for (const run of runs) {
         await runTests({
             vscodeExecutablePath,
             extensionDevelopmentPath,
             extensionTestsPath: resolve(import.meta.dirname, 'helper.ts'),
-            extensionTestsEnv: { SUITE_DIR: resolve(import.meta.dirname, suite) },
+            extensionTestsEnv: {
+                SUITE_DIRS: run.suites.map((suite) => resolve(import.meta.dirname, suite)).join(delimiter),
+            },
             launchArgs: [
-                resolve(import.meta.dirname, suite, 'workspace'),
+                run.workspace,
                 // xvfb has no GPU, so Chromium otherwise logs GPU process init errors.
                 '--disable-gpu',
                 `--builtin-extensions-dir=${builtinExtensionsDir}`,

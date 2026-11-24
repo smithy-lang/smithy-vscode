@@ -4,7 +4,7 @@ import { getDocUri, waitForPublishedDiagnostics, vscode } from '../helper.ts';
 
 suite('startup', function () {
     test('Should start extension and Language Server', async () => {
-        const smithyMainUri = getDocUri('main.smithy');
+        const smithyMainUri = getDocUri(import.meta.dirname, 'main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
         const editor = await vscode.window.showTextDocument(doc);
         const ext = vscode.extensions.getExtension('smithy.smithy-vscode-extension');
@@ -12,7 +12,7 @@ suite('startup', function () {
         const diagnostics = vscode.languages.getDiagnostics(smithyMainUri);
 
         // Grab model file directly
-        const modelFile = await vscode.workspace.openTextDocument(getDocUri('main.smithy'));
+        const modelFile = await vscode.workspace.openTextDocument(getDocUri(import.meta.dirname, 'main.smithy'));
         const modelFileText = modelFile.getText();
 
         assert.match(modelFileText, /namespace example.weather/);
