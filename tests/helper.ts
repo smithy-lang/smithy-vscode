@@ -1,7 +1,7 @@
 import type { Uri } from 'vscode';
 import { globSync } from 'fs';
 import { createRequire } from 'module';
-import { resolve } from 'path';
+import { delimiter, resolve } from 'path';
 import { run as runNodeTests } from 'node:test';
 import { spec } from 'node:test/reporters';
 import { setTimeout } from 'node:timers/promises';
@@ -10,7 +10,7 @@ import { setTimeout } from 'node:timers/promises';
 // On VS Code 1.114.0, importing 'vscode' from an ES module hangs the extension host.
 export const vscode: typeof import('vscode') = createRequire(import.meta.url)('vscode');
 
-export const getDocUri = (p: string) => vscode.Uri.file(resolve(process.env.SUITE_DIR!, 'workspace', p));
+export const getDocUri = (suiteDir: string, p: string) => vscode.Uri.file(resolve(suiteDir, 'workspace', p));
 
 // Generous, since the first suite on a fresh machine downloads the language server.
 const DEFAULT_TIMEOUT_MS = 180_000;
@@ -71,13 +71,14 @@ export async function waitForPublishedDiagnostics(uri: Uri): Promise<void> {
 }
 
 // Test runner entry point for the extension host (runTest.ts sets this file as extensionTestsPath),
-// which fails the run if the returned promise rejects. The suite directory comes from SUITE_DIR.
+// which fails the run if the returned promise rejects. The suite directories come from SUITE_DIRS,
+// separated by the platform's path delimiter.
 export async function run(): Promise<void> {
-    const testsRoot = process.env.SUITE_DIR;
-    if (!testsRoot) {
-        throw new Error('SUITE_DIR is not set');
+    const suiteDirs = process.env.SUITE_DIRS?.split(delimiter).filter(Boolean);
+    if (!suiteDirs?.length) {
+        throw new Error('SUITE_DIRS is not set');
     }
-    const files = globSync('*.test.ts', { cwd: testsRoot }).map((f) => resolve(testsRoot, f));
+    const files = suiteDirs.flatMap((dir) => globSync('*.test.ts', { cwd: dir }).map((f) => resolve(dir, f)));
     if (files.length === 0) {
         return;
     }

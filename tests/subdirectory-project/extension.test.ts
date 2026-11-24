@@ -4,7 +4,7 @@ import { getDocUri, waitForPublishedDiagnostics, vscode } from '../helper.ts';
 
 suite('subdirectory-project', function () {
     test('Should download jars even when not in workspace root', async () => {
-        const smithyMainUri = getDocUri('smithy/main.smithy');
+        const smithyMainUri = getDocUri(import.meta.dirname, 'smithy/main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
         await vscode.window.showTextDocument(doc);
         await waitForPublishedDiagnostics(smithyMainUri);
