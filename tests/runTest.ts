@@ -1,20 +1,28 @@
 import { spawnSync } from 'child_process';
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'fs';
 import { delimiter, resolve } from 'path';
+import { pathToFileURL } from 'url';
 
 import { runTests, downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath } from '@vscode/test-electron';
 import * as assert from 'assert';
 
 // Each directory under tests/ with a workspace is a suite, which runs the *.test.ts files in its
-// directory against tests/<suite>/workspace. To save starting VS Code and the language server for
+// directory against tests/<suite>/workspace. A suite can also have a settings.ts, whose default
+// export returns user settings for its run. To save starting VS Code and the language server for
 // every suite, suites share one VS Code instance, opened on a multi-root workspace with each suite's
 // workspace as a folder.
 const suites = readdirSync(import.meta.dirname)
     .filter((name) => existsSync(resolve(import.meta.dirname, name, 'workspace')))
     .sort();
-// Suites that need their own VS Code instance. The activation suite checks that smithy-build.json
-// alone activates the extension, which the other suites' .smithy files would also do.
-const isolatedSuites = ['activation'];
+
+// Suites that need their own VS Code instance:
+// - activation: checks that smithy-build.json alone activates the extension, which the other
+//   suites' .smithy files would also do.
+// - Suites with a settings.ts, since user settings apply to the whole instance.
+const isolatedSuites = [
+    'activation',
+    ...suites.filter((suite) => existsSync(resolve(import.meta.dirname, suite, 'settings.ts'))),
+];
 
 async function go() {
     const extensionDevelopmentPath = resolve(import.meta.dirname, '..');
@@ -36,12 +44,6 @@ async function go() {
 
     const userDataDir = resolve(testDataPath, 'user-data');
     mkdirSync(resolve(userDataDir, 'User'), { recursive: true });
-    writeFileSync(
-        resolve(userDataDir, 'User', 'settings.json'),
-        JSON.stringify({
-            'chat.disableAIFeatures': true,
-        })
-    );
 
     // Resolve and download VS Code once, rather than have runTests log the lookup for every suite.
     const vscodeExecutablePath = await downloadAndUnzipVSCode(version);
@@ -59,11 +61,25 @@ async function go() {
             .map((suite) => ({
                 suites: [suite],
                 workspace: resolve(import.meta.dirname, suite, 'workspace'),
+                settingsPath: resolve(import.meta.dirname, suite, 'settings.ts'),
             })),
-        { suites: sharedSuites, workspace: sharedWorkspace },
+        { suites: sharedSuites, workspace: sharedWorkspace, settingsPath: undefined },
     ];
 
     for (const run of runs) {
+        // Load the settings only now, since they may depend on earlier runs, such as the language
+        // server they downloaded.
+        const settings =
+            run.settingsPath && existsSync(run.settingsPath)
+                ? (await import(pathToFileURL(run.settingsPath).href)).default({ testDataPath, userDataDir })
+                : {};
+        writeFileSync(
+            resolve(userDataDir, 'User', 'settings.json'),
+            JSON.stringify({
+                'chat.disableAIFeatures': true,
+                ...settings,
+            })
+        );
         await runTests({
             vscodeExecutablePath,
             extensionDevelopmentPath,

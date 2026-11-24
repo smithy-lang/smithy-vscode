@@ -1,5 +1,9 @@
 # Smithy VSCode Extension Changelog
 
+## next
+
+- Added the `smithy.server.javaHome` setting to run the downloaded smithy-language-server with your own Java installation [#212](https://github.com/smithy-lang/smithy-vscode/pull/212)
+
 ## 0.11.0 (2026-11-17)
 
 - Replaced Coursier with smithy-language-server's self-contained release zips, which include a Java runtime and run natively on Apple Silicon. The language server is now downloaded only from GitHub releases, and the first start downloads about 30 MB instead of about 270 MB. `smithy.server.version` accepts `latest.release` or an exact version from 0.4.0 onward. To run a local build, use `smithy.server.executable` [#198](https://github.com/smithy-lang/smithy-vscode/pull/198)

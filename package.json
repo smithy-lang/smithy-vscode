@@ -157,6 +157,12 @@
                     "default": null,
                     "description": "Executable to run smithy-language-server, instead of the one managed by the extension. Can be the executable name if it is on your PATH, or an absolute path to the executable. If `null`, the extension will download it.`"
                 },
+                "smithy.server.javaHome": {
+                    "type": "string",
+                    "default": null,
+                    "scope": "machine",
+                    "description": "Path to a Java installation (the directory containing `bin/java`) to run smithy-language-server with, instead of the Java runtime included in the download. Requires Java 21 or later. JVM options in the `JAVA_OPTS` and `SMITHY_LANGUAGE_SERVER_OPTS` environment variables currently aren't applied; use `JDK_JAVA_OPTIONS` instead. If `null`, the included runtime is used. Ignored if smithy.server.executable is provided."
+                },
                 "smithy.server.version": {
                     "type": "string",
                     "default": "latest.release",
