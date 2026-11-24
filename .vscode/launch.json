@@ -30,14 +30,14 @@
             "type": "pickString",
             "description": "Test suite to run",
             "options": [
-                { "label": "suite1 - Language registration", "value": "suite1" },
-                { "label": "suite2 - Diagnostics", "value": "suite2" },
-                { "label": "suite3 - Selectors", "value": "suite3" },
-                { "label": "suite4 - User-specific root", "value": "suite4" },
-                { "label": "suite5 - Formatter", "value": "suite5" },
-                { "label": "suite6 - Startup", "value": "suite6" }
+                "activation",
+                "diagnostics",
+                "formatter",
+                "selector",
+                "startup",
+                "subdirectory-project"
             ],
-            "default": "suite1"
+            "default": "startup"
         }
     ]
 }

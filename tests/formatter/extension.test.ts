@@ -2,7 +2,7 @@ import { suite, test } from 'node:test';
 import type { TextEdit } from 'vscode';
 import { getDocUri, waitFor, waitForServerStartup, vscode } from '../helper.ts';
 
-suite('formatting tests', function () {
+suite('formatter', function () {
     test('Should register Smithy formatter', async () => {
         const smithyMainUri = getDocUri('smithy/main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);

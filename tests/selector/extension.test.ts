@@ -1,7 +1,7 @@
 import { suite, test } from 'node:test';
 import { getDocUri, waitForServerStartup, vscode } from '../helper.ts';
 
-suite('Selector tests', function () {
+suite('selector', function () {
     test('Can run selectors', async (t) => {
         const smithyMainUri = getDocUri('main.smithy');
         const doc = await vscode.workspace.openTextDocument(smithyMainUri);
