@@ -1,6 +1,6 @@
 # Smithy VSCode Extension Changelog
 
-## next
+## 0.11.1 (2026-11-24)
 
 - Added the `smithy.server.javaHome` setting to run the downloaded smithy-language-server with your own Java installation [#212](https://github.com/smithy-lang/smithy-vscode/pull/212)
 
