@@ -18,6 +18,7 @@ let client: lsp.LanguageClient;
 let versionStatusBarItem: vscode.StatusBarItem;
 
 const VERSION_POLICY_PROMPTED_KEY = 'smithy.versionPolicyPrompted';
+const RELEASES_CACHE_KEY = 'smithy.releasesCache';
 const LATEST_RELEASE = 'latest.release';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -74,7 +75,7 @@ async function promptVersionPolicy(context: vscode.ExtensionContext): Promise<vo
     await context.globalState.update(VERSION_POLICY_PROMPTED_KEY, true);
 
     if (choice === pinVersion) {
-        await pickAndPinVersion();
+        await pickAndPinVersion(context);
     }
 }
 
@@ -106,31 +107,66 @@ function updateVersionStatusBarItem(): void {
     }
 }
 
-async function fetchAvailableVersions(): Promise<string[]> {
-    // Lists the 10 most recently published releases.
-    const feedUrl = 'https://github.com/smithy-lang/smithy-language-server/releases.atom';
+interface ReleasesCache {
+    versions: string[];
+    etag?: string;
+    rateLimitRemaining?: number;
+    // UTC epoch seconds.
+    rateLimitReset?: number;
+}
+
+// Unauthenticated requests are limited to 60 per hour per IP, and a 304 response counts too.
+// Returns the cached versions when GitHub can't be reached or the rate limit is used up.
+async function fetchAvailableVersions(context: vscode.ExtensionContext): Promise<string[]> {
+    const releasesUrl = 'https://api.github.com/repos/smithy-lang/smithy-language-server/releases?per_page=100';
+    const cache = context.globalState.get<ReleasesCache>(RELEASES_CACHE_KEY);
+    // GitHub asks clients not to send requests until the rate limit resets.
+    if (
+        cache?.rateLimitRemaining === 0 &&
+        cache.rateLimitReset !== undefined &&
+        Date.now() < cache.rateLimitReset * 1000
+    ) {
+        return cache.versions;
+    }
     try {
-        const response = await fetch(feedUrl);
-        const text = await response.text();
-        // Only versions with a release zip can be downloaded.
-        return [
-            ...text.matchAll(
-                /href="https:\/\/github\.com\/smithy-lang\/smithy-language-server\/releases\/tag\/([^"]+)"/g
-            ),
-        ]
-            .map((m) => m[1])
-            .filter(isSupportedVersion)
-            .sort(compareVersions)
-            .reverse();
+        const response = await fetch(releasesUrl, {
+            headers: {
+                Accept: 'application/vnd.github+json',
+                ...(cache?.etag && { 'If-None-Match': cache.etag }),
+            },
+        });
+        const newCache: ReleasesCache = {
+            versions: cache?.versions ?? [],
+            etag: cache?.etag,
+            rateLimitRemaining: getNumberHeader(response, 'x-ratelimit-remaining'),
+            rateLimitReset: getNumberHeader(response, 'x-ratelimit-reset'),
+        };
+        if (response.status === 200) {
+            const releases = (await response.json()) as { tag_name: string }[];
+            // Only versions with a release zip can be downloaded.
+            newCache.versions = releases
+                .map((release) => release.tag_name)
+                .filter(isSupportedVersion)
+                .sort(compareVersions)
+                .reverse();
+            newCache.etag = response.headers.get('etag') ?? undefined;
+        }
+        await context.globalState.update(RELEASES_CACHE_KEY, newCache);
+        return newCache.versions;
     } catch {
-        return [];
+        return cache?.versions ?? [];
     }
 }
 
-async function pickAndPinVersion(): Promise<void> {
+function getNumberHeader(response: Response, name: string): number | undefined {
+    const value = response.headers.get(name);
+    return value === null ? undefined : Number(value);
+}
+
+async function pickAndPinVersion(context: vscode.ExtensionContext): Promise<void> {
     const versions = await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: 'Fetching available versions...' },
-        () => fetchAvailableVersions()
+        () => fetchAvailableVersions(context)
     );
 
     if (versions.length === 0) {
@@ -161,7 +197,7 @@ async function toggleVersionPolicy(context: vscode.ExtensionContext): Promise<vo
     const isLatest = currentVersion === LATEST_RELEASE;
 
     if (isLatest) {
-        await pickAndPinVersion();
+        await pickAndPinVersion(context);
     } else {
         await vscode.workspace
             .getConfiguration('smithy')
@@ -210,7 +246,7 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
         const languageServerVersion = config.getServerVersion();
 
         if (languageServerVersion !== LATEST_RELEASE && !isSupportedVersion(languageServerVersion)) {
-            promptUnsupportedVersion(languageServerVersion);
+            promptUnsupportedVersion(context, languageServerVersion);
             throw new Error(`Unsupported smithy-language-server version: ${languageServerVersion}`);
         }
 
@@ -245,7 +281,7 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
     }
 }
 
-async function promptUnsupportedVersion(version: string): Promise<void> {
+async function promptUnsupportedVersion(context: vscode.ExtensionContext, version: string): Promise<void> {
     const pickVersion = 'Pick a version';
     const choice = await vscode.window.showErrorMessage(
         `Smithy Language Server ${version} isn't supported. Pick version ${MINIMUM_VERSION} or later, ` +
@@ -253,6 +289,6 @@ async function promptUnsupportedVersion(version: string): Promise<void> {
         pickVersion
     );
     if (choice === pickVersion) {
-        await pickAndPinVersion();
+        await pickAndPinVersion(context);
     }
 }
