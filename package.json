@@ -208,6 +208,7 @@
         "typescript": "~7.0.2"
     },
     "dependencies": {
+        "@xmldom/xmldom": "^0.9.12",
         "node-stream-zip": "^1.16.0",
         "vscode-languageclient": "^10.1.2"
     }
