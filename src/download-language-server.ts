@@ -15,7 +15,7 @@ export const MINIMUM_VERSION = '0.4.0';
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 
 // Compares the numbers in versions, so 0.10.0 sorts after 0.9.0.
-const compareVersions = new Intl.Collator('en', { numeric: true }).compare;
+export const compareVersions = new Intl.Collator('en', { numeric: true }).compare;
 
 export function isSupportedVersion(version: string): boolean {
     return EXACT_VERSION.test(version) && compareVersions(version, MINIMUM_VERSION) >= 0;
