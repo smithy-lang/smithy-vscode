@@ -7,6 +7,7 @@ import * as config from './config';
 import JarFileContentsProvider from './jar-file-contents';
 import SelectorHandler from './selector';
 import downloadLanguageServerIfRequired, {
+    compareVersions,
     deleteCoursier,
     isSupportedVersion,
     MINIMUM_VERSION,
@@ -106,15 +107,20 @@ function updateVersionStatusBarItem(): void {
 }
 
 async function fetchAvailableVersions(): Promise<string[]> {
-    const metadataUrl =
-        'https://repo1.maven.org/maven2/software/amazon/smithy/smithy-language-server/maven-metadata.xml';
+    // Lists the 10 most recently published releases.
+    const feedUrl = 'https://github.com/smithy-lang/smithy-language-server/releases.atom';
     try {
-        const response = await fetch(metadataUrl);
+        const response = await fetch(feedUrl);
         const text = await response.text();
         // Only versions with a release zip can be downloaded.
-        return [...text.matchAll(/<version>([^<]+)<\/version>/g)]
+        return [
+            ...text.matchAll(
+                /href="https:\/\/github\.com\/smithy-lang\/smithy-language-server\/releases\/tag\/([^"]+)"/g
+            ),
+        ]
             .map((m) => m[1])
             .filter(isSupportedVersion)
+            .sort(compareVersions)
             .reverse();
     } catch {
         return [];
@@ -128,7 +134,7 @@ async function pickAndPinVersion(): Promise<void> {
     );
 
     if (versions.length === 0) {
-        vscode.window.showErrorMessage('Could not fetch Smithy Language Server versions from Maven Central.');
+        vscode.window.showErrorMessage('Could not fetch Smithy Language Server versions from GitHub releases.');
         return;
     }
 

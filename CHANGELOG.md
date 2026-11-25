@@ -1,5 +1,9 @@
 # Smithy VSCode Extension Changelog
 
+## next
+
+- Fixed the language server version picker listing versions from Maven Central that aren't on GitHub releases yet. It now lists the 10 most recently published GitHub releases [#231](https://github.com/smithy-lang/smithy-vscode/pull/231)
+
 ## 0.11.1 (2026-11-24)
 
 - Added the `smithy.server.javaHome` setting to run the downloaded smithy-language-server with your own Java installation [#212](https://github.com/smithy-lang/smithy-vscode/pull/212)
