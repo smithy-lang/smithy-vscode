@@ -16,6 +16,12 @@ import { logger } from './logger';
 
 let client: lsp.LanguageClient;
 
+// The smithy.server.version setting the extension last tried to start the language server with.
+let attemptedVersion: string | undefined;
+
+// Settles once the language server's current start or restart, if any, finishes.
+let serverUpdates: Promise<unknown> = Promise.resolve();
+
 const VERSION_POLICY_PROMPTED_KEY = 'smithy.versionPolicyPrompted';
 const LATEST_RELEASE = 'latest.release';
 
@@ -28,9 +34,42 @@ export async function activate(context: vscode.ExtensionContext) {
     // Registered before getServer, so the status bar item still works if the server can't be set up.
     context.subscriptions.push(vscode.commands.registerCommand('smithy.toggleVersionPolicy', toggleVersionPolicy));
 
-    const server = await getServer(context);
+    // Also registered before getServer, so they work once a version change starts the server.
+    const selectorHandler = new SelectorHandler(() => client);
 
-    // Create the language client and start the client.
+    context.subscriptions.push(
+        vscode.workspace.registerTextDocumentContentProvider('smithyjar', new JarFileContentsProvider(() => client)),
+        vscode.commands.registerCommand('smithy.runSelector', selectorHandler.run, selectorHandler),
+        vscode.commands.registerCommand('smithy.clearSelector', selectorHandler.clear, selectorHandler),
+        vscode.workspace.onDidChangeConfiguration((e) => {
+            if (e.affectsConfiguration('smithy.server.version')) {
+                restartServer(context);
+            }
+        })
+    );
+
+    // Start the client. This will also launch the server. Activation completes once the server has
+    // initialized, so awaiting activation means the server is ready.
+    await queueServerUpdate(async () => {
+        attemptedVersion = config.getServerVersion();
+        await startClient(await getServer(context));
+    });
+}
+
+// Runs `update` once the language server's current start or restart, if any, finishes.
+function queueServerUpdate(update: () => Promise<void>): Promise<void> {
+    const result = serverUpdates.then(update);
+    serverUpdates = result.catch(() => {});
+    return result;
+}
+
+// Stops the running language server, if any, and starts `server`.
+async function startClient(server: lsp.Executable): Promise<void> {
+    if (client) {
+        // dispose() throws if the client isn't running, for example because it failed to start.
+        await client.dispose().catch((err) => logger.warn(`Couldn't stop smithy-language-server: ${err}`));
+    }
+
     client = new lsp.LanguageClient('smithy', 'Smithy', server, {
         outputChannel: logger,
         // Don't switch to output window when the server returns output.
@@ -49,18 +88,43 @@ export async function activate(context: vscode.ExtensionContext) {
         },
     });
 
-    const selectorHandler = new SelectorHandler(client);
-
-    context.subscriptions.push(
-        vscode.workspace.registerTextDocumentContentProvider('smithyjar', new JarFileContentsProvider(client)),
-        vscode.commands.registerCommand('smithy.runSelector', selectorHandler.run, selectorHandler),
-        vscode.commands.registerCommand('smithy.clearSelector', selectorHandler.clear, selectorHandler)
-    );
-
-    // Start the client. This will also launch the server. Activation completes once the server has
-    // initialized, so awaiting activation means the server is ready.
     await client.start();
 }
+
+// Restarts the language server if smithy.server.version changed since the extension last tried to
+// start it. If a start or restart is running, restarts once it finishes, with the latest setting.
+function restartServer(context: vscode.ExtensionContext): void {
+    queueServerUpdate(async () => {
+        const version = config.getServerVersion();
+        // smithy.server.executable ignores smithy.server.version.
+        if (config.getServerExecutable() || version === attemptedVersion) {
+            return;
+        }
+
+        attemptedVersion = version;
+        logger.info(`smithy.server.version changed to ${version}, restarting smithy-language-server`);
+
+        let server: lsp.Executable;
+        try {
+            // Download before stopping the running server, which keeps running if this fails.
+            server = await getServer(context);
+        } catch (err) {
+            logger.error(`Couldn't restart smithy-language-server with ${version}: ${err}`);
+            if (!(err instanceof ShownError)) {
+                vscode.window.showErrorMessage(
+                    `Couldn't switch Smithy Language Server to ${version}: ${err instanceof Error ? err.message : err}`
+                );
+            }
+            return;
+        }
+
+        // The client shows its own error if the server fails to start.
+        await startClient(server).catch((err) => logger.error(`smithy-language-server failed to start: ${err}`));
+    });
+}
+
+// An error that the extension has already shown to the user.
+class ShownError extends Error {}
 
 export function deactivate(): Thenable<void> | undefined {
     if (!client) {
@@ -155,7 +219,7 @@ async function pickAndPinVersion(): Promise<void> {
     });
 
     if (picked) {
-        await setServerVersion(picked, 'Smithy Language Server pinned to v' + picked + '. Reload window to apply.');
+        await setServerVersion(picked);
     }
 }
 
@@ -163,18 +227,14 @@ async function toggleVersionPolicy(): Promise<void> {
     if (config.getServerVersion() === LATEST_RELEASE) {
         await pickAndPinVersion();
     } else {
-        await setServerVersion(undefined, 'Smithy Language Server set to use latest version. Reload window to apply.');
+        await setServerVersion(undefined);
     }
 }
 
-async function setServerVersion(version: string | undefined, message: string): Promise<void> {
+async function setServerVersion(version: string | undefined): Promise<void> {
     await vscode.workspace
         .getConfiguration('smithy')
         .update('server.version', version, vscode.ConfigurationTarget.Global);
-    const reload = await vscode.window.showInformationMessage(message, 'Reload');
-    if (reload === 'Reload') {
-        vscode.commands.executeCommand('workbench.action.reloadWindow');
-    }
 }
 
 async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executable> {
@@ -191,7 +251,7 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
 
     if (languageServerVersion !== LATEST_RELEASE && !isSupportedVersion(languageServerVersion)) {
         promptUnsupportedVersion(languageServerVersion);
-        throw new Error(`Unsupported smithy-language-server version: ${languageServerVersion}`);
+        throw new ShownError(`Unsupported smithy-language-server version: ${languageServerVersion}`);
     }
 
     const javaHome = config.getServerJavaHome();
@@ -199,7 +259,7 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
     if (javaExecutable && !existsSync(javaExecutable)) {
         const message = `smithy.server.javaHome is set to ${javaHome}, but ${javaExecutable} doesn't exist.`;
         vscode.window.showErrorMessage(message);
-        throw new Error(message);
+        throw new ShownError(message);
     }
 
     const { version, launchScript, classpath } = await downloadLanguageServerIfRequired(
