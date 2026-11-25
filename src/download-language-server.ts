@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'crypto';
 import { createWriteStream } from 'fs';
 import { access, chmod, mkdir, mkdtemp, readdir, rename, rm, stat, writeFile } from 'fs/promises';
-import { basename, dirname, join } from 'path';
+import { basename, join } from 'path';
 import { pipeline } from 'stream/promises';
 import StreamZip from 'node-stream-zip';
 import { logger } from './logger';
@@ -33,56 +33,89 @@ function platformNames(): string[] {
     return process.platform === 'win32' ? ['windows-x86_64', 'windows-x64'] : [`${process.platform}-${arch}`];
 }
 
-// Returns the path of the smithy-language-server launch script for `version` (an exact version, or
-// latest.release), downloading the release zip into `storagePath` if needed. Then deletes the
-// versions that no window uses.
-export default async function downloadLanguageServerIfRequired(storagePath: string, version: string): Promise<string> {
-    const launchScript = await installLanguageServer(storagePath, version);
-    const installDir = dirname(dirname(launchScript));
+// Returns the installed version, launch script, and classpath of smithy-language-server `version`
+// (an exact version, or latest.release), downloading the release zip into `storagePath` if needed.
+// For latest.release, falls back to the newest installed version if it can't be resolved or
+// downloaded. Then deletes the versions that no window uses.
+export default async function downloadLanguageServerIfRequired(
+    storagePath: string,
+    version: string
+): Promise<{ version: string; launchScript: string; classpath: string }> {
+    // TODO: Remove deleteCoursier once most users have run a version after 0.10.2, which deletes
+    // the Coursier binary that 0.10.2 and earlier downloaded.
+    await deleteCoursier(storagePath);
+
+    const installRoot = join(storagePath, 'language-server');
+    let installDir: string;
+
+    try {
+        installDir = await installLanguageServer(
+            installRoot,
+            version === 'latest.release' ? await resolveLatestVersion() : version
+        );
+    } catch (err) {
+        const installed = version === 'latest.release' ? await newestInstalledVersion(installRoot) : undefined;
+        if (!installed) {
+            throw err;
+        }
+        logger.warn(`Couldn't install the latest smithy-language-server, using ${installed}: ${err}`);
+        installDir = join(installRoot, installed);
+    }
+
     try {
         await writeFile(join(installDir, `${IN_USE_PREFIX}${process.pid}`), '');
         // Not awaited, so pruning doesn't delay starting the server.
-        pruneInstalls(dirname(installDir), basename(installDir)).catch((err) =>
+        pruneInstalls(installRoot, basename(installDir)).catch((err) =>
             logger.warn(`Couldn't delete old smithy-language-server versions: ${err}`)
         );
     } catch (err) {
         logger.warn(`Couldn't mark ${installDir} as in use: ${err}`);
     }
-    return launchScript;
+
+    return {
+        version: basename(installDir),
+        launchScript: getLaunchScript(installDir),
+        classpath: join(installDir, 'lib', '*'),
+    };
 }
 
-async function installLanguageServer(storagePath: string, version: string): Promise<string> {
-    const installRoot = join(storagePath, 'language-server');
-    const resolvedVersion = version === 'latest.release' ? await resolveLatestVersion(installRoot) : version;
-    const installDir = join(installRoot, resolvedVersion);
+// Returns the directory of exact `version` under `installRoot`, downloading it if needed.
+async function installLanguageServer(installRoot: string, version: string): Promise<string> {
+    const installDir = join(installRoot, version);
     const launchScript = getLaunchScript(installDir);
+
     if (await exists(launchScript)) {
-        return launchScript;
+        return installDir;
     }
 
-    logger.info(`Downloading smithy-language-server ${resolvedVersion}`);
+    logger.info(`Downloading smithy-language-server ${version}`);
     await mkdir(installRoot, { recursive: true });
+
     // Download and extract into a temporary directory that is renamed into place, so a partial
     // download never appears at `installDir`.
     const tempDir = await mkdtemp(join(installRoot, '.download-'));
     try {
-        const releaseUrl = `${RELEASES_URL}/download/${resolvedVersion}`;
+        const releaseUrl = `${RELEASES_URL}/download/${version}`;
         const checksums = parseChecksums(await fetchText(`${releaseUrl}/checksums_sha256.txt`));
         const asset = platformNames()
             .map((name) => `smithy-language-server-${name}.zip`)
             .find((name) => checksums.has(name));
+
         if (!asset) {
-            throw new Error(`smithy-language-server ${resolvedVersion} has no release zip for this platform`);
+            throw new Error(`smithy-language-server ${version} has no release zip for this platform`);
         }
 
         const zipFile = join(tempDir, asset);
+        const expected = checksums.get(asset);
         const sha256 = await downloadFile(`${releaseUrl}/${asset}`, zipFile);
-        if (sha256 !== checksums.get(asset)) {
-            throw new Error(`Checksum mismatch for ${asset}: expected ${checksums.get(asset)}, got ${sha256}`);
+
+        if (sha256 !== expected) {
+            throw new Error(`Checksum mismatch for ${asset}: expected ${expected}, got ${sha256}`);
         }
 
         const extractDir = join(tempDir, 'contents');
         await extractZip(zipFile, extractDir);
+
         try {
             await rename(await findInstallationRoot(extractDir), installDir);
         } catch (err) {
@@ -91,21 +124,14 @@ async function installLanguageServer(storagePath: string, version: string): Prom
                 throw err;
             }
         }
-    } catch (err) {
-        const installed = version === 'latest.release' ? await newestInstalledVersion(installRoot) : undefined;
-        if (!installed) {
-            throw err;
-        }
-        logger.warn(`Couldn't download smithy-language-server ${resolvedVersion}, using ${installed}: ${err}`);
-        return getLaunchScript(join(installRoot, installed));
     } finally {
         await rm(tempDir, { recursive: true, force: true }).catch((err) =>
             logger.warn(`Couldn't delete ${tempDir}: ${err}`)
         );
     }
 
-    logger.info(`Installed smithy-language-server ${resolvedVersion} at ${installDir}`);
-    return launchScript;
+    logger.info(`Installed smithy-language-server ${version} at ${installDir}`);
+    return installDir;
 }
 
 // Each window writes `.in-use-<extension host pid>` into the version it runs, so other windows don't
@@ -178,7 +204,7 @@ function isRunning(pid: number): boolean {
 }
 
 // Deletes Coursier binaries downloaded by earlier versions of the extension.
-export async function deleteCoursier(storagePath: string): Promise<void> {
+async function deleteCoursier(storagePath: string): Promise<void> {
     for (const name of ['coursier', 'coursier.exe']) {
         await rm(join(storagePath, name), { force: true }).catch(() => {});
     }
@@ -189,22 +215,13 @@ function getLaunchScript(installDir: string): string {
     return join(installDir, 'bin', name);
 }
 
-// Resolves latest.release to the newest released version. Offline, uses the newest installed one.
-async function resolveLatestVersion(installRoot: string): Promise<string> {
-    try {
-        const version = (await fetchText(`${RELEASES_URL}/latest/download/VERSION`)).trim();
-        if (!EXACT_VERSION.test(version)) {
-            throw new Error(`Unexpected latest smithy-language-server version: ${version}`);
-        }
-        return version;
-    } catch (err) {
-        const installed = await newestInstalledVersion(installRoot);
-        if (!installed) {
-            throw err;
-        }
-        logger.warn(`Couldn't resolve the latest smithy-language-server version, using ${installed}: ${err}`);
-        return installed;
+// Resolves latest.release to the newest released version.
+async function resolveLatestVersion(): Promise<string> {
+    const version = (await fetchText(`${RELEASES_URL}/latest/download/VERSION`)).trim();
+    if (!EXACT_VERSION.test(version)) {
+        throw new Error(`Unexpected latest smithy-language-server version: ${version}`);
     }
+    return version;
 }
 
 async function newestInstalledVersion(installRoot: string): Promise<string | undefined> {

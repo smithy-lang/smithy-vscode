@@ -1,5 +1,5 @@
 import { existsSync } from 'fs';
-import { dirname, join } from 'path';
+import { join } from 'path';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
@@ -8,7 +8,6 @@ import JarFileContentsProvider from './jar-file-contents';
 import SelectorHandler from './selector';
 import downloadLanguageServerIfRequired, {
     compareVersions,
-    deleteCoursier,
     isSupportedVersion,
     MINIMUM_VERSION,
 } from './download-language-server';
@@ -201,18 +200,16 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
         throw new Error(message);
     }
 
-    // TODO: Remove deleteCoursier once most users have run a version after 0.10.2, which deletes
-    // the Coursier binary that 0.10.2 and earlier downloaded.
-    await deleteCoursier(context.globalStoragePath);
-
-    const launchScript = await downloadLanguageServerIfRequired(context.globalStoragePath, languageServerVersion);
+    const { version, launchScript, classpath } = await downloadLanguageServerIfRequired(
+        context.globalStoragePath,
+        languageServerVersion
+    );
     if (javaExecutable) {
         // The launch scripts always use the bundled Java runtime, so run the server's main class directly.
-        logger.info(`Launching smithy-language-server ${languageServerVersion} with ${javaExecutable}`);
-        const classpath = join(dirname(dirname(launchScript)), 'lib', '*');
+        logger.info(`Launching smithy-language-server ${version} with ${javaExecutable}`);
         return { command: javaExecutable, args: ['-cp', classpath, 'software.amazon.smithy.lsp.Main', '0'] };
     }
-    logger.info(`Launching smithy-language-server ${languageServerVersion} via ${launchScript}`);
+    logger.info(`Launching smithy-language-server ${version} via ${launchScript}`);
 
     if (process.platform === 'win32') {
         // Node can only run .bat files through a shell. Quote the path, which may contain spaces.
