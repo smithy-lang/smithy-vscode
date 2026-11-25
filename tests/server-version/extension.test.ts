@@ -136,4 +136,10 @@ suite('server-version', function () {
         assert.notEqual(vscode.workspace.getConfiguration('smithy').get('server.version'), LATEST_RELEASE);
         await waitForRestarts(since, 1);
     });
+
+    test('Should run selectors with the restarted server', async (t) => {
+        // Restored automatically when the test finishes.
+        t.mock.method(vscode.window, 'showInputBox', async () => 'string');
+        await vscode.commands.executeCommand('smithy.runSelector');
+    });
 });
