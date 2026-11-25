@@ -6,13 +6,14 @@ const JarFileContentsRequest = {
 };
 
 export default class JarFileContentsProvider implements vscode.TextDocumentContentProvider {
-    private client: lsp.LanguageClient;
+    // Returns the current client, which changes when the language server restarts.
+    private getClient: () => lsp.LanguageClient;
 
-    constructor(client: lsp.LanguageClient) {
-        this.client = client;
+    constructor(getClient: () => lsp.LanguageClient) {
+        this.getClient = getClient;
     }
 
     provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
-        return this.client.sendRequest(JarFileContentsRequest.type, { uri: uri.toString() }, token);
+        return this.getClient().sendRequest(JarFileContentsRequest.type, { uri: uri.toString() }, token);
     }
 }

@@ -6,12 +6,13 @@ const SelectorCommandRequest = {
 };
 
 export default class SelectorHandler {
-    private client: lsp.LanguageClient;
+    // Returns the current client, which changes when the language server restarts.
+    private getClient: () => lsp.LanguageClient;
     private expression: string = 'Enter selector expression';
     private decorationType: vscode.TextEditorDecorationType;
 
-    constructor(client: lsp.LanguageClient) {
-        this.client = client;
+    constructor(getClient: () => lsp.LanguageClient) {
+        this.getClient = getClient;
         this.decorationType = createDecorationType();
     }
 
@@ -35,7 +36,7 @@ export default class SelectorHandler {
         await this.clear();
         this.expression = expression;
 
-        const response = await this.client.sendRequest(SelectorCommandRequest.type, { expression });
+        const response = await this.getClient().sendRequest(SelectorCommandRequest.type, { expression });
 
         const ranges: vscode.Range[] = [];
         for (const location of response) {

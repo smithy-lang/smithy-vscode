@@ -3,6 +3,7 @@
 ## next
 
 - Fixed the language server version picker listing versions from Maven Central that aren't on GitHub releases yet. It now lists the 10 most recently published GitHub releases [#231](https://github.com/smithy-lang/smithy-vscode/pull/231)
+- Changed the extension to restart smithy-language-server when `smithy.server.version` changes, instead of asking you to reload the window. The running server keeps running until the new version is downloaded, and if the download fails or the version isn't supported. [#233](https://github.com/smithy-lang/smithy-vscode/pull/233)
 
 ## 0.11.1 (2026-11-24)
 
