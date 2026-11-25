@@ -52,10 +52,48 @@ jobs:
           fi
           echo "CHANGELOG.md has entries for unreleased version $VERSION"
 
+  # Resolve the versions of everything the tests download, so each cache key changes when the
+  # version it caches changes:
+  # - @vscode/test-electron downloads VS Code into .vscode-test/vscode-<platform>-<version>,
+  #   where <platform> is linux-x64, darwin-arm64, or win32-x64-archive.
+  #   "stable" is resolved to a concrete version so a new Stable release gets a new key.
+  # - The extension downloads the latest language server release into
+  #   language-server/<version> in its global storage. Its version also keys the Maven cache,
+  #   because a release can bundle a Maven resolver that records cached artifacts differently.
+  # Resolving them once here, instead of in each test-extension job, makes fewer requests and
+  # gives every job the same versions.
+  versions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: Resolve versions
+    outputs:
+      vscode-stable: ${{ steps.versions.outputs.vscode-stable }}
+      lsp: ${{ steps.versions.outputs.lsp }}
+    steps:
+      - name: Resolve versions
+        id: versions
+        run: |
+          vscode=$(curl -fsSL --retry 3 --retry-all-errors https://update.code.visualstudio.com/api/releases/stable | jq -r '.[0]')
+          lsp=$(curl -fsSL --retry 3 --retry-all-errors https://github.com/smithy-lang/smithy-language-server/releases/latest/download/VERSION)
+          if [ -z "$vscode" ] || [ "$vscode" = "null" ] || [ -z "$lsp" ]; then
+            echo "::error::Could not resolve versions: VS Code '$vscode', language server '$lsp'"
+            exit 1
+          fi
+          {
+            echo "vscode-stable=$vscode"
+            echo "lsp=$lsp"
+          } >> "$GITHUB_OUTPUT"
+
   test-extension:
+    needs: versions
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     name: Test extension (${{ matrix.os }}, VS Code ${{ matrix.vscode-version }})
+    env:
+      # The exact VS Code version, such as 1.142.0 instead of "stable", so the tests use the
+      # VS Code install restored by "Cache VS Code download".
+      VSCODE_TEST_VERSION: ${{ matrix.vscode-version == 'stable' && needs.versions.outputs.vscode-stable || matrix.vscode-version }}
+      LSP_VERSION: ${{ needs.versions.outputs.lsp }}
     defaults:
       run:
         shell: bash
@@ -78,67 +116,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Resolve the versions of everything the tests download, so each cache key changes when the
-      # version it caches changes:
-      # - @vscode/test-electron downloads VS Code into .vscode-test/vscode-<platform>-<version>,
-      #   where <platform> is linux-x64, darwin-arm64, or win32-x64-archive.
-      #   "stable" is resolved to a concrete version so a new Stable release gets a new key.
-      # - The extension downloads the latest language server release into
-      #   language-server/<version> in its global storage. Its version also keys the Maven cache,
-      #   because a release can bundle a Maven resolver that records cached artifacts differently.
-      - name: Resolve versions
-        id: versions
-        env:
-          VSCODE_VERSION: ${{ matrix.vscode-version }}
-        run: |
-          vscode="$VSCODE_VERSION"
-          if [ "$vscode" = "stable" ]; then
-            vscode=$(curl -fsSL --retry 3 https://update.code.visualstudio.com/api/releases/stable | jq -r '.[0]')
-          fi
-          lsp=$(curl -fsSL --retry 3 https://github.com/smithy-lang/smithy-language-server/releases/latest/download/VERSION)
-          if [ -z "$vscode" ] || [ "$vscode" = "null" ] || [ -z "$lsp" ]; then
-            echo "::error::Could not resolve versions: VS Code '$vscode', language server '$lsp'"
-            exit 1
-          fi
-          {
-            echo "vscode=$vscode"
-            echo "lsp=$lsp"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Cache VS Code download
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: .vscode-test/vscode-*-${{ steps.versions.outputs.vscode }}
-          key: vscode-${{ runner.os }}-${{ runner.arch }}-${{ steps.versions.outputs.vscode }}
+          path: .vscode-test/vscode-*-${{ env.VSCODE_TEST_VERSION }}
+          key: vscode-${{ runner.os }}-${{ runner.arch }}-${{ env.VSCODE_TEST_VERSION }}
 
       - name: Cache language server download
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: .vscode-test/user-data/User/globalStorage/smithy.smithy-vscode-extension/language-server/${{ steps.versions.outputs.lsp }}
-          key: language-server-${{ runner.os }}-${{ runner.arch }}-${{ steps.versions.outputs.lsp }}
+          path: .vscode-test/user-data/User/globalStorage/smithy.smithy-vscode-extension/language-server/${{ env.LSP_VERSION }}
+          key: language-server-${{ runner.os }}-${{ runner.arch }}-${{ env.LSP_VERSION }}
 
       # The language server resolves the fixtures' Maven dependencies into ~/.m2/repository.
       - name: Cache Maven dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/repository
-          key: maven-${{ runner.os }}-${{ steps.versions.outputs.lsp }}-${{ hashFiles('tests/*/workspace/**/smithy-build.json') }}
+          key: maven-${{ runner.os }}-${{ env.LSP_VERSION }}-${{ hashFiles('tests/*/workspace/**/smithy-build.json') }}
 
-      # VSCODE_TEST_VERSION is the exact version from "Resolve versions", such as 1.142.0 instead of
-      # "stable", so the tests use the VS Code install restored by "Cache VS Code download".
       - name: Run tests
         if: runner.os == 'Linux'
         # xvfb provides a display. dbus-run-session provides a session bus so Electron doesn't log
         # dbus connection errors. The bus config has no service directories, so dbus-daemon doesn't
         # log failed attempts to start org.freedesktop.systemd1.
         run: dbus-run-session --config-file=.github/ci/dbus-session.conf -- xvfb-run -a npm run test-extension
-        env:
-          VSCODE_TEST_VERSION: ${{ steps.versions.outputs.vscode }}
       - name: Run tests
         if: runner.os != 'Linux'
         run: npm run test-extension
-        env:
-          VSCODE_TEST_VERSION: ${{ steps.versions.outputs.vscode }}
 
   ci-gate:
     name: ci-gate
