@@ -47,6 +47,7 @@ export default async function downloadLanguageServerIfRequired(
 
     const installRoot = join(storagePath, 'language-server');
     let installDir: string;
+
     try {
         installDir = await installLanguageServer(
             installRoot,
@@ -60,6 +61,7 @@ export default async function downloadLanguageServerIfRequired(
         logger.warn(`Couldn't install the latest smithy-language-server, using ${installed}: ${err}`);
         installDir = join(installRoot, installed);
     }
+
     try {
         await writeFile(join(installDir, `${IN_USE_PREFIX}${process.pid}`), '');
         // Not awaited, so pruning doesn't delay starting the server.
@@ -69,6 +71,7 @@ export default async function downloadLanguageServerIfRequired(
     } catch (err) {
         logger.warn(`Couldn't mark ${installDir} as in use: ${err}`);
     }
+
     return {
         version: basename(installDir),
         launchScript: getLaunchScript(installDir),
@@ -80,12 +83,14 @@ export default async function downloadLanguageServerIfRequired(
 async function installLanguageServer(installRoot: string, version: string): Promise<string> {
     const installDir = join(installRoot, version);
     const launchScript = getLaunchScript(installDir);
+
     if (await exists(launchScript)) {
         return installDir;
     }
 
     logger.info(`Downloading smithy-language-server ${version}`);
     await mkdir(installRoot, { recursive: true });
+
     // Download and extract into a temporary directory that is renamed into place, so a partial
     // download never appears at `installDir`.
     const tempDir = await mkdtemp(join(installRoot, '.download-'));
@@ -95,18 +100,22 @@ async function installLanguageServer(installRoot: string, version: string): Prom
         const asset = platformNames()
             .map((name) => `smithy-language-server-${name}.zip`)
             .find((name) => checksums.has(name));
+
         if (!asset) {
             throw new Error(`smithy-language-server ${version} has no release zip for this platform`);
         }
 
         const zipFile = join(tempDir, asset);
+        const expected = checksums.get(asset);
         const sha256 = await downloadFile(`${releaseUrl}/${asset}`, zipFile);
-        if (sha256 !== checksums.get(asset)) {
-            throw new Error(`Checksum mismatch for ${asset}: expected ${checksums.get(asset)}, got ${sha256}`);
+
+        if (sha256 !== expected) {
+            throw new Error(`Checksum mismatch for ${asset}: expected ${expected}, got ${sha256}`);
         }
 
         const extractDir = join(tempDir, 'contents');
         await extractZip(zipFile, extractDir);
+
         try {
             await rename(await findInstallationRoot(extractDir), installDir);
         } catch (err) {
