@@ -34,10 +34,14 @@ function platformNames(): string[] {
 }
 
 // Returns the path of the smithy-language-server launch script for `version` (an exact version, or
-// latest.release), downloading the release zip into `storagePath` if needed. Then deletes the
-// versions that no window uses.
-export default async function downloadLanguageServerIfRequired(storagePath: string, version: string): Promise<string> {
-    const launchScript = await installLanguageServer(storagePath, version);
+// latest.release) and the exact version it runs, downloading the release zip into `storagePath` if
+// needed. Then deletes the versions that no window uses.
+export default async function downloadLanguageServerIfRequired(
+    storagePath: string,
+    version: string
+): Promise<{ launchScript: string; version: string }> {
+    const installed = await installLanguageServer(storagePath, version);
+    const { launchScript } = installed;
     const installDir = dirname(dirname(launchScript));
     try {
         await writeFile(join(installDir, `${IN_USE_PREFIX}${process.pid}`), '');
@@ -48,16 +52,19 @@ export default async function downloadLanguageServerIfRequired(storagePath: stri
     } catch (err) {
         logger.warn(`Couldn't mark ${installDir} as in use: ${err}`);
     }
-    return launchScript;
+    return installed;
 }
 
-async function installLanguageServer(storagePath: string, version: string): Promise<string> {
+async function installLanguageServer(
+    storagePath: string,
+    version: string
+): Promise<{ launchScript: string; version: string }> {
     const installRoot = join(storagePath, 'language-server');
     const resolvedVersion = version === 'latest.release' ? await resolveLatestVersion(installRoot) : version;
     const installDir = join(installRoot, resolvedVersion);
     const launchScript = getLaunchScript(installDir);
     if (await exists(launchScript)) {
-        return launchScript;
+        return { launchScript, version: resolvedVersion };
     }
 
     logger.info(`Downloading smithy-language-server ${resolvedVersion}`);
@@ -97,7 +104,7 @@ async function installLanguageServer(storagePath: string, version: string): Prom
             throw err;
         }
         logger.warn(`Couldn't download smithy-language-server ${resolvedVersion}, using ${installed}: ${err}`);
-        return getLaunchScript(join(installRoot, installed));
+        return { launchScript: getLaunchScript(join(installRoot, installed)), version: installed };
     } finally {
         await rm(tempDir, { recursive: true, force: true }).catch((err) =>
             logger.warn(`Couldn't delete ${tempDir}: ${err}`)
@@ -105,7 +112,7 @@ async function installLanguageServer(storagePath: string, version: string): Prom
     }
 
     logger.info(`Installed smithy-language-server ${resolvedVersion} at ${installDir}`);
-    return launchScript;
+    return { launchScript, version: resolvedVersion };
 }
 
 // Each window writes `.in-use-<extension host pid>` into the version it runs, so other windows don't

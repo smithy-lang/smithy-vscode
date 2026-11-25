@@ -1,4 +1,8 @@
 # Smithy VSCode Extension Changelog
+## next
+
+- Changed the status bar to show the smithy-language-server version that's running, including the version `latest.release` resolved to. After `smithy.server.version` changes, it keeps showing the running version until the window reloads [#223](https://github.com/smithy-lang/smithy-vscode/issues/223)
+
 
 ## 0.11.1 (2026-11-24)
 
