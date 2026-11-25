@@ -1,3 +1,4 @@
+import { DOMParser } from '@xmldom/xmldom';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import * as vscode from 'vscode';
@@ -118,17 +119,18 @@ function createVersionStatusBarItem(context: vscode.ExtensionContext): void {
 
 async function fetchAvailableVersions(): Promise<string[]> {
     // Lists the 10 most recently published releases.
-    const feedUrl = 'https://github.com/smithy-lang/smithy-language-server/releases.atom';
+    const releasesFeedUrl = 'https://github.com/smithy-lang/smithy-language-server/releases.atom';
     try {
-        const response = await fetch(feedUrl);
-        const text = await response.text();
+        const response = await fetch(releasesFeedUrl);
+        const responseText = await response.text();
+        const releasesFeed = new DOMParser().parseFromString(responseText, 'text/xml');
+
+        // Each entry's id ends with the release tag, e.g. tag:github.com,2008:Repository/318516123/0.10.0.
         // Only versions with a release zip can be downloaded.
-        return [
-            ...text.matchAll(
-                /href="https:\/\/github\.com\/smithy-lang\/smithy-language-server\/releases\/tag\/([^"]+)"/g
-            ),
-        ]
-            .map((m) => m[1])
+        return Array.from(
+            releasesFeed.getElementsByTagName('entry'),
+            (entry) => entry.getElementsByTagName('id')[0]?.textContent?.split('/').pop() ?? ''
+        )
             .filter(isSupportedVersion)
             .sort(compareVersions)
             .reverse();
