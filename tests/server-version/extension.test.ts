@@ -1,4 +1,4 @@
-import { after, before, suite, test } from 'node:test';
+import { after, before, beforeEach, suite, test } from 'node:test';
 import { setTimeout } from 'node:timers/promises';
 import * as assert from 'assert';
 import { getDocUri, waitFor, waitForPublishedDiagnostics, vscode } from '../helper.ts';
@@ -6,6 +6,9 @@ import { getDocUri, waitFor, waitForPublishedDiagnostics, vscode } from '../help
 const LATEST_RELEASE = 'latest.release';
 // A restart takes a few seconds, since this suite's versions are already installed.
 const RESTART_TIMEOUT_MS = 30_000;
+
+// DEBUG, do not merge: written to stderr so it shows up in CI test output.
+const diag = (message: string) => console.error(`DIAG test ${new Date().toISOString()} ${message}`);
 
 // Each test changes smithy.server.version from the value the previous test left.
 suite('server-version', function () {
@@ -18,17 +21,24 @@ suite('server-version', function () {
     let listener: { dispose(): void } | undefined;
 
     const isPublished = () => vscode.languages.getDiagnostics().some(([uri]) => uri.toString() === mainUri.toString());
-    const setVersion = (version: string | undefined) =>
-        vscode.workspace
+    const setVersion = (version: string | undefined) => {
+        diag(`setVersion(${version})`);
+        return vscode.workspace
             .getConfiguration('smithy')
             .update('server.version', version, vscode.ConfigurationTarget.Global);
+    };
     // Waits until the server has stopped `count` more times and the last server has started.
     const waitForRestarts = async (since: number, count: number) => {
-        await waitFor(
-            `${count} language server restart(s)`,
-            () => stops.length >= since + count && isPublished(),
-            RESTART_TIMEOUT_MS
-        );
+        try {
+            await waitFor(
+                `${count} language server restart(s)`,
+                () => stops.length >= since + count && isPublished(),
+                RESTART_TIMEOUT_MS
+            );
+        } catch (err) {
+            diag(`timed out: since=${since} count=${count} stops=${stops.length} published=${isPublished()}`);
+            throw err;
+        }
         assert.equal(stops.length, since + count);
     };
 
@@ -42,11 +52,14 @@ suite('server-version', function () {
             if (published && !isPublished()) {
                 stops.push(Date.now());
             }
+            diag(`diagnostics changed: published=${isPublished()} stops=${stops.length}`);
             published = isPublished();
         });
     });
 
     after(() => listener?.dispose());
+
+    beforeEach((t) => diag(`test: ${t.name}`));
 
     test('Should restart the server when changed to latest.release', async () => {
         const since = stops.length;

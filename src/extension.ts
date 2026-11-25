@@ -23,6 +23,9 @@ let serverUpdates: Promise<unknown> = Promise.resolve();
 const VERSION_POLICY_PROMPTED_KEY = 'smithy.versionPolicyPrompted';
 const LATEST_RELEASE = 'latest.release';
 
+// DEBUG, do not merge: written to stderr so it shows up in CI test output.
+const diag = (message: string) => console.error(`DIAG ext ${new Date().toISOString()} ${message}`);
+
 export async function activate(context: vscode.ExtensionContext) {
     extensionContext = context;
     // The client doesn't dispose a channel passed in via options, so we own its lifecycle.
@@ -42,6 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('smithy.clearSelector', selectorHandler.clear, selectorHandler),
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('smithy.server.version')) {
+                diag(`config changed: version=${config.getServerVersion()}`);
                 restartServer();
             }
         })
@@ -64,9 +68,12 @@ function queueServerUpdate(update: () => Promise<void>): Promise<void> {
 
 // Stops the running language server, if any, and starts `server`.
 async function startClient(server: lsp.Executable): Promise<void> {
+    diag(`startClient: ${server.command} ${(server.args ?? []).join(' ')}`);
     if (client) {
+        diag(`disposing client, state=${client.state}`);
         // dispose() throws if the client isn't running, for example because it failed to start.
         await client.dispose().catch((err) => logger.warn(`Couldn't stop smithy-language-server: ${err}`));
+        diag('disposed client');
     }
     client = new lsp.LanguageClient('smithy', 'Smithy', server, {
         outputChannel: logger,
@@ -85,7 +92,10 @@ async function startClient(server: lsp.Executable): Promise<void> {
             onlyReloadOnSave: config.getServerOnlyReloadOnSave(),
         },
     });
+    const started = client;
+    started.onDidChangeState((e) => diag(`client state ${e.oldState} -> ${e.newState}`));
     await client.start();
+    diag(`client.start() resolved, state=${started.state}`);
 }
 
 // Restarts the language server if smithy.server.version changed since the extension last tried to
@@ -93,8 +103,10 @@ async function startClient(server: lsp.Executable): Promise<void> {
 function restartServer(): void {
     queueServerUpdate(async () => {
         const version = config.getServerVersion();
+        diag(`restartServer: version=${version} attemptedVersion=${attemptedVersion}`);
         // smithy.server.executable ignores smithy.server.version.
         if (config.getServerExecutable() || version === attemptedVersion) {
+            diag('restartServer: skipped');
             return;
         }
         attemptedVersion = version;
@@ -104,6 +116,7 @@ function restartServer(): void {
             // Download before stopping the running server, which keeps running if this fails.
             server = await getServer(extensionContext);
         } catch (err) {
+            diag(`restartServer: getServer failed: ${err}`);
             logger.error(`Couldn't restart smithy-language-server with ${version}: ${err}`);
             if (!(err instanceof ShownError)) {
                 vscode.window.showErrorMessage(
@@ -113,7 +126,11 @@ function restartServer(): void {
             return;
         }
         // The client shows its own error if the server fails to start.
-        await startClient(server).catch((err) => logger.error(`smithy-language-server failed to start: ${err}`));
+        await startClient(server).catch((err) => {
+            diag(`restartServer: startClient failed: ${err}`);
+            logger.error(`smithy-language-server failed to start: ${err}`);
+        });
+        diag('restartServer: done');
     });
 }
 
