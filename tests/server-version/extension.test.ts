@@ -18,6 +18,10 @@ suite('server-version', function () {
     // Times at which the language server stopped. The client clears its diagnostics when the server
     // stops, and the new server publishes them again once it starts.
     const stops: number[] = [];
+    // Whether the listener last saw diagnostics for main.smithy. VS Code delays diagnostics change
+    // events by up to 50 ms and merges them, so this can lag isPublished(). Tests wait on this, so the
+    // listener sees a publish before the next change clears it.
+    let published = true;
     // The time at which diagnostics last changed.
     let lastChange = 0;
     let listener: { dispose(): void } | undefined;
@@ -34,7 +38,7 @@ suite('server-version', function () {
         try {
             await waitFor(
                 `${count} language server restart(s)`,
-                () => stops.length >= since + count && isPublished(),
+                () => stops.length >= since + count && published,
                 RESTART_TIMEOUT_MS
             );
         } catch (err) {
@@ -49,7 +53,6 @@ suite('server-version', function () {
         assert.notEqual(installedVersion, LATEST_RELEASE, 'runTest.ts should pin smithy.server.version');
         await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(mainUri));
         await waitForPublishedDiagnostics(mainUri);
-        let published = true;
         listener = vscode.languages.onDidChangeDiagnostics(() => {
             lastChange = Date.now();
             if (published && !isPublished()) {
@@ -80,7 +83,7 @@ suite('server-version', function () {
         // out if the second restart didn't switch to latest.release.
         await waitFor(
             'the language server to restart and settle',
-            () => stops.length > since && isPublished() && Date.now() - lastChange >= 2000,
+            () => stops.length > since && published && Date.now() - lastChange >= 2000,
             RESTART_TIMEOUT_MS
         );
         assert.ok(stops.length <= since + 2, `stopped ${stops.length - since} times`);
