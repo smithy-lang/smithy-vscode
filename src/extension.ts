@@ -15,6 +15,8 @@ import { logger } from './logger';
 
 let client: lsp.LanguageClient;
 let versionStatusBarItem: vscode.StatusBarItem;
+// The smithy.server.version setting the language server was set up with, and the exact version it runs.
+let runningServer: { setting: string; version: string } | undefined;
 
 const VERSION_POLICY_PROMPTED_KEY = 'smithy.versionPolicyPrompted';
 const LATEST_RELEASE = 'latest.release';
@@ -95,14 +97,28 @@ function createVersionStatusBarItem(context: vscode.ExtensionContext): void {
 }
 
 function updateVersionStatusBarItem(): void {
-    const version = config.getServerVersion();
+    const setting = config.getServerVersion();
+    // Once the server is set up, show the version it runs until the window reloads.
+    const version = runningServer?.setting ?? setting;
+    let tooltip: string;
     if (version === LATEST_RELEASE) {
-        versionStatusBarItem.text = '$(check) Smithy LS (latest)';
-        versionStatusBarItem.tooltip = 'Smithy Language Server: using the latest release. Click to pin a version.';
+        if (runningServer) {
+            versionStatusBarItem.text = `$(check) Smithy LS v${runningServer.version} (latest)`;
+            tooltip = `Smithy Language Server: using v${runningServer.version}, the latest release.`;
+        } else {
+            versionStatusBarItem.text = '$(check) Smithy LS (latest)';
+            tooltip = 'Smithy Language Server: using the latest release.';
+        }
     } else {
         versionStatusBarItem.text = '$(pin) Smithy LS v' + version;
-        versionStatusBarItem.tooltip = 'Smithy Language Server: pinned to v' + version + '. Click to switch to latest.';
+        tooltip = 'Smithy Language Server: pinned to v' + version + '.';
     }
+    // Clicking toggles the current setting, which may differ from the running version's.
+    tooltip += setting === LATEST_RELEASE ? ' Click to pin a version.' : ' Click to switch to latest.';
+    if (runningServer && setting !== runningServer.setting) {
+        tooltip += ' Reload window to apply.';
+    }
+    versionStatusBarItem.tooltip = tooltip;
 }
 
 async function fetchAvailableVersions(): Promise<string[]> {
@@ -220,7 +236,12 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
         // the Coursier binary that 0.10.2 and earlier downloaded.
         await deleteCoursier(context.globalStoragePath);
 
-        const launchScript = await downloadLanguageServerIfRequired(context.globalStoragePath, languageServerVersion);
+        const { launchScript, version } = await downloadLanguageServerIfRequired(
+            context.globalStoragePath,
+            languageServerVersion
+        );
+        runningServer = { setting: languageServerVersion, version };
+        updateVersionStatusBarItem();
         if (javaExecutable) {
             // The launch scripts always use the bundled Java runtime, so run the server's main class directly.
             logger.info(`Launching smithy-language-server ${languageServerVersion} with ${javaExecutable}`);
