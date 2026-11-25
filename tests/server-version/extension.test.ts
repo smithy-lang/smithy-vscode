@@ -98,6 +98,19 @@ suite('server-version', function () {
         assert.ok(isPublished());
     });
 
+    test('Should restart the server when a version is picked from the unsupported version prompt', async (t) => {
+        const since = stops.length;
+        // Restored automatically when the test finishes.
+        t.mock.method(vscode.window, 'showErrorMessage', async () => 'Pick a version');
+        let picked: string | undefined;
+        t.mock.method(vscode.window, 'showQuickPick', async (items: readonly string[]) => (picked = items[0]));
+
+        await setVersion('0.2');
+        await waitForRestarts(since, 1);
+        assert.ok(picked);
+        assert.equal(vscode.workspace.getConfiguration('smithy').get('server.version'), picked);
+    });
+
     test("Should keep the server running when the version can't be downloaded", async () => {
         const since = stops.length;
         // A supported version that was never released.
