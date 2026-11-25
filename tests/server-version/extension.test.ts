@@ -18,6 +18,8 @@ suite('server-version', function () {
     // Times at which the language server stopped. The client clears its diagnostics when the server
     // stops, and the new server publishes them again once it starts.
     const stops: number[] = [];
+    // The time at which diagnostics last changed.
+    let lastChange = 0;
     let listener: { dispose(): void } | undefined;
 
     const isPublished = () => vscode.languages.getDiagnostics().some(([uri]) => uri.toString() === mainUri.toString());
@@ -49,6 +51,7 @@ suite('server-version', function () {
         await waitForPublishedDiagnostics(mainUri);
         let published = true;
         listener = vscode.languages.onDidChangeDiagnostics(() => {
+            lastChange = Date.now();
             if (published && !isPublished()) {
                 stops.push(Date.now());
             }
@@ -72,7 +75,15 @@ suite('server-version', function () {
         await setVersion(installedVersion);
         await waitFor('the server to stop', () => stops.length > since, RESTART_TIMEOUT_MS);
         await setVersion(LATEST_RELEASE);
-        await waitForRestarts(since, 2);
+        // The second restart can stop the server before it publishes diagnostics, which leaves no
+        // stop to count. So wait for diagnostics to settle, and rely on the next test, which times
+        // out if the second restart didn't switch to latest.release.
+        await waitFor(
+            'the language server to restart and settle',
+            () => stops.length > since && isPublished() && Date.now() - lastChange >= 2000,
+            RESTART_TIMEOUT_MS
+        );
+        assert.ok(stops.length <= since + 2, `stopped ${stops.length - since} times`);
     });
 
     test('Should restart the server when changed to a supported version', async () => {
