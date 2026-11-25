@@ -15,11 +15,15 @@ import downloadLanguageServerIfRequired, {
 import { logger } from './logger';
 
 let client: lsp.LanguageClient;
+let globalState: vscode.Memento;
 
 const VERSION_POLICY_PROMPTED_KEY = 'smithy.versionPolicyPrompted';
+const RELEASES_CACHE_KEY = 'smithy.releasesCache';
 const LATEST_RELEASE = 'latest.release';
 
 export async function activate(context: vscode.ExtensionContext) {
+    globalState = context.globalState;
+
     // The client doesn't dispose a channel passed in via options, so we own its lifecycle.
     context.subscriptions.push(logger);
 
@@ -117,25 +121,60 @@ function createVersionStatusBarItem(context: vscode.ExtensionContext): void {
     );
 }
 
+interface ReleasesCache {
+    versions: string[];
+    etag?: string;
+    rateLimitRemaining?: number;
+    // UTC epoch seconds.
+    rateLimitReset?: number;
+}
+
+// Unauthenticated requests are limited to 60 per hour per IP, and a 304 response counts too.
+// Returns the cached versions when GitHub can't be reached or the rate limit is used up.
 async function fetchAvailableVersions(): Promise<string[]> {
-    // Lists the 10 most recently published releases.
-    const feedUrl = 'https://github.com/smithy-lang/smithy-language-server/releases.atom';
-    try {
-        const response = await fetch(feedUrl);
-        const text = await response.text();
-        // Only versions with a release zip can be downloaded.
-        return [
-            ...text.matchAll(
-                /href="https:\/\/github\.com\/smithy-lang\/smithy-language-server\/releases\/tag\/([^"]+)"/g
-            ),
-        ]
-            .map((m) => m[1])
-            .filter(isSupportedVersion)
-            .sort(compareVersions)
-            .reverse();
-    } catch {
-        return [];
+    const releasesUrl = 'https://api.github.com/repos/smithy-lang/smithy-language-server/releases?per_page=100';
+    const cache = globalState.get<ReleasesCache>(RELEASES_CACHE_KEY);
+    // GitHub asks clients not to send requests until the rate limit resets.
+    if (
+        cache?.rateLimitRemaining === 0 &&
+        cache.rateLimitReset !== undefined &&
+        Date.now() < cache.rateLimitReset * 1000
+    ) {
+        return cache.versions;
     }
+    try {
+        const response = await fetch(releasesUrl, {
+            headers: {
+                Accept: 'application/vnd.github+json',
+                ...(cache?.etag && { 'If-None-Match': cache.etag }),
+            },
+        });
+        const newCache: ReleasesCache = {
+            versions: cache?.versions ?? [],
+            etag: cache?.etag,
+            rateLimitRemaining: getNumberHeader(response, 'x-ratelimit-remaining'),
+            rateLimitReset: getNumberHeader(response, 'x-ratelimit-reset'),
+        };
+        if (response.status === 200) {
+            const releases = (await response.json()) as { tag_name: string }[];
+            // Only versions with a release zip can be downloaded.
+            newCache.versions = releases
+                .map((release) => release.tag_name)
+                .filter(isSupportedVersion)
+                .sort(compareVersions)
+                .reverse();
+            newCache.etag = response.headers.get('etag') ?? undefined;
+        }
+        await globalState.update(RELEASES_CACHE_KEY, newCache);
+        return newCache.versions;
+    } catch {
+        return cache?.versions ?? [];
+    }
+}
+
+function getNumberHeader(response: Response, name: string): number | undefined {
+    const value = response.headers.get(name);
+    return value === null ? undefined : Number(value);
 }
 
 async function pickAndPinVersion(): Promise<void> {
