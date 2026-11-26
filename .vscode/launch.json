@@ -33,6 +33,8 @@
                 "activation",
                 "diagnostics",
                 "formatter",
+                "language-features",
+                "language-features-declarative",
                 "selector",
                 "startup",
                 "subdirectory-project"
