@@ -76,15 +76,20 @@ suite('language-features', function () {
     });
 
     test('Should go to the definition of shapes', async () => {
-        const locations = await vscode.commands.executeCommand<Location[]>(
+        const locations = await vscode.commands.executeCommand<(Location | LocationLink)[]>(
             'vscode.executeDefinitionProvider',
             mainUri,
             cityIdTarget
         );
-
         assert.equal(locations.length, 1);
-        assert.equal(locations[0].uri.toString(), mainUri.toString());
-        assert.equal(locations[0].range.start.line, cityIdDefinition.line);
+
+        const location = locations[0];
+        const [uri, range] =
+            'uri' in location
+                ? [location.uri, location.range]
+                : [location.targetUri, location.targetSelectionRange ?? location.targetRange];
+        assert.equal(uri.toString(), mainUri.toString());
+        assert.equal(range.start.line, cityIdDefinition.line);
     });
 
     test('Should open definitions in dependency jars', async () => {
