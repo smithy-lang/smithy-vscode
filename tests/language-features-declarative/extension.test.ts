@@ -54,6 +54,7 @@ suite('language-features-declarative', function () {
         ['[', ']'],
         ['(', ')'],
         ['"', '"'],
+        ['"""', '"""'],
     ]) {
         test(`Should auto-close ${open}`, async () => {
             // VS Code only auto-closes once the lines above the cursor are tokenized, and after a
