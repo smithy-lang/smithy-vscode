@@ -10,8 +10,12 @@ const RESTART_TIMEOUT_MS = 30_000;
 // Each test changes smithy.server.version from the value the previous test left.
 suite('server-version', function () {
     const mainUri = getDocUri(import.meta.dirname, 'main.smithy');
-    // The version runTest.ts pinned, which is installed.
+    // The version settings.ts pinned, which is older than latest.release. The extension installs it
+    // when it activates.
     let installedVersion: string;
+    // The newest version, which the unsupported version prompt picks. Later tests assume
+    // latest.release resolves to it, which fails if GitHub marks an older release as latest.
+    let newestVersion: string | undefined;
 
     // Times at which the language server stopped. The client clears its diagnostics when the server
     // stops, and the new server publishes them again once it starts.
@@ -46,7 +50,7 @@ suite('server-version', function () {
 
     before(async () => {
         installedVersion = vscode.workspace.getConfiguration('smithy').get<string>('server.version')!;
-        assert.notEqual(installedVersion, LATEST_RELEASE, 'runTest.ts should pin smithy.server.version');
+        assert.notEqual(installedVersion, LATEST_RELEASE, 'settings.ts should pin smithy.server.version');
         await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(mainUri));
         await waitForPublishedDiagnostics(mainUri);
 
@@ -109,6 +113,7 @@ suite('server-version', function () {
         await waitForRestarts(since, 1);
         assert.ok(picked);
         assert.equal(vscode.workspace.getConfiguration('smithy').get('server.version'), picked);
+        newestVersion = picked;
     });
 
     test("Should keep the server running when the version can't be downloaded", async () => {
@@ -120,15 +125,26 @@ suite('server-version', function () {
         assert.ok(isPublished());
     });
 
-    test('Should restart the server when the status bar switches to latest.release', async () => {
+    test('Should keep the server running when changed back to its version after a failed switch', async () => {
         const since = stops.length;
-        // Pinned to 0.4.99, so this switches to latest.release without opening the picker.
-        await vscode.commands.executeCommand('smithy.toggleVersionPolicy');
-        assert.equal(vscode.workspace.getConfiguration('smithy').get('server.version'), LATEST_RELEASE);
-        await waitForRestarts(since, 1);
+        assert.ok(newestVersion);
+        await setVersion(newestVersion);
+        await setTimeout(3000);
+        assert.equal(stops.length, since);
+        assert.ok(isPublished());
     });
 
-    test('Should restart the server when a version is picked from the status bar', async () => {
+    test('Should keep the server running when the status bar switches from the latest version to latest.release', async () => {
+        const since = stops.length;
+        // Pinned to the newest version, so this switches to latest.release without opening the picker.
+        await vscode.commands.executeCommand('smithy.toggleVersionPolicy');
+        assert.equal(vscode.workspace.getConfiguration('smithy').get('server.version'), LATEST_RELEASE);
+        await setTimeout(3000);
+        assert.equal(stops.length, since);
+        assert.ok(isPublished());
+    });
+
+    test('Should keep the server running when the status bar picks the version it runs', async () => {
         const since = stops.length;
         let done = false;
         const toggled = Promise.resolve(vscode.commands.executeCommand('smithy.toggleVersionPolicy')).finally(
@@ -146,8 +162,10 @@ suite('server-version', function () {
             RESTART_TIMEOUT_MS
         );
         await toggled;
-        assert.notEqual(vscode.workspace.getConfiguration('smithy').get('server.version'), LATEST_RELEASE);
-        await waitForRestarts(since, 1);
+        assert.equal(vscode.workspace.getConfiguration('smithy').get('server.version'), newestVersion);
+        await setTimeout(3000);
+        assert.equal(stops.length, since);
+        assert.ok(isPublished());
     });
 
     test('Should run selectors with the restarted server', async (t) => {

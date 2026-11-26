@@ -16,8 +16,8 @@ import { logger } from './logger';
 
 let client: lsp.LanguageClient;
 
-// The smithy.server.version setting the extension last tried to start the language server with.
-let attemptedVersion: string | undefined;
+// The version of the running language server, if the extension downloaded it.
+let serverVersion: string | undefined;
 
 // Settles once the language server's current start or restart, if any, finishes.
 let serverUpdates: Promise<unknown> = Promise.resolve();
@@ -51,8 +51,8 @@ export async function activate(context: vscode.ExtensionContext) {
     // Start the client. This will also launch the server. Activation completes once the server has
     // initialized, so awaiting activation means the server is ready.
     await queueServerUpdate(async () => {
-        attemptedVersion = config.getServerVersion();
-        await startClient(await getServer(context));
+        const { server, version } = await getServer(context);
+        await startClient(server, version);
     });
 }
 
@@ -63,12 +63,13 @@ function queueServerUpdate(update: () => Promise<void>): Promise<void> {
     return result;
 }
 
-// Stops the running language server, if any, and starts `server`.
-async function startClient(server: lsp.Executable): Promise<void> {
+// Stops the running language server, if any, and starts `server`, which runs `version`.
+async function startClient(server: lsp.Executable, version: string | undefined): Promise<void> {
     if (client) {
         // dispose() throws if the client isn't running, for example because it failed to start.
         await client.dispose().catch((err) => logger.warn(`Couldn't stop smithy-language-server: ${err}`));
     }
+    serverVersion = undefined;
 
     client = new lsp.LanguageClient('smithy', 'Smithy', server, {
         outputChannel: logger,
@@ -89,25 +90,25 @@ async function startClient(server: lsp.Executable): Promise<void> {
     });
 
     await client.start();
+    serverVersion = version;
 }
 
-// Restarts the language server if smithy.server.version changed since the extension last tried to
-// start it. If a start or restart is running, restarts once it finishes, with the latest setting.
+// Restarts the language server if smithy.server.version resolves to a version other than the running
+// one. If a start or restart is running, restarts once it finishes, with the latest setting.
 function restartServer(context: vscode.ExtensionContext): void {
     queueServerUpdate(async () => {
         const version = config.getServerVersion();
         // smithy.server.executable ignores smithy.server.version.
-        if (config.getServerExecutable() || version === attemptedVersion) {
+        if (config.getServerExecutable()) {
             return;
         }
-
-        attemptedVersion = version;
-        logger.info(`smithy.server.version changed to ${version}, restarting smithy-language-server`);
+        logger.info(`smithy.server.version changed to ${version}`);
 
         let server: lsp.Executable;
+        let resolvedVersion: string | undefined;
         try {
             // Download before stopping the running server, which keeps running if this fails.
-            server = await getServer(context);
+            ({ server, version: resolvedVersion } = await getServer(context));
         } catch (err) {
             logger.error(`Couldn't restart smithy-language-server with ${version}: ${err}`);
             if (!(err instanceof ShownError)) {
@@ -118,8 +119,16 @@ function restartServer(context: vscode.ExtensionContext): void {
             return;
         }
 
+        if (resolvedVersion === serverVersion && client?.isRunning()) {
+            logger.info(`smithy-language-server ${resolvedVersion} is already running, not restarting it`);
+            return;
+        }
+
+        logger.info(`Restarting smithy-language-server with ${resolvedVersion}`);
         // The client shows its own error if the server fails to start.
-        await startClient(server).catch((err) => logger.error(`smithy-language-server failed to start: ${err}`));
+        await startClient(server, resolvedVersion).catch((err) =>
+            logger.error(`smithy-language-server failed to start: ${err}`)
+        );
     });
 }
 
@@ -237,13 +246,17 @@ async function setServerVersion(version: string | undefined): Promise<void> {
         .update('server.version', version, vscode.ConfigurationTarget.Global);
 }
 
-async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executable> {
+// Returns the command that runs the language server, and the version it runs if the extension
+// downloaded it.
+async function getServer(context: vscode.ExtensionContext): Promise<{ server: lsp.Executable; version?: string }> {
     const serverExecutable = config.getServerExecutable();
     if (serverExecutable) {
         logger.info(`Using configured language server executable: ${serverExecutable}`);
         return {
-            command: serverExecutable,
-            args: ['0'],
+            server: {
+                command: serverExecutable,
+                args: ['0'],
+            },
         };
     }
 
@@ -268,18 +281,21 @@ async function getServer(context: vscode.ExtensionContext): Promise<lsp.Executab
     );
     if (javaExecutable) {
         // The launch scripts always use the bundled Java runtime, so run the server's main class directly.
-        logger.info(`Launching smithy-language-server ${version} with ${javaExecutable}`);
-        return { command: javaExecutable, args: ['-cp', classpath, 'software.amazon.smithy.lsp.Main', '0'] };
+        logger.info(`Using smithy-language-server ${version} with ${javaExecutable}`);
+        return {
+            server: { command: javaExecutable, args: ['-cp', classpath, 'software.amazon.smithy.lsp.Main', '0'] },
+            version,
+        };
     }
-    logger.info(`Launching smithy-language-server ${version} via ${launchScript}`);
+    logger.info(`Using smithy-language-server ${version} at ${launchScript}`);
 
     if (process.platform === 'win32') {
         // Node can only run .bat files through a shell. Quote the path, which may contain spaces.
         // Pass the argument in the command, since Node deprecates args with shell (DEP0190).
-        return { command: `"${launchScript}" 0`, args: [], options: { shell: true } };
+        return { server: { command: `"${launchScript}" 0`, args: [], options: { shell: true } }, version };
     }
 
-    return { command: launchScript, args: ['0'] };
+    return { server: { command: launchScript, args: ['0'] }, version };
 }
 
 async function promptUnsupportedVersion(version: string): Promise<void> {
