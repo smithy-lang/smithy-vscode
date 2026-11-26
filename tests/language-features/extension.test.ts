@@ -188,7 +188,11 @@ suite('language-features', function () {
 
         // VS Code passes the diagnostics in the range to the provider, and the server bases its
         // actions on them.
-        await waitFor('the missing version diagnostic', () => vscode.languages.getDiagnostics(uri).length > 0, 30_000);
+        await waitFor(
+            'the missing version diagnostic',
+            () => vscode.languages.getDiagnostics(uri).some((diagnostic) => diagnostic.code === 'define-idl-version'),
+            30_000
+        );
 
         const actions = await vscode.commands.executeCommand<CodeAction[]>(
             'vscode.executeCodeActionProvider',
