@@ -65,7 +65,9 @@ suite('language-features-declarative', function () {
                 async () => {
                     const lastLine = editor.document.lineAt(editor.document.lineCount - 1).range;
                     await editor.edit((builder) => builder.delete(lastLine));
-                    return (await runOnLastLine('type', { text: open })) === open + close;
+                    // Throw, rather than return false, so a timeout reports the last text typed.
+                    assert.equal(await runOnLastLine('type', { text: open }), open + close);
+                    return true;
                 },
                 30_000
             );
