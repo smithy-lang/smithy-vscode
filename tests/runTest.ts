@@ -69,10 +69,11 @@ async function go() {
     for (const run of runs) {
         // Load the settings only now, since they may depend on earlier runs, such as the language
         // server they downloaded.
-        const settings =
-            run.settingsPath && existsSync(run.settingsPath)
-                ? (await import(pathToFileURL(run.settingsPath).href)).default({ testDataPath, userDataDir })
-                : {};
+        let settings = {};
+        if (run.settingsPath && existsSync(run.settingsPath)) {
+            const { default: getSettings } = await import(pathToFileURL(run.settingsPath).href);
+            settings = await getSettings({ testDataPath, userDataDir });
+        }
         writeFileSync(
             resolve(userDataDir, 'User', 'settings.json'),
             JSON.stringify({
