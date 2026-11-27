@@ -40,7 +40,7 @@ export default class SelectorHandler {
 
         const ranges: vscode.Range[] = [];
         for (const location of response) {
-            if (location.uri.endsWith(activeEditor.document.fileName)) {
+            if (vscode.Uri.parse(location.uri).toString() === activeEditor.document.uri.toString()) {
                 const range = new vscode.Range(
                     location.range.start.line,
                     location.range.start.character,

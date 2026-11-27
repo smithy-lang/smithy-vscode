@@ -1,4 +1,4 @@
 {
     "version": "1.0",
-    "sources": ["./main.smithy"]
+    "sources": ["./main.smithy", "./weather alerts.smithy"]
 }
