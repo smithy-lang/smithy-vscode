@@ -60,7 +60,7 @@ jobs:
   # - The extension downloads the latest language server release into
   #   language-server/<version> in its global storage. Its version also keys the Maven cache,
   #   because a release can bundle a Maven resolver that records cached artifacts differently.
-  #   The server-version suite also downloads the older release that its settings.ts pins.
+  #   The server-version suite also downloads the release before it, which its settings.ts pins.
   # Resolving them once here, instead of in each test-extension job, makes fewer requests and
   # gives every job the same versions.
   versions:
@@ -128,7 +128,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .vscode-test/user-data/User/globalStorage/smithy.smithy-vscode-extension/language-server
-          key: language-server-${{ runner.os }}-${{ runner.arch }}-${{ env.LSP_VERSION }}-${{ hashFiles('tests/server-version/settings.ts') }}
+          key: language-server-${{ runner.os }}-${{ runner.arch }}-${{ env.LSP_VERSION }}
       # The cache restores the .in-use-* files' modification times, and the extension deletes a version
       # whose .in-use-* files are all more than 30 days old, so mark the restored versions as used now.
       - name: Mark cached language server versions as in use
